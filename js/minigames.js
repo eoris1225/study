@@ -10,11 +10,13 @@ function lifeUI(el, n) { const d = mk('div', 'lives'); el.appendChild(d); const 
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
 function pos(c, e) { const r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height }; }
 const KIND = { isochoric: '등적', isobaric: '등압', isothermal: '등온', adiabatic: '단열' };
-function txt(x, s, px, py, col = '#cfc6dd', font = '13px serif', al = 'left') { x.fillStyle = col; x.font = font; x.textAlign = al; x.fillText(s, px, py); }
+const MOB = () => Math.min(window.innerWidth, 860) < 600;
+const KS = () => MOB() ? 1.55 : 1;
+function txt(x, s, px, py, col = '#cfc6dd', font = '13px serif', al = 'left') { x.fillStyle = col; const cw = x.canvas.clientWidth || x.canvas.width, fs = Math.min(1.6, Math.max(1, x.canvas.width / cw / 1.15)); x.font = font.replace(/(\d+)px/, (m, n) => Math.round(n * fs) + 'px'); x.textAlign = al; x.fillText(s, px, py); }
 
 /* ============ P-V 그래프 조율 ============ */
 MG.pv = (cfg, el, done) => {
-  const h = hud(el), c = cv(el, 640, 400), x = c.getContext('2d'), log = mk('div', 'mglog'); el.appendChild(log);
+  const h = hud(el), c = cv(el, 640, 400), x = c.getContext('2d'), log = mk('div', 'mglog'); el.appendChild(log); c.style.touchAction = 'none';
   const W = 640, H = 400, ml = 54, mr = 16, mt = 16, mb = 44, Vm = cfg.Vmax, Pm = cfg.Pmax, g = 5 / 3, tol = cfg.tol || 0.07;
   const X = V => ml + V / Vm * (W - ml - mr), Y = P => H - mb - P / Pm * (H - mt - mb);
   const iX = px => (px - ml) / (W - ml - mr) * Vm, iY = py => (H - mb - py) / (H - mt - mb) * Pm;
@@ -32,7 +34,7 @@ MG.pv = (cfg, el, done) => {
     cur = { ...t }; s = { ...t }; path.push({ ...t }); Wleg = 0; li++;
     if (li >= legs.length) { over = true; if (cfg.cycle) log.textContent += `◎ 한 순환: ΔU = 0, 알짜 일 W = ${fmt(sumW, 1)} J (그래프로 둘러싸인 넓이)\n`; setTimeout(() => done(true), 1400); }
   }
-  c.onpointerdown = e => { const p = pos(c, e); if (Math.hypot(p.x - X(cur.V), p.y - Y(cur.P)) < 50) { drag = true; c.setPointerCapture(e.pointerId); } };
+  c.onpointerdown = e => { const p = pos(c, e); if (Math.hypot(p.x - X(cur.V), p.y - Y(cur.P)) < 50 * KS() * 1.3) { drag = true; c.setPointerCapture(e.pointerId); } };
   c.onpointerup = () => drag = false;
   c.onpointermove = e => {
     if (!drag || over) return; const q = pos(c, e);
@@ -56,7 +58,7 @@ MG.pv = (cfg, el, done) => {
     // area under path
     x.fillStyle = 'rgba(226,85,43,.16)'; x.beginPath(); x.moveTo(X(path[0].V), Y(0)); path.forEach(p => x.lineTo(X(p.V), Y(p.P))); x.lineTo(X(path[path.length - 1].V), Y(0)); x.fill();
     x.strokeStyle = '#e2552b'; x.lineWidth = 2.5; x.beginPath(); path.forEach((p, i) => i ? x.lineTo(X(p.V), Y(p.P)) : x.moveTo(X(p.V), Y(p.P))); x.stroke();
-    x.fillStyle = '#ffd166'; x.beginPath(); x.arc(X(cur.V), Y(cur.P), 9, 0, 7); x.fill();
+    x.fillStyle = '#ffd166'; x.beginPath(); x.arc(X(cur.V), Y(cur.P), 9 * KS(), 0, 7); x.fill();
     const leg = legs[Math.min(li, legs.length - 1)], dU = 1.5 * (cur.P * cur.V - s.P * s.V), Q = dU + Wleg;
     h.innerHTML = `<b>${li < legs.length ? `[${li + 1}/${legs.length}] ${leg.ask}` : '완료!'}</b><br>노란 점을 끌어 점선을 따라가라 · 궤도 안정도 <span class="gauge"><i style="width:${Math.max(0, hp)}%;background:${hp > 40 ? '#6fe3a1' : '#e2552b'}"></i></span><br>` +
       `P = ${fmt(cur.P)} , V = ${fmt(cur.V)} , <b>T = ${fmt(cur.P * cur.V / U0)} T₀</b> (T ∝ PV)<br><b>Q(${sgn(Q)}) = ΔU(${sgn(dU)}) + W(${sgn(Wleg)})</b> <small>— W는 그래프 아래 넓이</small>`;
@@ -101,11 +103,11 @@ MG.forge = (cfg, el, done, ctx) => {
     const draw = () => { ex.innerHTML = ''; let bi = 0; st.expr.forEach(e => { if (typeof e === 'string') ex.appendChild(mk('span', '', e)); else { const i = bi++; const b = mk('span', 'blank', fill[i] == null ? '?' : fill[i]); b.onclick = () => { fill[i] = null; draw(); }; ex.appendChild(b); } }); };
     draw();
     const tl = mk('div', 'tiles'); shuffle(st.tiles).forEach(tn => { const b = mk('button', '', tn); b.onclick = () => { const i = fill.indexOf(null); if (i >= 0) { fill[i] = tn; draw(); } }; tl.appendChild(b); }); box.appendChild(tl);
-    let inp; if (st.answer != null) { const a = mk('div', 'ans', `<span>${st.ansLabel || '답'} =</span>`); inp = mk('input'); inp.type = 'number'; inp.step = 'any'; inp.inputMode = 'decimal'; a.appendChild(inp); a.appendChild(mk('span', '', st.unit || '')); box.appendChild(a); }
+    let inp; if (st.answer != null) { const a = mk('div', 'ans', `<span>${st.ansLabel || '답'} =</span>`); inp = mk('input'); inp.type = 'text'; inp.inputMode = 'decimal'; inp.autocomplete = 'off'; const pm = mk('button', '', '±'); pm.type = 'button'; pm.onclick = () => { inp.value = inp.value.startsWith('-') ? inp.value.slice(1) : '-' + inp.value; }; a.appendChild(pm); a.appendChild(inp); a.appendChild(mk('span', '', st.unit || '')); box.appendChild(a); }
     const sub = mk('button', 'pri', '수식 발동'), msg = mk('div', 'msg'); box.appendChild(sub); box.appendChild(msg);
     sub.onclick = () => {
       let ok = st.anyOrder ? fill.slice().sort().join('|') === blanks.map(b => b.b).sort().join('|') : blanks.every((b, i) => fill[i] === b.b || (b.alt && b.alt.includes(fill[i])));
-      if (ok && inp) { const val = parseFloat(inp.value); ok = isFinite(val) && Math.abs(val - st.answer) <= (st.tol != null ? st.tol : Math.abs(st.answer) * 0.011 + 1e-9); }
+      if (ok && inp) { const val = parseFloat(inp.value.replace(',', '.').replace('−', '-')); ok = isFinite(val) && Math.abs(val - st.answer) <= (st.tol != null ? st.tol : Math.abs(st.answer) * 0.011 + 1e-9); }
       if (ok) { msg.className = 'msg good'; msg.innerHTML = '✔ ' + (st.explain || '정확하다!'); sub.disabled = true; setTimeout(() => { si++; if (si >= cfg.steps.length) done(true); else step(); }, st.explain ? 2600 : 900); }
       else { msg.className = 'msg bad'; msg.innerHTML = '✖ 수식이 어긋났다. ' + (st.hint ? '<br>힌트: ' + st.hint : ''); if (L.hit()) done(false); }
     };
@@ -114,7 +116,8 @@ MG.forge = (cfg, el, done, ctx) => {
 
 /* ============ 순환 리듬 ============ */
 MG.rhythm = (cfg, el, done, ctx) => {
-  const L = lifeUI(el, ctx.lives), h = hud(el), c = cv(el, 640, 300), x = c.getContext('2d');
+  const mob = MOB(), CW = mob ? 360 : 640, CHh = mob ? 500 : 300;
+  const L = lifeUI(el, ctx.lives), h = hud(el), c = cv(el, CW, CHh), x = c.getContext('2d');
   const n = cfg.stages.length, laps = cfg.laps || 3; let ang = 0, lap = 0, sec = 0, answered = false, hits = 0, fin = false, fb = '', beat = cfg.beat || 2.6;
   const row = mk('div', 'btnrow'); el.appendChild(row);
   shuffle(cfg.stages.map((s, i) => i)).forEach((i, bi) => { const b = mk('button', '', `<small>${bi + 1}</small> ${cfg.stages[i]}`); b.onclick = () => press(i); b.dataset.i = i; row.appendChild(b); });
@@ -150,7 +153,7 @@ MG.rhythm = (cfg, el, done, ctx) => {
       if (!answered) miss(`놓쳤다 — 「${cfg.stages[sec]}」`); if (fin) return;
       sec = ns % n; answered = false; if (ns >= n * (lap + 1)) { lap++; beat *= .85; if (lap >= laps) { fin = true; return done(true); } }
     }
-    x.clearRect(0, 0, 640, 300); const cx = 150, cy = 150, R = 110;
+    x.clearRect(0, 0, CW, CHh); const cx = mob ? 180 : 150, cy = mob ? 125 : 150, R = mob ? 118 : 110;
     for (let i = 0; i < n; i++) {
       const a0 = -Math.PI / 2 + i * Math.PI * 2 / n, a1 = a0 + Math.PI * 2 / n; x.beginPath(); x.moveTo(cx, cy); x.arc(cx, cy, R, a0, a1); x.closePath();
       x.fillStyle = i === sec ? (answered ? '#2f5d43' : '#5d4a1c') : '#1d1828'; x.fill(); x.strokeStyle = '#3b3150'; x.stroke();
@@ -158,7 +161,7 @@ MG.rhythm = (cfg, el, done, ctx) => {
       lb.split(' (').forEach((s, j) => txt(x, j ? '(' + s : s, cx + Math.cos(am) * R * .6, cy + Math.sin(am) * R * .6 + j * 14, show ? '#e8e2d4' : '#6d6480', '12px serif', 'center'));
     }
     const pa = -Math.PI / 2 + ang; x.strokeStyle = '#ffd166'; x.lineWidth = 3; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(pa) * R, cy + Math.sin(pa) * R); x.stroke();
-    if (cfg.cycle) drawCycle(300, 10, 330, 280); else drawPiston(300, 10, 330, 280);
+    if (cfg.cycle) mob ? drawCycle(10, 255, 340, 240) : drawCycle(300, 10, 330, 280); else mob ? drawPiston(15, 240, 330, 250) : drawPiston(300, 10, 330, 280);
     h.innerHTML = `<b>${cfg.ask || '바늘이 들어선 칸의 과정을 눌러라'}</b> · 바퀴 ${lap + 1}/${laps} ${lap === 0 ? '<small>(1바퀴째는 이름이 보인다. 외워라!)</small>' : '<small>(이름이 가려졌다 — 그래프를 읽어라)</small>'}<br>${fb}`;
   });
 };
@@ -183,9 +186,10 @@ MG.sort = (cfg, el, done, ctx) => {
 /* ============ 확산과 엔트로피 (맥스웰의 마개) ============ */
 MG.demon = (cfg, el, done) => {
   const h = hud(el), c = cv(el, 640, 300), x = c.getContext('2d'); const row = mk('div', 'btnrow'); el.appendChild(row);
-  const bt = mk('button', 'pri', '마개 열기 (누르고 있는 동안 열림 / Space)'); row.appendChild(bt);
+  const bt = mk('button', 'pri', '마개 열기 (누르고 있는 동안 열림)'); row.appendChild(bt);
   let open = false, phase = 0, ps = [], t = 0, hist = [], fin = false, holdA = 0; const mid = 320, gy = 110, gap = 70, BW = 640, BH = 220;
-  bt.onpointerdown = () => open = true; bt.onpointerup = bt.onpointerleave = () => open = false;
+  bt.style.touchAction = 'none'; bt.style.userSelect = 'none'; bt.style.webkitUserSelect = 'none'; bt.oncontextmenu = e => e.preventDefault();
+  bt.onpointerdown = e => { open = true; try { bt.setPointerCapture(e.pointerId); } catch (_) { } }; bt.onpointerup = bt.onpointercancel = () => open = false;
   const kd = e => { if (!el.isConnected) { window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); return; } if (e.code === 'Space') { open = true; e.preventDefault(); } }, ku = e => { if (e.code === 'Space') open = false; };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   const PH = [{ n: cfg.n1 || 3, time: 60 }, { n: cfg.n2 || 30, time: 25 }];
@@ -224,7 +228,7 @@ MG.demon = (cfg, el, done) => {
 /* ============ 단진동 타격 ============ */
 MG.strike = (cfg, el, done, ctx) => {
   const L = lifeUI(el, ctx.lives), h = hud(el), c = cv(el, 640, 300), x = c.getContext('2d'); const row = mk('div', 'btnrow'); el.appendChild(row);
-  const bt = mk('button', 'pri', '⚔ 타격! (Space)'); row.appendChild(bt);
+  const bt = mk('button', 'pri', '⚔ 타격!'); row.appendChild(bt);
   const w = cfg.omega || 2.2, A = 110; let t = 0, ri = 0, fin = false, fb = '', cool = 0;
   const cond = { center: (s) => Math.abs(s) < .26, edge: s => Math.abs(s) > .9, right: s => s > .9, left: s => s < -.9 };
   function hit() {
@@ -242,7 +246,7 @@ MG.strike = (cfg, el, done, ctx) => {
     x.setLineDash([3, 4]); x.strokeStyle = '#6d6480'; x.beginPath(); x.moveTo(px, py); x.lineTo(250, py); x.stroke(); x.setLineDash([]);
     // vertical projection Q
     x.strokeStyle = '#6d6480'; x.beginPath(); x.moveTo(250, cy - R - 10); x.lineTo(250, cy + R + 10); x.stroke();
-    x.fillStyle = '#ffd166'; x.beginPath(); x.arc(250, py, 8, 0, 7); x.fill(); txt(x, 'x = A sin ωt', 262, cy - R - 2, '#8a8198', '12px serif'); txt(x, 'O', 232, cy + 4, '#8a8198', '12px serif');
+    x.fillStyle = '#ffd166'; x.beginPath(); x.arc(250, py, 8, 0, 7); x.fill(); txt(x, 'x = A sin ωt', 262, cy + R + 24, '#8a8198', '12px serif'); txt(x, 'O', 232, cy + 4, '#8a8198', '12px serif');
     // spring horizontally
     const ox = 470, mx = ox + s * A * .9, sy = 250; x.strokeStyle = '#8a8198'; x.lineWidth = 3; x.beginPath(); x.moveTo(330, sy - 26); x.lineTo(330, sy + 26); x.stroke();
     x.lineWidth = 1.5; x.strokeStyle = '#b9b0c6'; x.beginPath(); x.moveTo(330, sy); const nC = 16; for (let i = 1; i <= nC; i++) x.lineTo(330 + (mx - 18 - 330) * i / nC, sy + (i % 2 ? -9 : 9)); x.stroke();
@@ -291,7 +295,7 @@ MG.phase = (cfg, el, done, ctx) => {
   function setup() { x0 = 30 + Math.random() * 60; cands = []; for (let n = 1; x0 + n * lam / 4 < 625; n++) { cands.push({ n, x: x0 + n * lam / 4, on: false }); } }
   setup();
   const good = cd => cfg.modes[ri] === 'same' ? cd.n % 4 === 0 : cd.n % 4 === 2;
-  c.onpointerdown = e => { const p = pos(c, e); cands.forEach(cd => { if (Math.hypot(p.x - cd.x, p.y - (mid - A * Math.sin(k * cd.x))) < 20) cd.on = !cd.on; }); };
+  c.onpointerdown = e => { const p = pos(c, e); cands.forEach(cd => { if (Math.hypot(p.x - cd.x, p.y - (mid - A * Math.sin(k * cd.x))) < 20 * KS()) cd.on = !cd.on; }); };
   ok.onclick = () => {
     if (fin) return;
     if (cands.every(cd => cd.on === good(cd))) { fb = '<span class="ok">✔ 정확하다.</span>'; ri++; if (ri >= cfg.modes.length) { fin = true; return done(true); } setup(); }
@@ -301,7 +305,7 @@ MG.phase = (cfg, el, done, ctx) => {
     if (fin) return; x.clearRect(0, 0, 640, 260); x.strokeStyle = '#3b3150'; x.beginPath(); x.moveTo(0, mid); x.lineTo(640, mid); x.stroke();
     x.strokeStyle = '#e2552b'; x.lineWidth = 2.5; x.beginPath(); for (let X = 0; X <= 640; X += 4) { const y = mid - A * Math.sin(k * X); X ? x.lineTo(X, y) : x.moveTo(X, y); } x.stroke();
     x.fillStyle = '#ffd166'; x.beginPath(); x.arc(x0, mid - A * Math.sin(k * x0), 9, 0, 7); x.fill(); txt(x, '기준 X', x0, mid - A * Math.sin(k * x0) - 14, '#ffd166', 'bold 13px serif', 'center');
-    cands.forEach(cd => { const y = mid - A * Math.sin(k * cd.x); x.beginPath(); x.arc(cd.x, y, 9, 0, 7); x.fillStyle = cd.on ? '#6fe3a1' : '#241e30'; x.fill(); x.strokeStyle = '#e8e2d4'; x.lineWidth = 1.5; x.stroke(); txt(x, (cd.n / 4) + 'λ', cd.x, 222 + (cd.n % 2) * 16, '#8a8198', '11px serif', 'center'); });
+    cands.forEach(cd => { const y = mid - A * Math.sin(k * cd.x); x.beginPath(); x.arc(cd.x, y, 9 * KS(), 0, 7); x.fillStyle = cd.on ? '#6fe3a1' : '#241e30'; x.fill(); x.strokeStyle = '#e8e2d4'; x.lineWidth = 1.5; x.stroke(); txt(x, (cd.n / 4) + 'λ', cd.x, 222 + (cd.n % 2) * 16, '#8a8198', '11px serif', 'center'); });
     txt(x, 'X로부터의 거리 →', 8, 252, '#6d6480', '11px serif');
     h.innerHTML = `<b>[${ri + 1}/${cfg.modes.length}] 기준점 X와 위상이 ${cfg.modes[ri] === 'same' ? '<u>같은</u>' : '<u>반대인</u>'} 점을 모두 골라 확정하라</b><br><small>위상차 180°×짝수 ⇒ 동위상, 180°×홀수 ⇒ 반대 위상 · 거리 (λ/2)×짝수 ⇒ 同, (λ/2)×홀수 ⇒ 反</small><br>${fb}`;
   });
@@ -335,7 +339,7 @@ MG.reflect = (cfg, el, done, ctx) => {
 
 /* ============ 두 스피커 간섭장 ============ */
 MG.field = (cfg, el, done) => {
-  const h = hud(el), c = cv(el, 640, 340), x = c.getContext('2d'); const lam = cfg.lam || 60, S1 = { x: 260, y: 310 }, S2 = { x: 380, y: 310 };
+  const h = hud(el), c = cv(el, 640, 340), x = c.getContext('2d'); c.style.touchAction = 'none'; const lam = cfg.lam || 60, S1 = { x: 260, y: 310 }, S2 = { x: 380, y: 310 };
   let P = { x: 150, y: 90 }, drag = false, ri = 0, hold = 0, fin = false, t = 0;
   c.onpointerdown = e => { drag = true; c.setPointerCapture(e.pointerId); mv(e); }; c.onpointerup = () => drag = false; c.onpointermove = e => drag && mv(e);
   function mv(e) { const p = pos(c, e); P = { x: Math.max(10, Math.min(630, p.x)), y: Math.max(10, Math.min(280, p.y)) }; }

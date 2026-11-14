@@ -38,7 +38,7 @@ input[type=text],input[type=number]{font-family:inherit;font-size:16px;backgroun
 .hud b{color:var(--gold)} .hud .ok{color:var(--green)} .hud .no{color:#ff9a7a} .hud .warn{color:#ff6b6b;font-weight:bold}
 .gauge{display:inline-block;width:120px;height:8px;background:#2a2436;border-radius:4px;vertical-align:middle;overflow:hidden;margin:0 6px}
 .gauge i{display:block;height:100%;background:var(--gold)}
-canvas.cv{width:100%;height:auto;background:#0a0810;border:1px solid var(--line);border-radius:8px;touch-action:none;display:block}
+canvas.cv{width:100%;height:auto;background:#0a0810;border:1px solid var(--line);border-radius:8px;touch-action:pan-y;display:block}
 .sliders{display:grid;gap:8px;margin-top:8px}
 .sliders .sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;font-size:14px}
 .sliders input[type=range]{width:100%;accent-color:var(--gold);height:28px}
@@ -78,4 +78,21 @@ canvas.cv{width:100%;height:auto;background:#0a0810;border:1px solid var(--line)
 .heart{color:#ff7a9c}
 .list button{display:block;width:100%;text-align:left;margin:6px 0}
 small,.dim{color:var(--dim)}
-@media(max-width:560px){.sliders .sl{grid-template-columns:96px 1fr 70px}.scene{min-height:110px;font-size:64px}.dlg .txt{font-size:15px}}
+html{-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:contain;-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation;min-height:40px}
+#app{padding-bottom:env(safe-area-inset-bottom)}
+#top{padding-top:max(8px,env(safe-area-inset-top))}
+.sliders input[type=range]{touch-action:pan-y}
+.forge .ans{flex-wrap:wrap}
+@media(max-width:560px){
+#top{flex-wrap:wrap}#chTitle{font-size:13px;flex:1 1 100%}#top nav{flex:1 1 100%;justify-content:space-between}#top button{flex:1;padding:6px 2px;font-size:12px;min-height:36px}
+#stage{padding:8px;min-height:60vh}.gp,.form,#modalBox{padding:10px}#modal{padding:6px}
+.gp h2{font-size:17px}.gp .formula,.fm{font-size:14px;padding:6px 8px}.hud{font-size:13px;min-height:0}
+.port{flex-basis:52px}.port svg{width:52px;height:52px}.dlg{padding:10px;gap:8px}
+.btnrow button{min-width:calc(50% - 8px);padding:12px 4px;font-size:14px}
+.forge .expr{font-size:16px}.forge .tiles button{padding:10px 12px}
+.sliders .sl{grid-template-columns:1fr auto;row-gap:0}.sliders .sl input{grid-column:1/3;grid-row:2;height:36px}
+.notes{font-size:14px}.notes table{display:block;overflow-x:auto;max-width:100%}
+.fall{height:230px}.hud{position:sticky;top:84px;z-index:3;box-shadow:0 6px 10px rgba(0,0,0,.6)}.title h1{font-size:24px}
+.sliders .sl{grid-template-columns:96px 1fr 70px}.scene{min-height:110px;font-size:64px}.dlg .txt{font-size:15px}}
