@@ -1,0 +1,169 @@
+'use strict';
+/* 횡스크롤 월드 */
+const World = (() => {
+  const H = 540, GY = 430, PW = 26, PH = 50;
+  let cv, x, W = 960, VH = 540, sc = 1, raf = 0, last = 0, t = 0;
+  let ch, th, plats, orbs, slimes, events, endX, p, cam, hist, fx, busy, banner, bannerT, floatTxt;
+  const keys = {}, pad = { l: 0, r: 0, j: 0 };
+  const stage = () => $('#stage');
+  function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let q = Math.imul(a ^ a >>> 15, 1 | a); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; }; }
+
+  function groupEvents(steps) {
+    const ev = []; let from = 0;
+    steps.forEach((s, i) => {
+      if (s.t === 'game') { ev.push({ from, to: i, kind: s.boss ? 'boss' : 'monster', st: s }); from = i + 1; }
+      else if (s.t === 'recruit') { ev.push({ from, to: i, kind: 'recruit', id: s.id }); from = i + 1; }
+      else if (s.t === 'camp') { ev.push({ from, to: i, kind: 'camp' }); from = i + 1; }
+    });
+    ev.push({ from, to: steps.length - 1, kind: 'portal' });
+    return ev;
+  }
+  function build(ci) {
+    ch = ci; th = Art.THEMES[ci % Art.THEMES.length]; const R = rng(ci * 7919 + 101), steps = G.chapters[ci].steps;
+    plats = []; orbs = []; slimes = []; events = groupEvents(steps); fx = []; floatTxt = [];
+    let cur = 0, spanStart = -400; const ground = (a, b) => plats.push({ x: a, y: GY, w: b - a, h: 300, g: 1 });
+    events.forEach((ev, i) => {
+      const dist = i === 0 ? 420 : 1050 + R() * 500, ex = cur + dist; let pos = cur + (i === 0 ? 9999 : 260);
+      while (pos < ex - 780) {
+        const r = Math.floor(R() * 5);
+        if (r === 0) { slimes.push({ x: pos + 120, y: GY, a: pos + 30, b: pos + 230, d: 1, dead: 0 }); for (let k = 0; k < 3; k++) orbs.push({ x: pos + 70 + k * 40, y: GY - 120 }); pos += 330; }
+        else if (r === 1) { const w = 120 + R() * 30; ground(spanStart, pos); spanStart = pos + w; for (let k = 0; k < 3; k++) orbs.push({ x: pos + w / 2 + (k - 1) * 40, y: GY - 90 - (k === 1 ? 30 : 0) }); pos += w + 210; }
+        else if (r === 2) { plats.push({ x: pos + 30, y: GY - 70, w: 100, h: 18 }, { x: pos + 180, y: GY - 140, w: 110, h: 18 }); for (let k = 0; k < 3; k++) orbs.push({ x: pos + 205 + k * 30, y: GY - 172 }); slimes.push({ x: pos + 380, y: GY, a: pos + 320, b: pos + 460, d: -1, dead: 0 }); pos += 500; }
+        else if (r === 3) { ground(spanStart, pos); spanStart = pos + 300; plats.push({ x: pos + 90, y: GY - 20, w: 120, h: 18 }); for (let k = 0; k < 3; k++) orbs.push({ x: pos + 120 + k * 30, y: GY - 62 }); pos += 520; }
+        else { for (let k = 0; k < 5; k++) orbs.push({ x: pos + 40 + k * 36, y: GY - 40 - Math.sin(k / 4 * Math.PI) * 60 }); pos += 260; }
+      }
+      ev.x = ex; ev.done = false; cur = ex;
+    });
+    endX = cur + 500; ground(spanStart, endX + 600);
+  }
+
+  function resize() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = innerWidth, h = innerHeight;
+    sc = Math.min(h / H, w / 720); W = w / sc; VH = h / sc; cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px'; x.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0);
+  }
+  function spawnAt(xx) { p = { x: xx, y: GY - PH, vx: 0, vy: 0, on: true, dir: 1, hp: 3, inv: 0, coy: 0, safe: xx, walk: 0 }; cam = Math.max(-200, xx - W * .35); hist = []; }
+
+  function load() {
+    $('#game').hidden = false; stage().className = ''; stage().innerHTML = '';
+    if (!cv) { cv = $('#world'); x = cv.getContext('2d'); addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 200)); bind(); }
+    resize(); build(S.ch);
+    let sx = 80; events.forEach(ev => { if (S.step > ev.to) { ev.done = true; sx = ev.x - 60; } });
+    spawnAt(sx); busy = false; banner = G.chapters[S.ch].title; bannerT = 3.2;
+    $('#chTitle').textContent = G.chapters[S.ch].title;
+    cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame);
+  }
+  function stop() { cancelAnimationFrame(raf); raf = 0; $('#game').hidden = true; }
+
+  function bind() {
+    addEventListener('keydown', e => { if ($('#game').hidden) return; keys[e.code] = 1; if (!busy && $('#modal').hidden && ['Space', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
+    addEventListener('keyup', e => { keys[e.code] = 0; });
+    const hook = (id, k) => { const b = $(id); b.oncontextmenu = e => e.preventDefault(); b.onpointerdown = e => { pad[k] = 1; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { } }; b.onpointerup = b.onpointercancel = b.onlostpointercapture = () => pad[k] = 0; };
+    hook('#pL', 'l'); hook('#pR', 'r'); hook('#pJ', 'j');
+  }
+
+  function say(text, col = '#ffd166') { floatTxt.push({ x: p.x, y: p.y - 30, s: text, col, life: 1.1 }); }
+  function burst(X, Y, col, n = 12) { for (let i = 0; i < n; i++) { const a = Math.random() * 7, v = 60 + Math.random() * 160; fx.push({ x: X, y: Y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: .7, col }); } }
+  function hurt() {
+    if (p.inv > 0) return; p.hp--; p.inv = 1.4; burst(p.x, p.y + 20, '#ff6b6b', 8); say('아얏!', '#ff8a8a');
+    if (p.hp <= 0) { p.hp = 3; p.x = p.safe; p.y = GY - PH - 40; p.vx = p.vy = 0; say('다시 일어선다!', '#9fe3ff'); }
+  }
+
+  function runEvent(ev) {
+    busy = true; p.vx = 0; pad.l = pad.r = pad.j = 0; for (const k in keys) keys[k] = 0;
+    const steps = G.chapters[ch].steps, sg = stage(); let i = Math.max(ev.from, S.step);
+    (function go() {
+      if (i > ev.to) return finish(ev);
+      const s = steps[i], nx = () => { i++; S.step = i; save(); go(); };
+      if (s.t === 'say') { sg.className = 'dlgmode'; renderSay(sg, s, nx); }
+      else if (s.t === 'choice') { sg.className = 'dlgmode'; renderChoice(sg, s, nx); }
+      else if (s.t === 'game') { sg.className = 'full'; gamePanel(sg, s, ch, i, nx); sg.scrollTop = 0; }
+      else if (s.t === 'recruit') { sg.className = 'full'; recruit(sg, s, nx); }
+      else if (s.t === 'camp') {
+        sg.className = 'dlgmode'; sg.innerHTML = ''; const d = mk('div', 'gp', '<h2>🏕 야영지</h2><div class="brief">모닥불이 타오른다. 동료들과 이야기를 나누고 다음 여정을 준비하자. (체력 회복!)</div>'); p.hp = 3;
+        const r = mk('div', 'btnrow'), a = mk('button', '', '💬 동료와 대화'), b = mk('button', 'pri', '길을 떠난다'); a.onclick = openCamp; b.onclick = nx; r.appendChild(a); r.appendChild(b); d.appendChild(r); sg.appendChild(d);
+      } else nx();
+    })();
+  }
+  function finish(ev) {
+    const sg = stage(); sg.className = ''; sg.innerHTML = ''; ev.done = true; busy = false; p.safe = ev.x - 60;
+    if (ev.kind === 'monster' || ev.kind === 'boss') { burst(ev.x + 50, GY - 30, '#ffd166', 30); const n = ev.kind === 'boss' ? 10 : 5; for (let k = 0; k < n; k++) orbs.push({ x: ev.x + 30 + k * 26, y: GY - 60 - (k % 2) * 30 }); say(ev.kind === 'boss' ? '보스 격파!' : '격파!'); }
+    if (ev.kind === 'recruit') { burst(ev.x + 50, GY - 40, '#9fe3ff', 24); say('동료가 되었다!', '#9fe3ff'); }
+    if (ev === events[events.length - 1]) {
+      S.cleared[ch] = true; S.ch = ch + 1; S.step = 0; save(); banner = '✦ 챕터 클리어 ✦'; bannerT = 2.2; busy = true;
+      setTimeout(() => { if (G.chapters[S.ch]) load(); else { stop(); ending(); } }, 2000);
+    }
+  }
+
+  function update(dt) {
+    t += dt; if (bannerT > 0) bannerT -= dt;
+    const next = events.find(e => !e.done);
+    if (!busy && $('#modal').hidden) {
+      const L = keys.ArrowLeft || keys.KeyA || pad.l, Rr = keys.ArrowRight || keys.KeyD || pad.r, J = keys.Space || keys.ArrowUp || keys.KeyW || pad.j;
+      const tv = (Rr ? 1 : 0) - (L ? 1 : 0); p.vx += (tv * 250 - p.vx) * Math.min(1, dt * 12); if (tv) p.dir = tv; p.walk = Math.abs(p.vx) > 30;
+      p.coy = p.on ? .1 : p.coy - dt;
+      if (J && p.coy > 0 && !p.jl) { p.vy = -590; p.coy = 0; p.on = false; } p.jl = J;
+      if (!J && p.vy < -220) p.vy = -220;
+      if (J && S.look.wings && p.vy > 110) p.vy = 110; // 요정은 점프를 누르고 있으면 활공
+    } else { p.vx *= .8; p.walk = false; }
+    p.vy += 1500 * dt; if (p.inv > 0) p.inv -= dt;
+    // X
+    let nx = p.x + p.vx * dt; if (nx < -150) nx = -150; if (next && nx > next.x - 46) nx = next.x - 46; if (nx > endX) nx = endX;
+    for (const q of plats) if (nx + PW / 2 > q.x && nx - PW / 2 < q.x + q.w && p.y + PH > q.y + 4 && p.y < q.y + q.h) { if (q.g || p.y + PH > q.y + 10) { nx = p.vx > 0 ? q.x - PW / 2 : q.x + q.w + PW / 2; p.vx = 0; } }
+    p.x = nx;
+    // Y
+    let ny = p.y + p.vy * dt; p.on = false;
+    for (const q of plats) if (p.x + PW / 2 > q.x + 2 && p.x - PW / 2 < q.x + q.w - 2) {
+      if (p.vy >= 0 && p.y + PH <= q.y + 6 && ny + PH >= q.y) { ny = q.y - PH; p.vy = 0; p.on = true; if (q.g) p.safe = Math.max(q.x + 30, Math.min(q.x + q.w - 30, p.x)); }
+      else if (!q.g && p.vy < 0 && p.y >= q.y + q.h - 4 && ny <= q.y + q.h) { ny = q.y + q.h; p.vy = 0; }
+    }
+    p.y = ny;
+    if (p.y > H + 120) { p.inv = 0; hurt(); p.x = p.safe; p.y = GY - PH - 60; p.vx = p.vy = 0; }
+    // orbs
+    for (const o of orbs) if (!o.got && Math.abs(o.x - p.x) < 26 && Math.abs(o.y - (p.y + PH / 2)) < 36) { o.got = 1; S.orbs = (S.orbs || 0) + 1; burst(o.x, o.y, '#ffe27a', 5); if (S.orbs % 25 === 0) { say('공명 조각 ' + S.orbs + '개! 전투 생명 +1', '#ffe27a'); save(); } }
+    // slimes
+    for (const s of slimes) {
+      if (s.dead) { s.dead += dt; continue; } s.x += s.d * 46 * dt; if (s.x > s.b) s.d = -1; if (s.x < s.a) s.d = 1;
+      if (Math.abs(s.x - p.x) < 26 && p.y + PH > s.y - 24 && p.y < s.y) { if (p.vy > 80 && p.y + PH < s.y - 4) { s.dead = .01; p.vy = -420; burst(s.x, s.y - 12, th.slime, 10); orbs.push({ x: s.x, y: s.y - 70 }); } else if (!busy) { hurt(); p.vx = (p.x < s.x ? -1 : 1) * 260; p.vy = -260; } }
+    }
+    // events
+    if (!busy && next && p.on && Math.abs(next.x - p.x) < 150) runEvent(next);
+    cam += (Math.max(-200, Math.min(endX + 300 - W, p.x - W * .38)) - cam) * Math.min(1, dt * 6);
+    hist.push({ x: p.x, y: p.y, dir: p.dir, walk: p.walk, on: p.on }); if (hist.length > 90) hist.shift();
+    for (const f of fx) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 500 * dt; f.life -= dt; } fx = fx.filter(f => f.life > 0);
+    for (const f of floatTxt) { f.y -= 40 * dt; f.life -= dt; } floatTxt = floatTxt.filter(f => f.life > 0);
+  }
+
+  function draw() {
+    x.save(); x.fillStyle = th.sky[0]; x.fillRect(0, 0, W, VH); x.translate(0, VH - H);
+    Art.bg(x, W, H, cam, th, t, GY); if (VH > H) { x.fillStyle = th.sky[0]; x.fillRect(0, -(VH - H), W, VH - H + 1); }
+    x.translate(-cam, 0);
+    for (const q of plats) if (q.x + q.w > cam && q.x < cam + W) Art.ground(x, q.x, q.y, q.w, q.h, th, !q.g);
+    const next = events.find(e => !e.done);
+    events.forEach((ev, i) => {
+      if (ev.x < cam - 300 || ev.x > cam + W + 300) return; const X = ev.x + 50;
+      if (ev.kind === 'camp') Art.campfire(x, X - 30, GY, t);
+      else if (ev.kind === 'portal') Art.portal(x, X + 10, GY, t);
+      else if (ev.kind === 'recruit') { if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, 16, 4, 0, 0, 7); x.fill(); Art.chibi(x, X, GY, 1.15, compC(ev.id), { t, dir: -1 }); } }
+      else if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, ev.kind === 'boss' ? 50 : 28, 6, 0, 0, 7); x.fill(); Art.monster(x, X, GY, ev.kind === 'boss' ? 2 : 1.15, (i + ch) % 4, ev.kind === 'boss' ? '#b0457a' : th.slime, t, ev.kind === 'boss'); }
+      if (ev === next && !busy) { x.fillStyle = '#ffd166'; x.font = 'bold 30px serif'; x.textAlign = 'center'; x.fillText(ev.kind === 'camp' ? '🏕' : ev.kind === 'portal' ? '✦' : '❗', X, GY - (ev.kind === 'boss' ? 150 : 96) + Math.sin(t * 5) * 5); }
+    });
+    for (const o of orbs) if (!o.got && o.x > cam - 20 && o.x < cam + W + 20) Art.orb(x, o.x, o.y, t);
+    for (const s of slimes) if (s.x > cam - 40 && s.x < cam + W + 40 && (!s.dead || s.dead < .35)) Art.slime(x, s.x, s.y, th.slime, t + s.a, !!s.dead);
+    // companions
+    S.party.forEach((id, k) => { const hI = hist[Math.max(0, hist.length - 1 - (k + 1) * 16)] || p, L = compC(id); x.fillStyle = 'rgba(0,0,0,.2)'; x.beginPath(); x.ellipse(hI.x - (k + 1) * 4 * hI.dir, GY, 11, 3, 0, 0, 7); if (hI.on) x.fill(); Art.chibi(x, hI.x - (k + 1) * 4 * hI.dir, hI.y + PH - (L.wings ? 14 : 0), L.wings ? .82 : .95, L, { t: t + k, walk: hI.walk, dir: hI.dir, air: !hI.on }); });
+    // player
+    if (p.on) { x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(p.x, p.y + PH, 14, 4, 0, 0, 7); x.fill(); }
+    if (!(p.inv > 0 && Math.floor(t * 14) % 2)) Art.chibi(x, p.x, p.y + PH, 1, S.look, { t, walk: p.walk, dir: p.dir, air: !p.on });
+    for (const f of fx) { x.globalAlpha = Math.max(0, f.life / .7); x.fillStyle = f.col; x.fillRect(f.x - 3, f.y - 3, 6, 6); } x.globalAlpha = 1;
+    for (const f of floatTxt) { x.globalAlpha = Math.min(1, f.life * 2); x.fillStyle = f.col; x.font = 'bold 18px serif'; x.textAlign = 'center'; x.strokeStyle = '#000'; x.lineWidth = 3; x.strokeText(f.s, f.x, f.y); x.fillText(f.s, f.x, f.y); } x.globalAlpha = 1;
+    x.restore();
+    // HUD
+    x.textAlign = 'left'; x.font = '22px serif'; x.fillStyle = '#ff6b8a'; x.fillText('❤'.repeat(p.hp) + '♡'.repeat(3 - p.hp), 14, 30);
+    x.fillStyle = '#ffe27a'; x.font = 'bold 18px serif'; x.fillText('✦ ' + (S.orbs || 0), 14, 56);
+    if (next && !busy && next.x > cam + W) { x.fillStyle = `rgba(255,209,102,${.6 + .4 * Math.sin(t * 5)})`; x.font = 'bold 26px serif'; x.textAlign = 'right'; x.fillText('▶▶', W - 14, VH / 2); }
+    if (bannerT > 0) { x.globalAlpha = Math.min(1, bannerT); x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, VH * .36, W, 64); x.fillStyle = '#ffd166'; x.font = 'bold 26px serif'; x.textAlign = 'center'; x.fillText(banner, W / 2, VH * .36 + 41); x.globalAlpha = 1; }
+    $('#pad').style.display = busy ? 'none' : '';
+  }
+  function frame(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); raf = requestAnimationFrame(frame); }
+  return { load, stop, _dbg: () => ({ p, plats, slimes, events, busy, GY }) };
+})();

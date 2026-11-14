@@ -2,26 +2,25 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>엔트로피의 황혼과 공명의 노래</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="app">
-  <header id="top">
-    <span id="chTitle">엔트로피의 황혼</span>
-    <nav>
-      <button id="bCamp">🏕 야영지</button>
-      <button id="bBook">📖 마도서</button>
-      <button id="bStat">🧙 상태</button>
-      <button id="bMenu">☰</button>
-    </nav>
-  </header>
-  <main id="stage"></main>
+<div id="game" hidden>
+  <canvas id="world"></canvas>
+  <div id="hudbtns"><span id="chTitle"></span><button id="bCamp">🏕</button><button id="bBook">📖</button><button id="bStat">🧙</button><button id="bMenu">☰</button></div>
+  <div id="pad"><div class="pl"><button id="pL">◀</button><button id="pR">▶</button></div><div class="pr"><button id="pJ">점프</button></div></div>
 </div>
+<div id="stage"></div>
+<div id="rotate"><div>📱↻<br>화면을 가로로 돌려 주세요</div></div>
 <div id="modal" hidden><div id="modalBox"><button id="modalX">✕</button><div id="modalBody"></div></div></div>
+<script src="js/art.js"></script>
 <script src="js/core.js"></script>
 <script src="js/minigames.js"></script>
+<script src="js/world.js"></script>
 <script src="js/ch1.js"></script>
 <script src="js/ch2.js"></script>
 <script src="js/ch3.js"></script>

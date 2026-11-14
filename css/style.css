@@ -96,3 +96,58 @@ button{touch-action:manipulation;min-height:40px}
 .notes{font-size:14px}.notes table{display:block;overflow-x:auto;max-width:100%}
 .fall{height:230px}.hud{position:sticky;top:84px;z-index:3;box-shadow:0 6px 10px rgba(0,0,0,.6)}.title h1{font-size:24px}
 .sliders .sl{grid-template-columns:96px 1fr 70px}.scene{min-height:110px;font-size:64px}.dlg .txt{font-size:15px}}
+
+/* ===== 횡스크롤 월드 레이아웃 ===== */
+html,body{overflow:hidden;height:100%;position:fixed;inset:0;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+input{user-select:text;-webkit-user-select:text}
+#game{position:fixed;inset:0}#game[hidden]{display:none}
+#world{position:absolute;inset:0;display:block}
+#hudbtns{position:absolute;top:max(6px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));display:flex;gap:6px;align-items:center}
+#hudbtns button{padding:4px 10px;font-size:18px;min-height:38px;background:rgba(20,16,30,.75)}
+#hudbtns #chTitle{font-size:12px;opacity:.8;margin-right:6px;text-shadow:0 1px 3px #000}
+#pad{position:absolute;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;padding:0 max(14px,env(safe-area-inset-left));pointer-events:none}
+#pad button{pointer-events:auto;width:76px;height:76px;border-radius:50%;font-size:26px;background:rgba(30,24,44,.55);border:2px solid rgba(217,178,95,.6);color:#ffe9b0;touch-action:none;margin:0 6px}
+#pad #pJ{width:92px;height:92px;font-size:18px;font-weight:bold}
+@media(hover:hover) and (pointer:fine){#pad{opacity:.35}#pad:hover{opacity:1}}
+#stage{position:fixed;inset:0;z-index:10;display:none;min-height:0;padding:0;background:none}
+#stage.full{display:block;overflow:auto;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse at 50% 0%,#2a1a3a 0%,#0d0b12 70%);padding:12px max(12px,env(safe-area-inset-left)) 24px}
+#stage.full>*{max-width:900px;margin-left:auto;margin-right:auto}
+#stage.dlgmode{display:flex;flex-direction:column;justify-content:flex-end;padding:10px max(12px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom));background:linear-gradient(transparent 35%,rgba(0,0,0,.55))}
+#stage.dlgmode>*{max-width:860px;width:100%;margin:0 auto}
+#stage.dlgmode .scene{display:none}
+#stage.dlgmode .dlg{background:rgba(26,22,34,.94);min-height:0}
+#stage.dlgmode .choices button{background:rgba(36,30,48,.96)}
+#stage.dlgmode .gp{background:rgba(26,22,34,.95)}
+.port img{image-rendering:auto}
+.trio{display:flex;gap:10px;justify-content:center}
+.form.custom{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+.cprev{text-align:center}.cprev canvas{width:220px;height:220px}
+.copts{display:grid;gap:8px}.copts label{gap:4px}
+.pick button{padding:6px 10px;min-height:36px;font-size:14px}
+.cc{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--text)}
+.cc input{width:44px;height:34px;padding:0;border:1px solid var(--line);background:none}
+#rotate{display:none;position:fixed;inset:0;z-index:99;background:#0d0b12;color:var(--gold);align-items:center;justify-content:center;text-align:center;font-size:22px;line-height:2}
+@media(orientation:portrait) and (max-width:700px){#rotate{display:flex}}
+/* 가로 폰: 미니게임 화면을 낮은 높이에 맞춤 */
+@media(orientation:landscape) and (max-height:520px){
+ #stage.full{padding-top:6px}
+ .gp{padding:8px 10px}.gp h2{font-size:16px;margin-bottom:4px}.gp .brief{font-size:13px;line-height:1.5}.gp .formula,.fm{font-size:13px;padding:4px 8px;margin:5px 0}
+ .hud{font-size:12.5px;line-height:1.5;min-height:0;padding:5px 8px;margin:5px 0;position:static}
+ canvas.cv{width:auto;max-width:100%;max-height:68vh;margin:0 auto}
+ .sliders{grid-template-columns:1fr 1fr;column-gap:16px}.sliders .sl{grid-template-columns:1fr auto;row-gap:0;font-size:13px}.sliders .sl input{grid-column:1/3;grid-row:2;height:30px}
+ .btnrow button{min-width:0;padding:9px 6px;font-size:14px}.fall{height:46vh}
+ .dlg{padding:8px 12px}.dlg .txt{font-size:15px;line-height:1.55}.port img{width:56px;height:56px}
+ .form.custom{grid-template-columns:190px 1fr}.cprev canvas{width:170px;height:170px}
+ .title{padding:6px}.title h1{font-size:22px;margin:4px 0}.title h1 br{display:none}.title .btns{margin:10px auto}.trio img{width:60px;height:60px}
+ #pad button{width:64px;height:64px}#pad #pJ{width:78px;height:78px}
+ .gp.playing .brief,.gp.playing .formula{display:none}
+ .gp.playing h2{font-size:14px;margin:0 0 2px}
+ .gp.playing.g-forge .brief{display:block}
+ .fall{height:38vh}
+ .mgarea{display:grid;grid-template-columns:40% 1fr;column-gap:10px;align-items:start}
+ .mgarea:not(:has(canvas)){display:block}
+ .mgarea canvas.cv{grid-column:2;grid-row:1/span 8;max-height:80vh;justify-self:center}
+ .mgarea .sliders{grid-template-columns:1fr}
+ .mgarea .btnrow button{flex:1 1 40%}
+}
+@media(max-width:620px){.form.custom{grid-template-columns:1fr}}
