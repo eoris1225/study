@@ -244,3 +244,15 @@ canvas.cv{border:2px solid var(--line);border-radius:14px}
 @keyframes subIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes subBob{50%{transform:translateY(3px)}}
 @media(orientation:landscape) and (max-height:520px){#stage.dlgmode .dlg .txt{font-size:17px}#stage.dlgmode .dlg .who{font-size:12px}#stage.dlgmode .choices button{padding:7px 16px;font-size:14px}}
+
+/* ---------- 개념 컷신 ---------- */
+.cutov{position:fixed;inset:0;z-index:60;background:#1a1446;cursor:pointer;overflow:hidden}
+.cutcv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.cutsub{position:absolute;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;padding:0 16px;pointer-events:none;text-align:center}
+.cutsub .who{display:inline-block;margin-bottom:6px;padding:2px 12px;border-radius:999px;font-size:14px;font-weight:800;color:#2a0f5e;background:var(--who,#ffd23f);box-shadow:0 2px 0 rgba(42,15,94,.35)}
+.cutsub .txt{font-size:clamp(17px,2.5vw,26px);line-height:1.45;font-weight:800;color:#fff;max-width:30em;word-break:keep-all;overflow-wrap:break-word;text-shadow:0 0 3px #2a0f5e,0 0 3px #2a0f5e,0 2px 0 #2a0f5e,2px 0 0 #2a0f5e,-2px 0 0 #2a0f5e,0 -2px 0 #2a0f5e,0 3px 10px rgba(20,6,60,.7);animation:subIn .3s ease-out}
+.cutsub .txt b{color:#ffd23f}
+.cutskip{position:absolute;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));background:rgba(255,255,255,.88)!important;color:#2a0f5e;border:0;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:800}
+.cutprog{position:absolute;top:max(18px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
+.cutprog i{width:22px;height:6px;border-radius:3px;background:rgba(255,255,255,.35)}.cutprog i.on{background:#ffd23f}.cutprog i.done{background:#fff}
+.cutagain{justify-content:flex-start;margin:4px 0 8px}.cutagain button{font-size:13px;padding:6px 12px;min-height:0}

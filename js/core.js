@@ -84,11 +84,16 @@ function livesFor(st, chIdx) {
 }
 function findLesson(chIdx, st) { return ((window.LESSONS || {})[chIdx] || []).find(l => l.match.some(m => st.title.includes(m))); }
 function findTip(st) { const T0 = window.TIPS || {}; const k = Object.keys(T0).find(k => st.title.includes(k)); return k ? T0[k] : null; }
-function lessonView(el, les, onDone, doneLabel) {
+function lessonView(el, les, onDone, doneLabel, textMode) {
+  if (!textMode && window.CUTS && CUTS[les.id] && typeof Cut !== 'undefined') {
+    const qs = les.cards.filter(c => c.q), after = Object.assign({}, les, { cards: qs.length ? qs : les.cards, _full: les });
+    return Cut.play(CUTS[les.id], () => lessonView(el, after, onDone, doneLabel, true));
+  }
   let i = 0; S.seen = S.seen || {};
   (function show() {
     el.innerHTML = ''; const c = les.cards[i], box = mk('div', 'gp lesson');
     box.appendChild(mk('div', 'ltop', `📘 개념 수업 · ${les.title} <span class="dots">${les.cards.map((_, k) => k === i ? '●' : '○').join('')}</span>`));
+    if (les._full) { const rb = mk('div', 'btnrow cutagain'), a = mk('button', '', '▶ 컷신 다시 보기'), b = mk('button', '', '📄 설명 글로 읽기'); a.onclick = () => lessonView(el, les._full, onDone, doneLabel); b.onclick = () => lessonView(el, les._full, onDone, doneLabel, true); rb.append(a, b); box.appendChild(rb); }
     const nav = mk('div', 'btnrow'), prev = mk('button', '', '◀ 이전'), nx = mk('button', 'pri', i === les.cards.length - 1 ? (doneLabel || '수업 끝! ▶') : '다음 ▶');
     prev.disabled = i === 0; prev.onclick = () => { i--; show(); };
     nx.onclick = () => { if (i === les.cards.length - 1) { S.seen[les.id] = 1; save(); onDone(); } else { i++; show(); } };
