@@ -151,3 +151,20 @@ input{user-select:text;-webkit-user-select:text}
  .mgarea .btnrow button{flex:1 1 40%}
 }
 @media(max-width:620px){.form.custom{grid-template-columns:1fr}}
+
+/* ===== 개념 수업 ===== */
+.lesson .ltop{font-size:13px;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.lesson .dots{color:var(--gold);letter-spacing:3px}
+.lesson h2{font-size:20px}
+.lbody{font-size:16.5px;line-height:1.85}
+.lbody b{color:#ffe9b0}.lbody .k{color:#8fe3ff;font-weight:bold}
+.lbody .box{background:#0f0c16;border-left:3px solid var(--gold);padding:8px 12px;margin:8px 0;border-radius:4px}
+.lbody .eg{background:#141a14;border-left:3px solid var(--green);padding:8px 12px;margin:8px 0;border-radius:4px}
+.lbody .warn2{background:#1f1212;border-left:3px solid #ff8a7a;padding:8px 12px;margin:8px 0;border-radius:4px}
+.lbody svg{display:block;max-width:100%;height:auto;margin:8px auto;background:#0a0810;border-radius:8px}
+.lbody table{border-collapse:collapse;margin:8px 0;font-size:14.5px}.lbody td,.lbody th{border:1px solid var(--line);padding:5px 9px}.lbody th{background:var(--panel2)}
+.helpbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0;font-size:13px;color:var(--dim)}
+.helpbar .how{flex:1;min-width:200px;line-height:1.5}
+.helpbar button{padding:5px 12px;min-height:34px;font-size:13px;border-color:var(--gold);color:var(--gold)}
+.tipbox{flex:1 1 100%;background:#17140c;border:1px dashed var(--gold);border-radius:8px;padding:8px 12px;color:var(--text);line-height:1.7;font-size:14px}
+@media(orientation:landscape) and (max-height:520px){.lbody{font-size:14.5px;line-height:1.6}.lesson h2{font-size:17px}.lbody svg{max-height:38vh;width:auto}.lesson .btnrow{position:sticky;bottom:0;background:var(--panel);padding-top:6px}.helpbar{margin:2px 0;font-size:12px}}

@@ -80,34 +80,59 @@ function livesFor(st, chIdx) {
   n += Math.min(2, Math.floor((S.orbs || 0) / 25));
   return n;
 }
+function findLesson(chIdx, st) { return ((window.LESSONS || {})[chIdx] || []).find(l => l.match.some(m => st.title.includes(m))); }
+function findTip(st) { const T0 = window.TIPS || {}; const k = Object.keys(T0).find(k => st.title.includes(k)); return k ? T0[k] : null; }
+function lessonView(el, les, onDone, doneLabel) {
+  let i = 0; S.seen = S.seen || {};
+  (function show() {
+    el.innerHTML = ''; const c = les.cards[i], box = mk('div', 'gp lesson');
+    box.appendChild(mk('div', 'ltop', `📘 개념 수업 · ${les.title} <span class="dots">${les.cards.map((_, k) => k === i ? '●' : '○').join('')}</span>`));
+    const nav = mk('div', 'btnrow'), prev = mk('button', '', '◀ 이전'), nx = mk('button', 'pri', i === les.cards.length - 1 ? (doneLabel || '수업 끝! ▶') : '다음 ▶');
+    prev.disabled = i === 0; prev.onclick = () => { i--; show(); };
+    nx.onclick = () => { if (i === les.cards.length - 1) { S.seen[les.id] = 1; save(); onDone(); } else { i++; show(); } };
+    if (c.q) {
+      box.appendChild(mk('h2', '', '✏️ 확인 문제')); box.appendChild(mk('div', 'brief', c.q));
+      const ch = mk('div', 'choices'), fb = mk('div', 'msg'); nx.disabled = true;
+      c.a.forEach((a, k) => { const b = mk('button', '', a); b.onclick = () => { if (k === c.c) { fb.className = 'msg good'; fb.innerHTML = '✔ 맞아요! ' + c.why; nx.disabled = false;[...ch.children].forEach(x => x.disabled = true); b.style.borderColor = 'var(--green)'; } else { fb.className = 'msg bad'; fb.innerHTML = '✖ 다시 생각해 봐요. ' + (c.hint || ''); b.disabled = true; } }; ch.appendChild(b); });
+      box.appendChild(ch); box.appendChild(fb);
+    } else { box.appendChild(mk('h2', '', c.h)); box.appendChild(mk('div', 'brief lbody', T(c.b))); }
+    nav.appendChild(prev); nav.appendChild(nx); box.appendChild(nav); el.appendChild(box); el.scrollTop = 0;
+  })();
+}
 function gamePanel(el, st, chIdx, stepIdx, onWin) {
-  el.innerHTML = '';
+  el.innerHTML = ''; S.seen = S.seen || {};
+  const les = findLesson(chIdx, st), again = () => gamePanel(el, st, chIdx, stepIdx, onWin);
   const p = mk('div', 'gp');
   p.appendChild(mk('h2', '', (st.boss ? '☠ ' : '⚙ ') + st.title));
   p.appendChild(mk('div', 'brief', T(st.brief || '')));
   if (st.formula) p.appendChild(mk('div', 'formula', st.formula));
   const lives = livesFor(st, chIdx);
-  const row = mk('div', 'btnrow'); const go = mk('button', 'pri', '시작'); row.appendChild(go);
-  p.appendChild(row); el.appendChild(p);
+  const row = mk('div', 'btnrow'); const go = mk('button', 'pri', '⚔ 전투 시작');
+  if (les) { const lb = mk('button', S.seen[les.id] ? '' : 'pri', S.seen[les.id] ? '📘 개념 다시 보기' : '📘 먼저 개념 배우기 (처음이라면 여기!)'); lb.onclick = () => lessonView(el, les, again, '수업 끝! 전투하러 가기 ▶'); row.appendChild(lb); if (!S.seen[les.id]) { go.className = ''; go.textContent = '이미 알아요 — 바로 전투'; } }
+  row.appendChild(go); p.appendChild(row); el.appendChild(p);
   go.onclick = () => {
     row.remove(); p.classList.add('playing', 'g-' + st.g);
+    const help = mk('div', 'helpbar'), how = (window.HOW || {})[st.g], tip = findTip(st) || st.lesson;
+    if (how) help.appendChild(mk('span', 'how', '🎮 ' + how));
+    if (tip) { const hb = mk('button', '', '💡 힌트'), tv = mk('div', 'tipbox', tip); tv.hidden = true; hb.onclick = () => tv.hidden = !tv.hidden; help.appendChild(hb); help.appendChild(tv); }
+    p.appendChild(help);
     const area = mk('div', 'mgarea'); p.appendChild(area);
     MG[st.g](st.cfg, area, ok => {
       const end = mk('div');
       if (ok) {
-        end.appendChild(mk('div', 'msg good', '✦ 조율 성공! ' + T(st.win || '')));
+        end.appendChild(mk('div', 'msg good', '✦ 조율 성공! ' + T(st.win || '') + (st.lesson ? '<br><small>📌 정리: ' + st.lesson + '</small>' : '')));
         const b = mk('button', 'pri', '계속'); b.onclick = onWin; end.appendChild(b);
       } else {
         const key = chIdx + ':' + stepIdx; let m = S.mistakes.find(x => x.key === key);
         if (!m) { m = { key, ch: chIdx, step: stepIdx, n: 0 }; S.mistakes.push(m); } m.n++; save();
-        end.appendChild(mk('div', 'msg bad', '✖ 조율 실패… <br><b>복습 포인트:</b> ' + (st.lesson || st.formula || '')));
+        end.appendChild(mk('div', 'msg bad', '✖ 아쉽다! 괜찮아요, 다시 하면 됩니다.<br><b>📌 핵심:</b> ' + (st.lesson || st.formula || '') + (tip && tip !== st.lesson ? '<br><b>💡 힌트:</b> ' + tip : '')));
         const r = mk('div', 'btnrow');
-        const b = mk('button', 'pri', '다시 도전'); b.onclick = () => gamePanel(el, st, chIdx, stepIdx, onWin);
-        const g = mk('button', '', '📖 마도서 보기'); g.onclick = () => openBook(chIdx);
-        r.appendChild(b); r.appendChild(g); end.appendChild(r);
+        const b = mk('button', 'pri', '다시 도전'); b.onclick = again; r.appendChild(b);
+        if (les) { const lb = mk('button', '', '📘 개념 다시 배우기'); lb.onclick = () => lessonView(el, les, again, '다시 도전하러 가기 ▶'); r.appendChild(lb); }
+        const g = mk('button', '', '📖 마도서'); g.onclick = () => openBook(chIdx); r.appendChild(g); end.appendChild(r);
       }
       p.appendChild(end); end.scrollIntoView({ block: 'nearest' });
-    }, { lives });
+    }, { lives, boss: !!st.boss });
   };
 }
 
@@ -181,6 +206,7 @@ function openBook(tabCh) {
     const show = (key, btn) => {
       [...tabs.children].forEach(x => x.classList.remove('on')); btn.classList.add('on'); body.innerHTML = '';
       if (typeof key === 'number') body.appendChild(mk('div', 'notes', G.chapters[key].notes));
+      else if (key === 'learn') { const lst = mk('div', 'list'); body.appendChild(lst); G.chapters.forEach((ch, ci) => { if (ci > S.maxCh) return; ((window.LESSONS || {})[ci] || []).forEach(l => { const bt = mk('button', '', `[${ci + 1}장] 📘 ${l.title}${(S.seen || {})[l.id] ? ' <small>✓ 수강</small>' : ''}`); bt.onclick = () => lessonView(body, l, () => show(key, btn), '목록으로 ▶'); lst.appendChild(bt); }); }); }
       else {
         const items = key === 'wrong' ? S.mistakes.map(m => ({ ci: m.ch, si: m.step, st: G.chapters[m.ch].steps[m.step], n: m.n })).filter(x => x.st) : gameSteps(S.maxCh);
         if (!items.length) body.appendChild(mk('p', 'dim', key === 'wrong' ? '아직 실패한 조율이 없다. 훌륭하다.' : '아직 기록이 없다.'));
@@ -192,6 +218,7 @@ function openBook(tabCh) {
       }
     };
     G.chapters.forEach((ch, ci) => { if (ci > S.maxCh) return; const bt = mk('button', '', (ci + 1) + '장'); bt.title = ch.title; bt.onclick = () => show(ci, bt); tabs.appendChild(bt); });
+    const lt = mk('button', '', '📘 수업'); lt.onclick = () => show('learn', lt); tabs.appendChild(lt);
     const w = mk('button', '', '✖ 오답 복습장'); w.onclick = () => show('wrong', w); tabs.appendChild(w);
     const t = mk('button', '', '⚔ 훈련장'); t.onclick = () => show('train', t); tabs.appendChild(t);
     const first = typeof tabCh === 'number' ? Math.min(tabCh, S.maxCh) : Math.min(S.ch, S.maxCh, G.chapters.length - 1);

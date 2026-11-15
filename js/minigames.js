@@ -66,7 +66,7 @@ MG.pv = (cfg, el, done) => {
 };
 
 /* ============ 슬라이더 조율 ============ */
-MG.tuner = (cfg, el, done) => {
+MG.tuner = (cfg, el, done, ctx) => {
   const h = hud(el); let c, x; if (cfg.draw) { c = cv(el, 640, cfg.h || 240); x = c.getContext('2d'); }
   const v = {}, panel = mk('div', 'sliders'); el.appendChild(panel);
   cfg.vars.forEach(a => {
@@ -75,12 +75,12 @@ MG.tuner = (cfg, el, done) => {
     const o = mk('span', 'val'); const show = () => o.textContent = (a.show ? a.show(v[a.id]) : fmt(v[a.id], 3)) + (a.unit ? ' ' + a.unit : '');
     i.oninput = () => { v[a.id] = +i.value; show(); }; show(); r.appendChild(i); r.appendChild(o); panel.appendChild(r);
   });
-  const rounds = cfg.rounds, T0 = cfg.time || 90, need = cfg.hold || 1.2; let ri = 0, hold = 0, tleft = T0, t = 0, fin = false;
+  const timed = !!(ctx && ctx.boss), rounds = cfg.rounds, T0 = cfg.time || 90, need = cfg.hold || 1.2; let ri = 0, hold = 0, tleft = T0, t = 0, fin = false;
   loop(el, dt => {
-    if (fin) return; t += dt; tleft -= dt; const r = rounds[ri];
+    if (fin) return; t += dt; if (timed) tleft -= dt; const r = rounds[ri];
     const res = r.goals.map(g => { const val = g.f(v); return { g, val, ok: Math.abs(val - g.target) <= (g.tol != null ? g.tol : Math.abs(g.target) * 0.015 + 1e-9) }; });
     hold = res.every(o => o.ok) ? hold + dt : 0;
-    let s = `<b>[${ri + 1}/${rounds.length}] ${r.text}</b> <small>· 남은 시간 ${Math.ceil(tleft)}초</small><br>`;
+    let s = `<b>[${ri + 1}/${rounds.length}] ${r.text}</b> <small>${timed ? '· 남은 시간 ' + Math.ceil(tleft) + '초' : '· 시간 제한 없음, 천천히 만져 보세요'}</small><br>`;
     if (cfg.formula) s += `<span class="fm" style="display:block;margin:4px 0">${cfg.formula}</span>`;
     (cfg.outs || []).forEach(o => { s += `${o.label} = <b>${o.show ? o.show(o.f(v)) : fmt(o.f(v), o.d == null ? 2 : o.d)}</b> ${o.unit || ''} &nbsp; `; });
     s += '<br>'; res.forEach(o => { s += `<span class="${o.ok ? 'ok' : 'no'}">${o.ok ? '✔' : '◇'} ${o.g.label}: ${o.g.show ? o.g.show(o.val) : fmt(o.val, o.g.d == null ? 2 : o.g.d)} → 목표 ${o.g.hide ? '???' : (o.g.show ? o.g.show(o.g.target) : fmt(o.g.target, o.g.d == null ? 2 : o.g.d))} ${o.g.unit || ''}</span> &nbsp; `; });
