@@ -143,26 +143,26 @@ const World = (() => {
       if (ev.x < cam - 300 || ev.x > cam + W + 300) return; const X = ev.x + 50;
       if (ev.kind === 'camp') Art.campfire(x, X - 30, GY, t);
       else if (ev.kind === 'portal') Art.portal(x, X + 10, GY, t);
-      else if (ev.kind === 'recruit') { if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, 16, 4, 0, 0, 7); x.fill(); Art.chibi(x, X, GY, 1.15, compC(ev.id), { t, dir: -1 }); } }
+      else if (ev.kind === 'recruit') { if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, 16, 4, 0, 0, 7); x.fill(); Art.chibi(x, X, GY, 1.35, compC(ev.id), { t, dir: -1 }); } }
       else if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, ev.kind === 'boss' ? 50 : 28, 6, 0, 0, 7); x.fill(); Art.monster(x, X, GY, ev.kind === 'boss' ? 2 : 1.15, (i + ch) % 4, ev.kind === 'boss' ? '#b0457a' : th.slime, t, ev.kind === 'boss'); }
       if (ev === next && !busy) { x.fillStyle = '#ffd166'; x.font = 'bold 30px serif'; x.textAlign = 'center'; x.fillText(ev.kind === 'camp' ? '🏕' : ev.kind === 'portal' ? '✦' : '❗', X, GY - (ev.kind === 'boss' ? 150 : 96) + Math.sin(t * 5) * 5); }
     });
     for (const o of orbs) if (!o.got && o.x > cam - 20 && o.x < cam + W + 20) Art.orb(x, o.x, o.y, t);
     for (const s of slimes) if (s.x > cam - 40 && s.x < cam + W + 40 && (!s.dead || s.dead < .35)) Art.slime(x, s.x, s.y, th.slime, t + s.a, !!s.dead);
     // companions
-    S.party.forEach((id, k) => { const hI = hist[Math.max(0, hist.length - 1 - (k + 1) * 16)] || p, L = compC(id); x.fillStyle = 'rgba(0,0,0,.2)'; x.beginPath(); x.ellipse(hI.x - (k + 1) * 4 * hI.dir, GY, 11, 3, 0, 0, 7); if (hI.on) x.fill(); Art.chibi(x, hI.x - (k + 1) * 4 * hI.dir, hI.y + PH - (L.wings ? 14 : 0), L.wings ? .82 : .95, L, { t: t + k, walk: hI.walk, dir: hI.dir, air: !hI.on }); });
+    S.party.forEach((id, k) => { const hI = hist[Math.max(0, hist.length - 1 - (k + 1) * 16)] || p, L = compC(id); x.fillStyle = 'rgba(0,0,0,.2)'; x.beginPath(); x.ellipse(hI.x - (k + 1) * 4 * hI.dir, GY, 11, 3, 0, 0, 7); if (hI.on) x.fill(); Art.chibi(x, hI.x - (k + 1) * 4 * hI.dir, hI.y + PH - (L.wings ? 14 : 0), L.wings ? 1 : 1.14, L, { t: t + k, walk: hI.walk, dir: hI.dir, air: !hI.on }); });
     // player
     if (p.on) { x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(p.x, p.y + PH, 14, 4, 0, 0, 7); x.fill(); }
-    if (!(p.inv > 0 && Math.floor(t * 14) % 2)) Art.chibi(x, p.x, p.y + PH, 1, S.look, { t, walk: p.walk, dir: p.dir, air: !p.on });
+    if (!(p.inv > 0 && Math.floor(t * 14) % 2)) Art.chibi(x, p.x, p.y + PH, 1.2, S.look, { t, walk: p.walk, dir: p.dir, air: !p.on });
     for (const f of fx) { x.globalAlpha = Math.max(0, f.life / .7); x.fillStyle = f.col; x.fillRect(f.x - 3, f.y - 3, 6, 6); } x.globalAlpha = 1;
     for (const f of floatTxt) { x.globalAlpha = Math.min(1, f.life * 2); x.fillStyle = f.col; x.font = 'bold 18px serif'; x.textAlign = 'center'; x.strokeStyle = '#000'; x.lineWidth = 3; x.strokeText(f.s, f.x, f.y); x.fillText(f.s, f.x, f.y); } x.globalAlpha = 1;
     x.translate(cam, 0); Art.fg(x, W, H, cam, th, t, GY);
     x.restore();
     // HUD
-    x.textAlign = 'left'; x.font = '22px serif'; x.fillStyle = '#ff6b8a'; x.fillText('❤'.repeat(p.hp) + '♡'.repeat(3 - p.hp), 14, 30);
-    x.fillStyle = '#ffe27a'; x.font = 'bold 18px serif'; x.fillText('✦ ' + (S.orbs || 0), 14, 56);
+    for (let k = 0; k < Math.max(3, p.hp); k++) Art.heart(x, 26 + k * 30, 28, 11, k < p.hp);
+    Art.orb(x, 26, 62, 0); x.textAlign = 'left'; x.font = '800 18px system-ui,sans-serif'; x.lineWidth = 4; x.strokeStyle = 'rgba(42,15,94,.55)'; x.strokeText(S.orbs || 0, 44, 69); x.fillStyle = '#fff'; x.fillText(S.orbs || 0, 44, 69);
     if (next && !busy && next.x > cam + W) { x.fillStyle = `rgba(255,209,102,${.6 + .4 * Math.sin(t * 5)})`; x.font = 'bold 26px serif'; x.textAlign = 'right'; x.fillText('▶▶', W - 14, VH / 2); }
-    if (bannerT > 0) { x.globalAlpha = Math.min(1, bannerT); x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, VH * .36, W, 64); x.fillStyle = '#ffd166'; x.font = 'bold 26px serif'; x.textAlign = 'center'; x.fillText(banner, W / 2, VH * .36 + 41); x.globalAlpha = 1; }
+    if (bannerT > 0) { const k = Math.min(1, bannerT), e = bannerT > 2 ? Art.ease.back(Math.min(1, (3.2 - bannerT) * 4 + .2)) : 1; x.globalAlpha = k; x.font = '800 26px system-ui,sans-serif'; x.textAlign = 'center'; const bw = x.measureText(banner).width + 64, by = VH * .3; x.save(); x.translate(W / 2, by); x.scale(e, e); x.fillStyle = 'rgba(42,15,94,.25)'; rr(x, -bw / 2, 6, bw, 58, 29); x.fill(); x.fillStyle = '#fff'; rr(x, -bw / 2, 0, bw, 58, 29); x.fill(); x.fillStyle = '#ff5f8f'; rr(x, -bw / 2 + 10, 10, 8, 38, 4); x.fill(); x.fillStyle = '#2a0f5e'; x.fillText(banner, 4, 39); x.restore(); x.globalAlpha = 1; }
     $('#pad').style.display = busy ? 'none' : '';
   }
   function frame(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); raf = requestAnimationFrame(frame); }

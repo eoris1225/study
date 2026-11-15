@@ -209,7 +209,7 @@ Art.portrait = (L, size = 72) => {
 Art.monster = (x, X, Y, s, kind, col, t, boss) => {
   const D = dk(col, .38), Lc = lt(col, .35), b = Math.sin(t * 4.2);
   x.save(); x.translate(X, Y); x.scale(s, s); x.lineCap = 'round'; x.lineJoin = 'round';
-  if (boss) { x.save(); x.translate(0, -34); x.rotate(t * .25); for (let i = 0; i < 10; i++) { x.rotate(TAU / 10); x.fillStyle = `rgba(255,120,170,${i & 1 ? .16 : .09})`; poly(x, [0, 0, -9, -78, 9, -78]); } x.restore(); aglow(x, 0, -34, 62, 'rgb(255,95,150)', .5); }
+  if (boss) { x.save(); x.translate(0, -34); x.rotate(t * .25); x.restore(); aglow(x, 0, -34, 62, 'rgb(255,95,150)', .5); }
   const eyes = (ex, ey, r, gap, angry = 1) => { for (const q of [-1, 1]) { x.fillStyle = '#fff'; ell(x, ex + q * gap, ey, r, r * 1.12); x.fillStyle = '#2a1746'; circ(x, ex + q * gap + 1.2 + Math.sin(t * .8) * 1.2, ey + .8, r * .52); x.fillStyle = '#fff'; circ(x, ex + q * gap + 2.2 + Math.sin(t * .8) * 1.2, ey - .6, r * .2); if (angry) { x.fillStyle = D; poly(x, [ex + q * (gap - r - 1), ey - r * .5, ex + q * (gap + r + 1), ey - r * 1.5, ex + q * (gap + r + 1), ey - r * 2.1, ex + q * (gap - r - 1), ey - r * 1.2]); } } };
   if (kind === 0) {
     x.save(); x.scale(1 + b * .06, 1 - b * .06);
@@ -295,136 +295,142 @@ Art.portal = (x, X, Y, t) => {
 };
 
 /* ---------- 배경 ----------
-   sky 3단 그라데이션 → 별 → 큰 천체(후광·광선) → 구름 → 원경(l1) → 안개 → 중경(l2) → 근경(l3) → 입자 */
+   원칙: 고명도·고채도 / 먼 것일수록 하늘색에 녹는다 / 큰 면 몇 개 + 여백 / 질감은 짧은 대시 선으로만 */
 Art.THEMES = [
-  { name: 'forge', sky: ['#3b0f6b', '#c2256e', '#ff8a3c'], sun: '#ffd45e', sunR: 62, l1: '#7a1f7a', l2: '#56186c', l3: '#3a1158', lit: '#ffcf4a', cloud: '#e04a7c', g1: '#a13b6b', g2: '#5e1f66', top: '#ffb14a', deco: 'gear', part: 'ember', slime: '#ff7a4a', stars: .35 },
-  { name: 'engine', sky: ['#2a1a7a', '#7a3fc0', '#ffb347'], sun: '#fff0a8', sunR: 54, l1: '#5a37a8', l2: '#42278c', l3: '#2c1a6b', lit: '#ffe27a', cloud: '#b06fe0', g1: '#8a5fc0', g2: '#4f2f8f', top: '#ffd166', deco: 'chimney', part: 'smoke', slime: '#f0a13c', stars: .3 },
-  { name: 'ice', sky: ['#0d1466', '#2456c8', '#6fe3ff'], sun: '#eaffff', sunR: 58, l1: '#2f6fd0', l2: '#2450a8', l3: '#172f7a', lit: '#b6f6ff', cloud: '#7fb8ff', g1: '#bfe6ff', g2: '#5f8fe0', top: '#ffffff', deco: 'crystal', part: 'snow', slime: '#7fd0ff', stars: .9 },
-  { name: 'forest', sky: ['#0b3a66', '#12908a', '#b8f26a'], sun: '#fff7b0', sunR: 60, l1: '#17907a', l2: '#126a66', l3: '#0b4552', lit: '#ffe27a', cloud: '#5fd6b0', g1: '#3fb06a', g2: '#1f6f5a', top: '#c6f55a', deco: 'string', part: 'leaf', slime: '#9be35a', stars: .2 },
-  { name: 'shore', sky: ['#172a9a', '#2f8fe6', '#8ff0e6'], sun: '#fff3b0', sunR: 66, l1: '#2f7fe0', l2: '#2260c0', l3: '#17429a', lit: '#fff3b0', cloud: '#ffffff', g1: '#ffd98a', g2: '#e0a25a', top: '#fff3cf', deco: 'wave', part: 'bubble', slime: '#5fd6e6', stars: 0 },
-  { name: 'hall', sky: ['#260f6b', '#7a2fc0', '#ff7ab8'], sun: '#ffd6f0', sunR: 56, l1: '#6a2fb0', l2: '#4c2090', l3: '#33146e', lit: '#ffd166', cloud: '#c060e0', g1: '#9a6fe0', g2: '#5a3aa8', top: '#e6c8ff', deco: 'arch', part: 'note', slime: '#c58cff', stars: .6 },
-  { name: 'harp', sky: ['#1a1466', '#5a2fb0', '#ffb04a'], sun: '#ffe9a0', sunR: 70, l1: '#6a3aa8', l2: '#4c2788', l3: '#321a66', lit: '#ffe27a', cloud: '#e07ab0', g1: '#c08a5a', g2: '#7a4a6b', top: '#ffd166', deco: 'harp', part: 'note', slime: '#ffcf4a', stars: .7 }
+  { name: 'forge', sky: ['#ff6a5c', '#ff9a4a', '#ffd77a'], sun: '#fff4c2', sunR: 70, l1: '#f0607a', l2: '#c8386e', l3: '#8e2470', lit: '#ffe27a', cloud: '#ffd0a0', g1: '#9a3496', g2: '#6a1f7e', top: '#ffb84a', leaf: '#16b39e', deco: 'gear', part: 'ember', slime: '#7a3cff', stars: 0 },
+  { name: 'engine', sky: ['#5a48d8', '#9a6cf0', '#ffb3c6'], sun: '#fff1b8', sunR: 58, l1: '#8e72ec', l2: '#6448cc', l3: '#43309e', lit: '#ffd95a', cloud: '#ffd6ec', g1: '#5038b0', g2: '#30217e', top: '#ffcf5a', leaf: '#22c4a0', deco: 'chimney', part: 'smoke', slime: '#ff9f43', stars: .3 },
+  { name: 'ice', sky: ['#2f5fe0', '#4fa8ff', '#c4f3ff'], sun: '#ffffff', sunR: 60, l1: '#86c8ff', l2: '#4a8ef0', l3: '#2c62c8', lit: '#ffffff', cloud: '#ffffff', g1: '#9fd0ff', g2: '#3a62c4', top: '#ffffff', leaf: '#2c62c8', deco: 'crystal', part: 'snow', slime: '#ff6fa8', stars: .25 },
+  { name: 'forest', sky: ['#1aa0c8', '#56d4c4', '#f4f4a0'], sun: '#fffbd0', sunR: 64, l1: '#62cfa2', l2: '#22a07c', l3: '#127060', lit: '#ffe27a', cloud: '#ffffff', g1: '#2f8f6a', g2: '#1a5a5a', top: '#b8f060', leaf: '#ff8a3c', deco: 'string', part: 'leaf', slime: '#ff7a4a', stars: 0 },
+  { name: 'shore', sky: ['#1f6fe0', '#4cc2ff', '#cbf9ff'], sun: '#fff6c8', sunR: 68, l1: '#78c0ff', l2: '#2f8ce2', l3: '#1c5fc0', lit: '#fff3b0', cloud: '#ffffff', g1: '#ffc96a', g2: '#e0924a', top: '#fff2c4', leaf: '#14b59a', deco: 'wave', part: 'bubble', slime: '#ff5f8f', stars: 0 },
+  { name: 'hall', sky: ['#6a30d4', '#c25ee4', '#ffb4d4'], sun: '#ffe9f6', sunR: 56, l1: '#b676ea', l2: '#8c4ad2', l3: '#6430b0', lit: '#ffd166', cloud: '#ffd6f0', g1: '#7044c4', g2: '#40208c', top: '#ffd2f0', leaf: '#ff6fa8', deco: 'arch', part: 'note', slime: '#ffcf4a', stars: .35 },
+  { name: 'harp', sky: ['#ff6a6a', '#ffa94a', '#ffeaa0'], sun: '#fff8d8', sunR: 74, l1: '#ff9470', l2: '#e05a5a', l3: '#a8346a', lit: '#fff3b0', cloud: '#ffe0b8', g1: '#8a36a0', g2: '#5a2280', top: '#ffd166', leaf: '#16b39e', deco: 'harp', part: 'note', slime: '#6a5cff', stars: 0 }
 ];
-const cloud = (x, cx, cy, s, col, colD) => {
-  x.fillStyle = col; x.beginPath(); x.moveTo(cx - 62 * s, cy); x.arc(cx - 40 * s, cy, 20 * s, Math.PI, Math.PI * 1.5); x.arc(cx - 16 * s, cy - 18 * s, 22 * s, Math.PI * 1.1, Math.PI * 1.75); x.arc(cx + 16 * s, cy - 12 * s, 26 * s, Math.PI * 1.25, Math.PI * 1.9); x.arc(cx + 44 * s, cy, 18 * s, Math.PI * 1.4, 0); x.closePath(); x.fill();
-  x.fillStyle = colD; rr(x, cx - 72 * s, cy - 5 * s, 150 * s, 10 * s, 5 * s); x.fill();
+/* 짧은 대시 선 질감 */
+const dashes = (x, X, Y, w, h, col, seed, n, vert, len = 18) => {
+  x.strokeStyle = col; x.lineCap = 'round'; x.lineWidth = vert ? 3 : 4;
+  x.beginPath();
+  for (let i = 0; i < n; i++) { const a = hash(seed * 97 + i), b = hash(seed * 31 + i * 7), c = hash(seed + i * 13), px = X + a * w, py = Y + b * h, l = len * (.5 + c); if (vert) { x.moveTo(px, py); x.lineTo(px, py + l); } else { x.moveTo(px, py); x.lineTo(px + l, py); } }
+  x.stroke();
+};
+const cloud = (x, cx, cy, s, col, colL) => {
+  x.fillStyle = col; x.beginPath(); x.arc(cx - 34 * s, cy, 18 * s, Math.PI * .5, Math.PI * 1.5); x.arc(cx - 10 * s, cy - 16 * s, 22 * s, Math.PI, Math.PI * 1.9); x.arc(cx + 22 * s, cy - 6 * s, 20 * s, Math.PI * 1.3, Math.PI * .5); x.closePath(); x.fill();
+  x.fillStyle = colL; x.beginPath(); x.arc(cx - 10 * s, cy - 16 * s, 22 * s, Math.PI * 1.15, Math.PI * 1.6); x.arc(cx - 10 * s, cy - 10 * s, 20 * s, Math.PI * 1.55, Math.PI * 1.2, true); x.fill();
 };
 const tree = (x, cx, B, h, col, colL, trunk) => {
-  x.fillStyle = trunk; x.beginPath(); x.moveTo(cx - h * .05, B); x.quadraticCurveTo(cx - h * .02, B - h * .5, cx - h * .12, B - h * .72); x.lineTo(cx + h * .1, B - h * .7); x.quadraticCurveTo(cx + h * .03, B - h * .4, cx + h * .06, B); x.fill();
-  const lobes = [[-.26, .62, .2], [.24, .66, .22], [0, .8, .27], [-.14, .96, .18], [.16, .98, .16]];
-  for (const [dx, dy, r] of lobes) { x.fillStyle = col; rr(x, cx + (dx - r) * h, B - (dy + r * .55) * h, r * 2 * h, r * 1.1 * h, r * .55 * h); x.fill(); x.fillStyle = colL; rr(x, cx + (dx - r * .7) * h, B - (dy + r * .55) * h, r * 1.3 * h, r * .34 * h, r * .17 * h); x.fill(); }
+  x.fillStyle = trunk; x.beginPath(); x.moveTo(cx - h * .045, B); x.quadraticCurveTo(cx - h * .02, B - h * .45, cx - h * .1, B - h * .66); x.lineTo(cx + h * .07, B - h * .64); x.quadraticCurveTo(cx + h * .02, B - h * .4, cx + h * .05, B); x.fill();
+  x.fillStyle = col; rr(x, cx - h * .34, B - h * 1.02, h * .68, h * .5, h * .25); x.fill(); rr(x, cx - h * .22, B - h * 1.16, h * .44, h * .3, h * .15); x.fill();
+  x.fillStyle = colL; rr(x, cx - h * .2, B - h * 1.12, h * .26, h * .06, h * .03); x.fill(); rr(x, cx - h * .3, B - h * .94, h * .2, h * .05, h * .025); x.fill();
 };
-const tower = (x, X, B, w, h, col, lit, seed, t) => {
-  x.fillStyle = col; rr(x, X, B - h, w, h + 4, 6); x.fill(); x.fillStyle = dk(col, .18); rr(x, X, B - h, w * .3, h + 4, 6); x.fill();
-  x.fillStyle = lt(col, .16); rr(x, X - 4, B - h - 6, w + 8, 9, 4); x.fill();
-  const cols = Math.max(2, Math.floor(w / 15)), rows = Math.floor(h / 22);
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const on = hash(seed * 31 + r * 7 + c) > .45, fl = on && hash(seed + r * 13 + c * 5) > .8 ? .6 + .4 * Math.sin(t * 2 + r + c) : 1; x.fillStyle = on ? lit : dk(col, .28); x.globalAlpha = on ? .85 * fl : 1; rr(x, X + 6 + c * ((w - 12) / cols) + 1, B - h + 10 + r * 22, (w - 12) / cols - 4, 11, 2.5); x.fill(); } x.globalAlpha = 1;
+const tower = (x, X, B, w, h, col, win, seed) => {
+  x.fillStyle = col; rr(x, X, B - h, w, h + 4, 4); x.fill(); x.fillStyle = lt(col, .12); rr(x, X - 3, B - h - 5, w + 6, 8, 3); x.fill();
+  const cols = Math.max(2, Math.floor(w / 18)), rows = Math.floor(h / 26), cw = (w - 14) / cols;
+  x.fillStyle = win;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { if (hash(seed * 31 + r * 7 + c) < .35) continue; rr(x, X + 7 + c * cw + 2, B - h + 12 + r * 26, cw - 6, 13, 2); x.fill(); }
 };
-const gear = (x, cx, cy, r, rot, col, hole) => { x.save(); x.translate(cx, cy); x.rotate(rot); x.fillStyle = col; const n = Math.max(7, Math.round(r / 5)); for (let i = 0; i < n; i++) { x.rotate(TAU / n); rr(x, -r * .16, -r * 1.24, r * .32, r * .36, r * .07); x.fill(); } circ(x, 0, 0, r); x.fillStyle = hole; circ(x, 0, 0, r * .62); x.fillStyle = col; circ(x, 0, 0, r * .3); for (let i = 0; i < 4; i++) { x.rotate(TAU / 4); x.fillRect(-r * .07, -r * .64, r * .14, r * .4); } x.restore(); };
-const crystal = (x, cx, B, w, h, col, lean) => { const tx = cx + lean * h; x.fillStyle = col; poly(x, [cx - w, B, tx - w * .45, B - h * .82, tx, B - h, tx + w * .5, B - h * .78, cx + w, B]); x.fillStyle = lt(col, .42); poly(x, [tx, B - h, tx + w * .5, B - h * .78, cx + w, B, cx + w * .2, B]); x.fillStyle = dk(col, .25); poly(x, [cx - w, B, tx - w * .45, B - h * .82, tx - w * .1, B - h * .7, cx - w * .3, B]); };
+const gear = (x, cx, cy, r, rot, col, hole) => { x.save(); x.translate(cx, cy); x.rotate(rot); x.fillStyle = col; const n = Math.max(8, Math.round(r / 5)); for (let i = 0; i < n; i++) { x.rotate(TAU / n); rr(x, -r * .15, -r * 1.2, r * .3, r * .32, r * .06); x.fill(); } circ(x, 0, 0, r); x.fillStyle = hole; circ(x, 0, 0, r * .55); x.fillStyle = col; circ(x, 0, 0, r * .22); x.restore(); };
+const crystal = (x, cx, B, w, h, col, lean) => { const tx = cx + lean * h; x.fillStyle = col; poly(x, [cx - w, B, tx - w * .4, B - h * .84, tx, B - h, tx + w * .45, B - h * .8, cx + w, B]); x.fillStyle = lt(col, .3); poly(x, [tx, B - h, tx + w * .45, B - h * .8, cx + w, B, cx + w * .15, B]); };
 const hillPath = (x, W, H, base, cam, par, f1, a1, f2, a2, step = 24) => { x.beginPath(); x.moveTo(0, H); for (let X = 0; X <= W + step; X += step) { const wx = X + cam * par; x.lineTo(X, base - Math.sin(wx * f1) * a1 - Math.sin(wx * f2 + 1.3) * a2); } x.lineTo(W + step, H); x.closePath(); x.fill(); };
 const hillY = (wx, base, f1, a1, f2, a2) => base - Math.sin(wx * f1) * a1 - Math.sin(wx * f2 + 1.3) * a2;
+const bush = (x, cx, y, r, col, colL) => { x.fillStyle = col; x.beginPath(); x.arc(cx - r * .7, y - r * .45, r * .6, Math.PI * .9, Math.PI * 1.9); x.arc(cx, y - r * .8, r * .72, Math.PI * 1.1, Math.PI * 1.95); x.arc(cx + r * .75, y - r * .4, r * .55, Math.PI * 1.2, Math.PI * .1); x.lineTo(cx + r * 1.3, y + 2); x.lineTo(cx - r * 1.3, y + 2); x.closePath(); x.fill(); x.fillStyle = colL; rr(x, cx - r * .4, y - r * 1.36, r * .55, r * .14, r * .07); x.fill(); };
 
 Art.bg = (x, W, H, cam, th, t, GY) => {
-  const g = x.createLinearGradient(0, 0, 0, GY + 30); g.addColorStop(0, th.sky[0]); g.addColorStop(.55, th.sky[1]); g.addColorStop(1, th.sky[2]); x.fillStyle = g; x.fillRect(0, 0, W, H);
-  /* 별 */
-  if (th.stars) for (let i = 0; i < 46; i++) { const sx = ((hash(i) * (W + 80) - cam * .02) % (W + 80) + W + 80) % (W + 80) - 40, sy = hash(i + 99) * GY * .62, a = th.stars * (.35 + .65 * Math.abs(Math.sin(t * (1 + hash(i + 7)) + i))); if (i % 9 === 0) spark(x, sx, sy, 4 + hash(i) * 3, `rgba(255,255,255,${a})`); else { x.fillStyle = `rgba(255,255,255,${a * .8})`; circ(x, sx, sy, .9 + hash(i + 3) * 1.1); } }
-  /* 천체 */
-  const sx = W * .74 - cam * .012, sy = GY * .36, sr = th.sunR;
-  aglow(x, sx, sy, sr * 4.2, rgbOf(th.sun), .42);
-  x.save(); x.translate(sx, sy); x.rotate(t * .05); for (let i = 0; i < 14; i++) { x.rotate(TAU / 14); x.fillStyle = `rgba(255,255,255,${i & 1 ? .07 : .035})`; poly(x, [0, 0, -sr * .34, -sr * 5.4, sr * .34, -sr * 5.4]); } x.restore();
-  x.fillStyle = mix(th.sun, th.sky[1], .55); circ(x, sx, sy, sr * 1.5); x.fillStyle = mix(th.sun, th.sky[1], .25); circ(x, sx, sy, sr * 1.22); x.fillStyle = th.sun; circ(x, sx, sy, sr);
-  x.save(); x.beginPath(); x.arc(sx, sy, sr, 0, TAU); x.clip(); x.fillStyle = mix(th.sun, th.sky[2], .38); circ(x, sx - sr * .5, sy + sr * .55, sr * .95); x.fillStyle = mix(th.sun, '#ffffff', .6); circ(x, sx + sr * .35, sy - sr * .4, sr * .34); x.restore();
-  if (th.deco === 'crystal' || th.deco === 'harp') { x.strokeStyle = mix(th.sun, th.sky[1], .2); x.lineWidth = 5; x.beginPath(); x.ellipse(sx, sy, sr * 1.75, sr * .34, -.35, .1, Math.PI - .1); x.stroke(); }
-  /* 구름 2겹 */
-  for (let L = 0; L < 2; L++) { const par = .05 + L * .07, sp = 520 - L * 130, off = cam * par + t * (4 + L * 5); for (let i = Math.floor(off / sp) - 1; i < (off + W) / sp + 1; i++) { const h = hash(i * 17 + L * 91); cloud(x, i * sp - off + h * 180, GY * (.2 + L * .24) + h * 60, (.9 + h * .7) * (L ? 1.1 : .8), mix(th.cloud, th.sky[1], L ? .15 : .45), mix(th.cloud, th.sky[0], L ? .35 : .55)); } }
+  const S0 = th.sky[0], S1 = th.sky[1], S2 = th.sky[2], fade = (c, k) => mix(c, S2, k);
+  const g = x.createLinearGradient(0, 0, 0, GY); g.addColorStop(0, S0); g.addColorStop(.6, S1); g.addColorStop(1, S2); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  /* 별: 밤 테마에서만, 적게 */
+  if (th.stars) for (let i = 0; i < 18; i++) { const sx = ((hash(i) * (W + 80) - cam * .02) % (W + 80) + W + 80) % (W + 80) - 40, sy = hash(i + 99) * GY * .4, a = th.stars * (.5 + .5 * Math.sin(t * (1 + hash(i + 7)) + i)); x.fillStyle = `rgba(255,255,255,${a})`; circ(x, sx, sy, 1.2 + hash(i + 3) * 1.4); }
+  /* 해: 원판 + 부드러운 동심원 두 겹 */
+  const sx = W * .72 - cam * .012, sy = GY * .34, sr = th.sunR;
+  x.fillStyle = mix(th.sun, S1, .72); circ(x, sx, sy, sr * 2.1); x.fillStyle = mix(th.sun, S1, .45); circ(x, sx, sy, sr * 1.45); x.fillStyle = th.sun; circ(x, sx, sy, sr);
+  /* 구름: 적게, 크게, 천천히 */
+  const offc = cam * .05 + t * 5, spc = 640;
+  for (let i = Math.floor(offc / spc) - 1; i < (offc + W) / spc + 1; i++) { const h = hash(i * 17 + 3); cloud(x, i * spc - offc + h * 260, GY * (.16 + h * .2), 1.3 + h * .9, mix(th.cloud, S1, .35), mix(th.cloud, '#ffffff', .5)); }
 
-  /* 원경 l1 */
-  const B = GY + 24, off1 = cam * .18, sp1 = 360, c1 = mix(th.l1, th.sky[1], .28), lit1 = mix(th.lit, th.sky[1], .25);
-  x.fillStyle = mix(th.l1, th.sky[1], .5); hillPath(x, W, H, GY - 96, cam, .1, .0031, 54, .0083, 22);
+  /* 원경 l1: 하늘에 거의 녹은 실루엣 */
+  const B = GY + 10, off1 = cam * .16, sp1 = 420, c1 = fade(th.l1, .5), c1w = fade(th.l1, .32);
+  x.fillStyle = fade(th.l1, .62); hillPath(x, W, H, GY - 110, cam, .08, .0028, 50, .0071, 18, 32);
   for (let i = Math.floor(off1 / sp1) - 1; i < (off1 + W) / sp1 + 1; i++) {
-    const X = i * sp1 - off1, hh = hash(i * 7 + 3), h = 170 + hh * 150;
+    const X = i * sp1 - off1, hh = hash(i * 7 + 3), h = 190 + hh * 140;
     switch (th.deco) {
-      case 'gear': tower(x, X + 20, B, 96, h * .8, c1, lit1, i, t); tower(x, X + 130, B, 60, h * 1.1, mix(c1, th.sky[1], .12), lit1, i + 50, t); gear(x, X + 262, B - 130 - hh * 50, 52 + hh * 16, t * .25 * (i & 1 ? 1 : -1) + i, c1, mix(th.sky[1], th.l1, .35)); gear(x, X + 322, B - 66, 30, -t * .45 + i, dk(c1, .12), mix(th.sky[1], th.l1, .35)); break;
-      case 'chimney': tower(x, X + 10, B, 150, h * .6, c1, lit1, i, t); x.fillStyle = c1; rr(x, X + 34, B - h - 70, 30, h + 70, 5); x.fill(); rr(x, X + 108, B - h - 20, 24, h + 20, 5); x.fill(); x.fillStyle = lit1; rr(x, X + 30, B - h - 74, 38, 8, 4); x.fill(); rr(x, X + 104, B - h - 24, 32, 7, 3.5); x.fill(); for (let k = 0; k < 5; k++) { const q = (t * .12 + k / 5 + hh) % 1; x.fillStyle = `rgba(255,255,255,${.34 * (1 - q)})`; circ(x, X + 49 + q * 46 + Math.sin(q * 7 + k) * 8, B - h - 84 - q * 150, 12 + q * 30); } tower(x, X + 200, B, 110, h * .9, mix(c1, th.sky[1], .14), lit1, i + 9, t); x.fillStyle = c1; rr(x, X + 150, B - h * .45, 70, 12, 6); x.fill(); break;
-      case 'crystal': for (let k = 0; k < 4; k++) crystal(x, X + 50 + k * 86, B, 26 + hash(i * 5 + k) * 22, h * (.7 + hash(i * 3 + k) * .8), mix(c1, k & 1 ? '#bfefff' : th.sky[1], .22), (hash(i + k) - .5) * .4); break;
-      case 'string': tree(x, X + 80, B, h * 1.25, c1, mix(c1, th.sky[2], .25), dk(c1, .2)); tree(x, X + 250, B, h * .95, mix(c1, th.sky[1], .15), mix(c1, th.sky[2], .3), dk(c1, .2)); x.strokeStyle = `rgba(255,243,176,.5)`; x.lineWidth = 2; for (let k = 0; k < 3; k++) { const yy = B - h * (.7 + k * .12), n = k + 1, A = 8 * Math.sin(t * (5 + k * 2) + i); x.beginPath(); for (let q = 0; q <= 34; q++) { const px = X + 80 + q * 5; q ? x.lineTo(px, yy + Math.sin(q / 34 * Math.PI * n) * A) : x.moveTo(px, yy); } x.stroke(); } break;
-      case 'wave': { x.fillStyle = c1; x.beginPath(); x.moveTo(X + 40, B); x.quadraticCurveTo(X + 110, B - h * 1.1, X + 190, B - h * .5); x.quadraticCurveTo(X + 260, B - h * .2, X + 330, B); x.fill(); x.fillStyle = lt(c1, .2); x.beginPath(); x.moveTo(X + 100, B - h * .72); x.quadraticCurveTo(X + 140, B - h * .8, X + 190, B - h * .5); x.quadraticCurveTo(X + 150, B - h * .56, X + 100, B - h * .72); x.fill(); x.fillStyle = '#fff'; rr(x, X + 150, B - h * .9 - 60, 22, 62, 6); x.fill(); x.fillStyle = '#ff5f6d'; rr(x, X + 150, B - h * .9 - 44, 22, 12, 0); x.fill(); rr(x, X + 150, B - h * .9 - 20, 22, 12, 0); x.fill(); x.fillStyle = '#ffe27a'; rr(x, X + 146, B - h * .9 - 72, 30, 14, 5); x.fill(); x.save(); x.translate(X + 161, B - h * .9 - 65); x.rotate(Math.sin(t * .6 + i) * .7); x.fillStyle = 'rgba(255,243,176,.2)'; poly(x, [0, 0, 240, -46, 240, 46]); x.restore(); break; }
-      case 'arch': { const aw = 250, ah = h + 110; x.fillStyle = c1; x.beginPath(); x.moveTo(X + 30, B); x.lineTo(X + 30, B - ah * .6); x.quadraticCurveTo(X + 30 + aw / 2, B - ah * 1.25, X + 30 + aw, B - ah * .6); x.lineTo(X + 30 + aw, B); x.closePath(); x.fill(); x.fillStyle = mix(th.sky[1], th.sky[2], .5); x.beginPath(); x.moveTo(X + 62, B); x.lineTo(X + 62, B - ah * .56); x.quadraticCurveTo(X + 30 + aw / 2, B - ah * 1.08, X + aw - 2, B - ah * .56); x.lineTo(X + aw - 2, B); x.closePath(); x.fill(); for (let k = 0; k < 7; k++) { const ph2 = 60 + Math.abs(3 - k) * -14 + 70 + hh * 30; x.fillStyle = k & 1 ? c1 : dk(c1, .14); rr(x, X + 74 + k * 24, B - ph2, 18, ph2 + 6, 8); x.fill(); x.fillStyle = lit1; rr(x, X + 79 + k * 24, B - ph2 + 12, 8, 3.5, 1.7); x.fill(); } x.fillStyle = lit1; circ(x, X + 30 + aw / 2, B - ah * .86, 15); x.fillStyle = c1; for (let k = 0; k < 6; k++) { x.save(); x.translate(X + 30 + aw / 2, B - ah * .86); x.rotate(k * TAU / 6 + t * .1); x.fillRect(-1.5, -15, 3, 30); x.restore(); } break; }
-      case 'harp': { x.fillStyle = c1; rr(x, X + 50, B - h - 150, 24, h + 150, 10); x.fill(); x.beginPath(); x.moveTo(X + 50, B - h - 150); x.bezierCurveTo(X + 150, B - h - 250, X + 270, B - h - 120, X + 310, B - 30); x.lineTo(X + 286, B - 30); x.bezierCurveTo(X + 250, B - h - 80, X + 150, B - h - 190, X + 74, B - h - 122); x.fill(); x.fillStyle = lit1; circ(x, X + 62, B - h - 150, 9); for (let k = 1; k < 9; k++) { const sxk = X + 74 + k * 25, top = B - h - 150 + Math.pow(k / 9, 1.6) * (h + 60) + (k < 4 ? -12 : 0), n = (k % 3) + 1, A = 3.5 * Math.sin(t * (6 + k) + i); x.strokeStyle = `rgba(255,243,176,${.42 + .2 * (k & 1)})`; x.lineWidth = 1.6; x.beginPath(); for (let q = 0; q <= 14; q++) { const yy = top + (B - top) * q / 14, px = sxk + Math.sin(q / 14 * Math.PI * n) * A; q ? x.lineTo(px, yy) : x.moveTo(px, yy); } x.stroke(); } break; }
+      case 'gear': tower(x, X + 30, B, 90, h * .85, c1, c1w, i); gear(x, X + 250, B - 150 - hh * 40, 60 + hh * 14, t * .15 * (i & 1 ? 1 : -1) + i, c1, fade(th.l1, .62)); break;
+      case 'chimney': tower(x, X + 20, B, 130, h * .62, c1, c1w, i); x.fillStyle = c1; rr(x, X + 44, B - h - 60, 28, h + 60, 4); x.fill(); for (let k = 0; k < 4; k++) { const q = (t * .08 + k / 4 + hh) % 1; x.fillStyle = `rgba(255,255,255,${.4 * (1 - q)})`; circ(x, X + 58 + q * 50, B - h - 76 - q * 140, 14 + q * 28); } tower(x, X + 220, B, 100, h * .9, fade(th.l1, .44), c1w, i + 9); break;
+      case 'crystal': for (let k = 0; k < 3; k++) crystal(x, X + 70 + k * 110, B, 34 + hash(i * 5 + k) * 22, h * (.8 + hash(i * 3 + k) * .7), c1, (hash(i + k) - .5) * .35); break;
+      case 'string': tree(x, X + 110, B, h * 1.2, c1, c1w, fade(th.l1, .4)); tree(x, X + 300, B, h * .9, fade(th.l1, .56), c1w, fade(th.l1, .45)); break;
+      case 'wave': { x.fillStyle = c1; x.beginPath(); x.moveTo(X + 30, B); x.quadraticCurveTo(X + 120, B - h * 1.05, X + 210, B - h * .45); x.quadraticCurveTo(X + 280, B - h * .18, X + 360, B); x.fill(); if (i & 1) { const lx = X + 180, ly = B - h * .55; x.fillStyle = fade('#ffffff', .1); rr(x, lx - 11, ly - 66, 22, 66, 4); x.fill(); x.fillStyle = fade('#ff5f6d', .35); rr(x, lx - 11, ly - 50, 22, 11, 0); x.fill(); rr(x, lx - 11, ly - 26, 22, 11, 0); x.fill(); x.fillStyle = fade(th.lit, .1); rr(x, lx - 14, ly - 80, 28, 15, 5); x.fill(); } break; }
+      case 'arch': { const aw = 260, ah = h + 100, ax = X + 40; x.fillStyle = c1; x.beginPath(); x.moveTo(ax, B); x.lineTo(ax, B - ah * .58); x.quadraticCurveTo(ax + aw / 2, B - ah * 1.2, ax + aw, B - ah * .58); x.lineTo(ax + aw, B); x.lineTo(ax + aw - 34, B); x.lineTo(ax + aw - 34, B - ah * .55); x.quadraticCurveTo(ax + aw / 2, B - ah * 1.02, ax + 34, B - ah * .55); x.lineTo(ax + 34, B); x.closePath(); x.fill(); break; }
+      case 'harp': { x.fillStyle = c1; rr(x, X + 50, B - h - 140, 22, h + 140, 9); x.fill(); x.beginPath(); x.moveTo(X + 50, B - h - 140); x.bezierCurveTo(X + 150, B - h - 230, X + 270, B - h - 110, X + 310, B - 20); x.lineTo(X + 288, B - 20); x.bezierCurveTo(X + 250, B - h - 80, X + 150, B - h - 180, X + 72, B - h - 114); x.fill(); x.strokeStyle = c1w; x.lineWidth = 2; for (let k = 1; k < 8; k++) { const sxk = X + 72 + k * 27, top = B - h - 140 + Math.pow(k / 8, 1.6) * (h + 60), A = 3 * Math.sin(t * (5 + k) + i); x.beginPath(); x.moveTo(sxk, top); x.quadraticCurveTo(sxk + A, (top + B) / 2, sxk, B); x.stroke(); } break; }
     }
   }
-  /* 지평선 안개 */
-  const hz = x.createLinearGradient(0, GY - 150, 0, GY + 30); hz.addColorStop(0, mix(th.sky[2], th.sky[2], 0).replace('rgb', 'rgba').replace(')', ',0)')); hz.addColorStop(1, mix(th.sky[2], '#ffffff', .15).replace('rgb', 'rgba').replace(')', ',.55)')); x.fillStyle = hz; x.fillRect(0, GY - 150, W, 190);
 
-  /* 중경 l2: 언덕 + 소품 */
-  const p2 = .42, f1 = .0042, a1 = 42, f2 = .011, a2 = 18, base2 = GY - 34, c2 = th.l2, c2L = mix(th.l2, th.sky[2], .3);
+  /* 중경 l2: 언덕 + 큼직한 소품 몇 개 */
+  const p2 = .4, f1 = .0036, a1 = 40, f2 = .0094, a2 = 14, base2 = GY - 40, c2 = fade(th.l2, .2), c2L = fade(th.l2, .02);
   x.fillStyle = c2; hillPath(x, W, H, base2, cam, p2, f1, a1, f2, a2);
-  x.fillStyle = c2L; x.beginPath(); for (let X = 0; X <= W + 24; X += 24) { const y = hillY(X + cam * p2, base2, f1, a1, f2, a2); X ? x.lineTo(X, y) : x.moveTo(X, y); } for (let X = W + 24; X >= 0; X -= 24) x.lineTo(X, hillY(X + cam * p2, base2, f1, a1, f2, a2) + 5 + 3 * Math.sin((X + cam * p2) * .02)); x.fill();
-  const off2 = cam * p2, sp2 = 170;
+  dashes(x, 0, base2 + 10, W, 90, fade(th.l2, .3), Math.floor(cam * p2 / 400), 10, false, 26);
+  const off2 = cam * p2, sp2 = 300;
   for (let i = Math.floor(off2 / sp2) - 1; i < (off2 + W) / sp2 + 1; i++) {
-    const hh = hash(i * 13 + 5), wx = i * sp2 + hh * 90, X = wx - off2, y = hillY(wx, base2, f1, a1, f2, a2) + 6;
-    if (hh < .12) continue;
+    const hh = hash(i * 13 + 5), wx = i * sp2 + hh * 120, X = wx - off2, y = hillY(wx, base2, f1, a1, f2, a2) + 8;
+    if (hh < .3) continue;
     switch (th.deco) {
-      case 'gear': if (hh > .6) { gear(x, X, y - 22, 26 + hh * 14, t * .6 * (i & 1 ? 1 : -1), c2, c2L); } else { x.fillStyle = c2; rr(x, X - 9, y - 70 - hh * 60, 18, 80 + hh * 60, 6); x.fill(); x.fillStyle = th.lit; rr(x, X - 12, y - 74 - hh * 60, 24, 7, 3.5); x.fill(); x.fillStyle = `rgba(255,190,90,${.5 + .3 * Math.sin(t * 6 + i)})`; ell(x, X, y - 84 - hh * 60, 6, 10 + Math.sin(t * 9 + i) * 3); } break;
-      case 'chimney': x.fillStyle = c2; rr(x, X - 30, y - 40 - hh * 40, 60, 60 + hh * 40, 8); x.fill(); x.fillStyle = th.lit; for (let k = 0; k < 3; k++) { x.globalAlpha = .55 + .45 * Math.sin(t * 1.5 + i + k); rr(x, X - 22 + k * 16, y - 30 - hh * 40, 10, 12, 3); x.fill(); } x.globalAlpha = 1; x.strokeStyle = c2; x.lineWidth = 7; x.beginPath(); x.moveTo(X + 30, y - 20); x.lineTo(X + 60, y - 20); x.lineTo(X + 60, y + 10); x.stroke(); break;
-      case 'crystal': crystal(x, X, y + 4, 12 + hh * 12, 50 + hh * 80, mix(c2, '#9fe6ff', .3), (hh - .5) * .5); if (hh > .5) crystal(x, X + 24, y + 4, 8, 30 + hh * 30, mix(c2, '#ffffff', .35), .2); break;
-      case 'string': tree(x, X, y + 4, 70 + hh * 70, c2, c2L, dk(c2, .25)); break;
-      case 'wave': if (hh > .55) { x.fillStyle = c2; x.beginPath(); x.moveTo(X - 6, y + 4); x.quadraticCurveTo(X - 2, y - 40, X - 14 + Math.sin(t * 1.2 + i) * 3, y - 76); x.lineTo(X - 6 + Math.sin(t * 1.2 + i) * 3, y - 76); x.quadraticCurveTo(X + 6, y - 36, X + 6, y + 4); x.fill(); for (let k = 0; k < 5; k++) { x.save(); x.translate(X - 10 + Math.sin(t * 1.2 + i) * 3, y - 76); x.rotate(-1.4 + k * .7 + Math.sin(t * 1.5 + k + i) * .08); x.fillStyle = k & 1 ? c2L : c2; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(26, -14, 50, 4); x.quadraticCurveTo(24, -2, 0, 0); x.fill(); x.restore(); } } else { x.fillStyle = c2L; x.beginPath(); x.arc(X, y + 6, 20 + hh * 16, Math.PI, 0); x.fill(); } break;
-      case 'arch': x.fillStyle = c2; rr(x, X - 10, y - 86 - hh * 50, 20, 96 + hh * 50, 5); x.fill(); x.fillStyle = c2L; rr(x, X - 15, y - 92 - hh * 50, 30, 10, 4); x.fill(); rr(x, X - 15, y - 8, 30, 12, 4); x.fill(); aglow(x, X, y - 104 - hh * 50, 22, rgbOf(th.lit), .6); x.fillStyle = th.lit; circ(x, X, y - 104 - hh * 50, 6 + Math.sin(t * 3 + i)); break;
-      case 'harp': { const ht = 70 + hh * 60; x.fillStyle = c2; rr(x, X - 4, y - ht, 8, ht + 6, 4); x.fill(); x.beginPath(); x.moveTo(X - 4, y - ht); x.quadraticCurveTo(X + 30, y - ht - 26, X + 46, y - ht + 16); x.lineTo(X + 40, y - ht + 20); x.quadraticCurveTo(X + 26, y - ht - 12, X + 4, y - ht + 8); x.fill(); x.strokeStyle = 'rgba(255,243,176,.6)'; x.lineWidth = 1.2; for (let k = 1; k < 4; k++) { x.beginPath(); x.moveTo(X + k * 11, y - ht + 4 + k * 3); x.quadraticCurveTo(X + k * 11 + Math.sin(t * 14 + k + i) * 2.4, y - ht / 2, X + k * 11, y + 2); x.stroke(); } break; }
+      case 'gear': if (hh > .65) gear(x, X, y - 30, 34 + hh * 12, t * .4 * (i & 1 ? 1 : -1), c2, fade(th.l2, .45)); else { x.fillStyle = c2; rr(x, X - 10, y - 120 - hh * 40, 20, 130 + hh * 40, 5); x.fill(); x.fillStyle = c2L; rr(x, X - 14, y - 126 - hh * 40, 28, 9, 4); x.fill(); } break;
+      case 'chimney': x.fillStyle = c2; rr(x, X - 40, y - 60 - hh * 30, 80, 70 + hh * 30, 6); x.fill(); x.fillStyle = fade(th.lit, .25); for (let k = 0; k < 3; k++) { rr(x, X - 28 + k * 22, y - 46 - hh * 30, 12, 16, 3); x.fill(); } break;
+      case 'crystal': crystal(x, X, y + 4, 18 + hh * 12, 70 + hh * 70, c2, (hh - .5) * .5); break;
+      case 'string': tree(x, X, y + 6, 100 + hh * 60, c2, c2L, fade(th.l2, .1)); break;
+      case 'wave': if (hh > .55) { const sw = Math.sin(t * 1.1 + i) * 3; x.fillStyle = c2; x.beginPath(); x.moveTo(X - 6, y + 4); x.quadraticCurveTo(X - 2, y - 50, X - 12 + sw, y - 96); x.lineTo(X - 4 + sw, y - 96); x.quadraticCurveTo(X + 6, y - 44, X + 6, y + 4); x.fill(); for (let k = 0; k < 5; k++) { x.save(); x.translate(X - 8 + sw, y - 96); x.rotate(-1.4 + k * .7 + Math.sin(t * 1.3 + k + i) * .06); x.fillStyle = k & 1 ? c2L : c2; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(30, -16, 58, 4); x.quadraticCurveTo(28, -2, 0, 0); x.fill(); x.restore(); } } else bush(x, X, y + 4, 34, c2, c2L); break;
+      case 'arch': x.fillStyle = c2; rr(x, X - 12, y - 120 - hh * 40, 24, 130 + hh * 40, 6); x.fill(); x.fillStyle = c2L; rr(x, X - 18, y - 128 - hh * 40, 36, 12, 5); x.fill(); x.fillStyle = th.lit; circ(x, X, y - 146 - hh * 40, 8); break;
+      case 'harp': bush(x, X, y + 4, 36, c2, c2L); break;
     }
   }
-  /* 근경 l3: 땅 바로 뒤 풀숲 실루엣 */
-  const p3 = .74, base3 = GY - 4; x.fillStyle = th.l3; hillPath(x, W, H, base3, cam, p3, .0073, 16, .019, 8, 20);
-  const off3 = cam * p3, sp3 = 64;
+  /* 근경 l3: 둥근 덤불 띠 */
+  const p3 = .72, base3 = GY - 6, c3 = th.l3, c3L = mix(th.l3, S2, .22);
+  x.fillStyle = c3; hillPath(x, W, H, base3, cam, p3, .006, 12, .017, 6, 20);
+  const off3 = cam * p3, sp3 = 150;
   for (let i = Math.floor(off3 / sp3) - 1; i < (off3 + W) / sp3 + 1; i++) {
-    const hh = hash(i * 29 + 11), wx = i * sp3 + hh * 40, X = wx - off3, y = hillY(wx, base3, .0073, 16, .019, 8) + 4, swy = Math.sin(t * 1.6 + i) * 3;
-    if (hh < .45) { x.fillStyle = th.l3; for (let k = -2; k <= 2; k++) { x.beginPath(); x.moveTo(X + k * 5 - 3, y); x.quadraticCurveTo(X + k * 7 + swy * .5, y - 20 - hh * 30, X + k * 11 + swy, y - 30 - hh * 44 + Math.abs(k) * 8); x.quadraticCurveTo(X + k * 6 + 3, y - 14, X + k * 5 + 3, y); x.fill(); } }
-    else if (hh < .75) { x.fillStyle = th.l3; circ(x, X, y - 6, 16 + hh * 10); circ(x, X + 18, y - 2, 12 + hh * 8); x.fillStyle = mix(th.l3, th.sky[2], .22); ell(x, X - 3, y - 14 - hh * 6, 9, 4, -.3); }
-    else { x.strokeStyle = th.l3; x.lineWidth = 3; x.beginPath(); x.moveTo(X, y); x.quadraticCurveTo(X + swy * .4, y - 22, X + swy, y - 40); x.stroke(); aglow(x, X + swy, y - 44, 13, rgbOf(th.lit), .55); x.fillStyle = th.lit; circ(x, X + swy, y - 44, 4.2); }
+    const hh = hash(i * 29 + 11), wx = i * sp3 + hh * 60, X = wx - off3, y = hillY(wx, base3, .006, 12, .017, 6) + 6;
+    if (hh < .35) continue;
+    bush(x, X, y, 22 + hh * 22, c3, c3L);
   }
-  /* 입자 */
-  for (let i = 0; i < 30; i++) {
+  /* 입자: 적게, 부드럽게 */
+  for (let i = 0; i < 14; i++) {
     const r = hash(i + 500), fall = th.part === 'snow' || th.part === 'leaf';
-    const px = ((hash(i) * (W + 60) + (fall ? t * 22 : 0) - cam * .8) % (W + 60) + W + 60) % (W + 60) - 30;
-    const py = fall ? (r * H + t * (30 + r * 44)) % (GY + 20) : GY - ((r * GY + t * (18 + r * 34)) % GY), k = fall ? 1 : py / GY;
-    if (th.part === 'ember') { x.fillStyle = `rgba(255,${170 + r * 70 | 0},90,${.25 + k * .7})`; spark(x, px + Math.sin(t * 2 + i) * 9, py, 2 + r * 3.4, x.fillStyle); }
-    else if (th.part === 'snow') { x.fillStyle = 'rgba(255,255,255,.88)'; if (i % 4) circ(x, px + Math.sin(t + i) * 12, py, 1.6 + r * 2.4); else spark(x, px + Math.sin(t + i) * 12, py, 4 + r * 3, 'rgba(255,255,255,.9)'); }
-    else if (th.part === 'leaf') { x.save(); x.translate(px + Math.sin(t + i) * 18, py); x.rotate(t * (1 + r) + i); x.fillStyle = i & 1 ? 'rgba(198,245,90,.85)' : 'rgba(255,226,122,.85)'; x.beginPath(); x.moveTo(-6, 0); x.quadraticCurveTo(0, -5, 6, 0); x.quadraticCurveTo(0, 5, -6, 0); x.fill(); x.restore(); }
-    else if (th.part === 'bubble') { x.fillStyle = 'rgba(255,255,255,.2)'; circ(x, px + Math.sin(t + i) * 6, py, 3 + r * 6); x.fillStyle = 'rgba(255,255,255,.75)'; circ(x, px + Math.sin(t + i) * 6 + 1.5 + r * 2, py - 1.5 - r * 2, 1 + r); }
-    else if (th.part === 'note') { const nx = px + Math.sin(t + i) * 10; x.globalAlpha = .35 + r * .45; x.fillStyle = i & 1 ? th.lit : '#fff'; ell(x, nx, py, 4 + r * 2, 3 + r * 1.4, -.4); x.fillRect(nx + 3 + r * 1.6, py - 14 - r * 4, 1.6, 14 + r * 4); if (i % 3 === 0) { x.beginPath(); x.moveTo(nx + 3 + r * 1.6, py - 14 - r * 4); x.quadraticCurveTo(nx + 12, py - 12, nx + 10, py - 5); x.quadraticCurveTo(nx + 9, py - 9, nx + 4.6 + r * 1.6, py - 9); x.fill(); } x.globalAlpha = 1; }
-    else if (th.part === 'smoke') { x.fillStyle = `rgba(255,255,255,${.06 + r * .08})`; circ(x, px, py, 12 + r * 18); }
+    const px = ((hash(i) * (W + 60) + (fall ? t * 18 : 0) - cam * .8) % (W + 60) + W + 60) % (W + 60) - 30;
+    const py = fall ? (r * H + t * (24 + r * 30)) % (GY + 20) : GY - ((r * GY + t * (14 + r * 24)) % GY);
+    if (th.part === 'ember') { x.fillStyle = `rgba(255,240,180,${.25 + (py / GY) * .5})`; circ(x, px + Math.sin(t * 2 + i) * 9, py, 2 + r * 2); }
+    else if (th.part === 'snow') { x.fillStyle = 'rgba(255,255,255,.9)'; circ(x, px + Math.sin(t + i) * 12, py, 2 + r * 2.4); }
+    else if (th.part === 'leaf') { x.save(); x.translate(px + Math.sin(t + i) * 18, py); x.rotate(t * (1 + r) + i); x.fillStyle = th.leaf; x.beginPath(); x.moveTo(-7, 0); x.quadraticCurveTo(0, -6, 7, 0); x.quadraticCurveTo(0, 6, -7, 0); x.fill(); x.restore(); }
+    else if (th.part === 'bubble') { x.fillStyle = 'rgba(255,255,255,.3)'; circ(x, px + Math.sin(t + i) * 6, py, 4 + r * 6); }
+    else if (th.part === 'note') { const nx = px + Math.sin(t + i) * 10; x.globalAlpha = .5 + r * .3; x.fillStyle = '#fff'; ell(x, nx, py, 4.5, 3.4, -.4); x.fillRect(nx + 3.4, py - 15, 1.8, 15); x.globalAlpha = 1; }
+    else if (th.part === 'smoke') { x.fillStyle = 'rgba(255,255,255,.1)'; circ(x, px, py, 14 + r * 16); }
   }
 };
-/* 캐릭터 앞에 깔리는 레이어: 큰 풀잎 실루엣 + 빛줄기 + 가장자리 어둡게 */
+/* 캐릭터 앞 레이어: 화면 가장자리에만 가끔 들어오는 큰 잎 */
+const bigLeaf = (x, X, B, ln, rot, col, vein) => {
+  x.save(); x.translate(X, B); x.rotate(rot);
+  x.fillStyle = col; x.beginPath(); x.moveTo(0, 0); x.bezierCurveTo(-ln * .3, -ln * .3, -ln * .22, -ln * .8, 0, -ln); x.bezierCurveTo(ln * .22, -ln * .8, ln * .3, -ln * .3, 0, 0); x.fill();
+  x.strokeStyle = vein; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.moveTo(0, -ln * .1); x.lineTo(0, -ln * .85);
+  for (let k = 1; k < 5; k++) { const yy = -ln * (.15 + k * .15); x.moveTo(0, yy); x.lineTo(-ln * .12, yy - ln * .07); x.moveTo(0, yy - ln * .03); x.lineTo(ln * .12, yy - ln * .1); }
+  x.stroke(); x.restore();
+};
 Art.fg = (x, W, H, cam, th, t, GY) => {
-  x.save(); x.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 4; i++) { const bx = W * (.2 + i * .22) - (cam * .06) % 80 + Math.sin(t * .3 + i) * 20; x.fillStyle = `rgba(255,255,255,${.035 + .02 * Math.sin(t * .7 + i * 2)})`; poly(x, [bx + 190, -10, bx + 250 + i * 12, -10, bx + 40 + i * 12, GY + 20, bx - 60, GY + 20]); }
-  x.restore();
-  const par = 1.45, off = cam * par, sp = 430, col = mix(th.l3, '#12063a', .5), colL = mix(th.l3, '#12063a', .25);
+  const par = 1.5, off = cam * par, sp = 900, col = th.leaf, vein = lt(th.leaf, .35);
   for (let i = Math.floor(off / sp) - 1; i < (off + W) / sp + 1; i++) {
-    const hh = hash(i * 41 + 7), X = i * sp - off + hh * 200, B = H + 10, sw = Math.sin(t * 1.1 + i) * .05; if (hh < .3) continue;
-    for (let k = 0; k < 5; k++) { x.save(); x.translate(X + k * 8, B); x.rotate(-.7 + k * .34 + sw * (k - 2)); x.fillStyle = k & 1 ? colL : col; const ln = 110 + hash(i + k) * 70; x.beginPath(); x.moveTo(-9, 0); x.quadraticCurveTo(-16, -ln * .55, 0, -ln); x.quadraticCurveTo(16, -ln * .5, 9, 0); x.fill(); x.restore(); }
+    const hh = hash(i * 41 + 7); if (hh < .4) continue;
+    const X = i * sp - off + hh * 300, B = H + 30, sw = Math.sin(t * .9 + i) * .04;
+    bigLeaf(x, X, B, 120 + hh * 40, -.6 + sw, dk(col, .1), vein);
+    bigLeaf(x, X + 30, B, 150 + hh * 30, -.12 - sw, col, vein);
+    bigLeaf(x, X + 60, B, 115, .5 + sw, dk(col, .18), vein);
   }
-  const v = x.createRadialGradient(W / 2, H * .45, H * .45, W / 2, H * .45, Math.max(W, H) * .8); v.addColorStop(0, 'rgba(20,6,60,0)'); v.addColorStop(1, 'rgba(20,6,60,.4)'); x.fillStyle = v; x.fillRect(0, -200, W, H + 400);
 };
 Art.ground = (x, X, Y, w, h, th, float) => {
   const seed = Math.round(X / 7);
   if (float) {
-    x.fillStyle = dk(th.g2, .2); x.beginPath(); x.moveTo(X + 4, Y + 6); x.quadraticCurveTo(X + w * .3, Y + h + 20, X + w * .5, Y + h + 8); x.quadraticCurveTo(X + w * .75, Y + h + 22, X + w - 4, Y + 6); x.fill();
-    x.fillStyle = th.g2; rr(x, X, Y + 2, w, Math.min(h, 16), 8); x.fill(); x.fillStyle = th.g1; rr(x, X, Y, w, 10, 5); x.fill(); x.fillStyle = th.top; rr(x, X - 2, Y - 4, w + 4, 8, 4); x.fill();
-    x.fillStyle = lt(th.top, .5); rr(x, X + 6, Y - 3, w * .4, 2.4, 1.2); x.fill();
-    for (let i = 0; i < 3; i++) { const cx = X + w * (.25 + i * .25); x.fillStyle = th.lit; x.globalAlpha = .8; poly(x, [cx - 3, Y + h + 6 + i * 3, cx, Y + h + 18 + i * 4, cx + 3, Y + h + 6 + i * 3]); x.globalAlpha = 1; }
+    x.fillStyle = th.g2; x.beginPath(); x.moveTo(X + 6, Y + 8); x.quadraticCurveTo(X + w * .5, Y + h + 26, X + w - 6, Y + 8); x.fill();
+    x.fillStyle = th.g1; rr(x, X, Y, w, 14, 7); x.fill(); x.fillStyle = th.top; rr(x, X - 2, Y - 4, w + 4, 9, 4.5); x.fill();
     return;
   }
-  x.fillStyle = th.g2; rr(x, X, Y, w, h, 6); x.fill();
-  x.fillStyle = dk(th.g2, .22); for (let i = 10; i < w - 30; i += 58) { const hh = hash(seed + i); rr(x, X + i + hh * 18, Y + 44 + hh * 60, 26 + hh * 20, 9, 4.5); x.fill(); rr(x, X + i + 22 - hh * 14, Y + 78 + hh * 80, 14 + hh * 12, 7, 3.5); x.fill(); }
-  x.fillStyle = mix(th.g2, th.g1, .5); for (let i = 26; i < w - 20; i += 74) { const hh = hash(seed + i * 3); circ(x, X + i + hh * 24, Y + 58 + hh * 70, 3.5 + hh * 4); }
-  x.fillStyle = th.g1; x.beginPath(); x.moveTo(X, Y + 6); x.lineTo(X + w, Y + 6); x.lineTo(X + w, Y + 24); for (let i = w; i >= 0; i -= 22) x.quadraticCurveTo(X + i - 11, Y + 24 + 9 + hash(seed + i) * 7, X + Math.max(0, i - 22), Y + 24); x.closePath(); x.fill();
-  x.fillStyle = th.top; rr(x, X - 2, Y - 4, w + 4, 12, 6); x.fill(); x.fillStyle = lt(th.top, .5); for (let i = 8; i < w - 40; i += 96) { rr(x, X + i + hash(seed + i) * 30, Y - 2, 34, 2.6, 1.3); x.fill(); }
-  /* 풀/돌기 */
-  for (let i = 14; i < w - 10; i += 38) { const hh = hash(seed + i * 7); if (hh < .4) continue; const cx = X + i + hh * 12; x.fillStyle = hh > .8 ? th.lit : lt(th.top, .25); if (hh > .8) { circ(x, cx, Y - 8, 3); x.fillStyle = th.top; x.fillRect(cx - .8, Y - 6, 1.6, 4); } else { poly(x, [cx - 4, Y - 3, cx - 2, Y - 11 - hh * 5, cx, Y - 3]); poly(x, [cx, Y - 3, cx + 3, Y - 9 - hh * 4, cx + 5, Y - 3]); } }
+  x.fillStyle = th.g2; x.fillRect(X, Y + 18, w, h);
+  dashes(x, X + 10, Y + 40, w - 40, Math.max(0, h - 60), mix(th.g2, th.g1, .35), seed, Math.floor(w / 40), false, 22);
+  x.fillStyle = th.g1; rr(x, X, Y, w, 26, 6); x.fill();
+  x.fillStyle = th.top; rr(x, X - 2, Y - 4, w + 4, 12, 6); x.fill();
+  dashes(x, X + 14, Y + 13, w - 50, 6, mix(th.g1, th.top, .3), seed + 5, Math.floor(w / 70), false, 14);
 };
 /* HUD/표식용 벡터 아이콘 */
 Art.heart = (x, cx, cy, r, on) => { x.fillStyle = on ? '#ff4f7d' : 'rgba(255,255,255,.25)'; x.beginPath(); x.moveTo(cx, cy + r); x.bezierCurveTo(cx - r * 1.6, cy - r * .2, cx - r * .8, cy - r * 1.3, cx, cy - r * .45); x.bezierCurveTo(cx + r * .8, cy - r * 1.3, cx + r * 1.6, cy - r * .2, cx, cy + r); x.fill(); if (on) { x.fillStyle = '#ffb3c7'; ell(x, cx - r * .45, cy - r * .45, r * .26, r * .16, -.6); } };
