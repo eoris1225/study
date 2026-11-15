@@ -270,7 +270,7 @@ Art.chibi = (x, X, Y, s, L, o = {}) => {
     spark(x, -HR * 1.5 - tip, -HR * 2.7, 3.4 + Math.sin(t * 5) * .8, '#ffffff');
   }
   else if (kind === 'resona') { accDraw(x, 3, HR, 0, sway); x.fillStyle = '#b4f06a'; x.save(); x.translate(-2, -HR - 1); x.rotate(Math.sin(t * 6.5) * .25 - .3); x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(-7, -7, -2, -13); x.quadraticCurveTo(5, -8, 0, 0); x.fill(); x.restore(); }
-  else accDraw(x, L.acc | 0, HR, 0, sway);
+  else if (kind !== 'ignis') accDraw(x, L.acc | 0, HR, 0, sway);
   x.restore();
 
   /* --- 가까운 쪽 팔 → 손에 든 것 → 손 (쥐고 있는 것처럼 손이 맨 위) --- */

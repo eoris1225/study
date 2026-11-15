@@ -41,7 +41,7 @@ const World = (() => {
     const dpr = Math.min(2, window.devicePixelRatio || 1), w = innerWidth, h = innerHeight;
     sc = Math.min(h / H, w / 720); W = w / sc; VH = h / sc; cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px'; x.setTransform(dpr * sc, 0, 0, dpr * sc, 0, 0);
   }
-  function spawnAt(xx) { p = { x: xx, y: GY - PH, vx: 0, vy: 0, on: true, dir: 1, hp: 3, inv: 0, coy: 0, safe: xx, walk: 0 }; cam = Math.max(-200, xx - W * .35); hist = []; }
+  function spawnAt(xx) { p = { x: xx, y: GY - PH, vx: 0, vy: 0, on: true, dir: 1, hp: 3, inv: 0, coy: 0, safe: xx, walk: 0 }; cam = Math.max(-200, xx - W * .35); hist = []; for (let i = 120; i >= 0; i--) hist.push({ x: xx - i * 3, y: GY - PH, dir: 1, walk: 0, on: true }); }
 
   function load() {
     $('#game').hidden = false; stage().className = ''; stage().innerHTML = '';
@@ -128,7 +128,7 @@ const World = (() => {
     // events
     if (!busy && next && p.on && Math.abs(next.x - p.x) < 150) runEvent(next);
     cam += (Math.max(-200, Math.min(endX + 300 - W, p.x - W * .38)) - cam) * Math.min(1, dt * 6);
-    hist.push({ x: p.x, y: p.y, dir: p.dir, walk: p.walk, on: p.on }); if (hist.length > 90) hist.shift();
+    { const h = hist[hist.length - 1]; if (!h || Math.hypot(p.x - h.x, p.y - h.y) > 3) { hist.push({ x: p.x, y: p.y, dir: p.dir, walk: p.walk, on: p.on }); if (hist.length > 400) hist.shift(); } else { h.dir = p.dir; h.on = p.on; } }
     for (const f of fx) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 500 * dt; f.life -= dt; } fx = fx.filter(f => f.life > 0);
     for (const f of floatTxt) { f.y -= 40 * dt; f.life -= dt; } floatTxt = floatTxt.filter(f => f.life > 0);
   }
@@ -150,7 +150,10 @@ const World = (() => {
     for (const o of orbs) if (!o.got && o.x > cam - 20 && o.x < cam + W + 20) Art.orb(x, o.x, o.y, t);
     for (const s of slimes) if (s.x > cam - 40 && s.x < cam + W + 40 && (!s.dead || s.dead < .35)) Art.slime(x, s.x, s.y, th.slime, t + s.a, !!s.dead);
     // companions
-    S.party.forEach((id, k) => { const hI = hist[Math.max(0, hist.length - 1 - (k + 1) * 16)] || p, L = compC(id); x.fillStyle = 'rgba(0,0,0,.2)'; x.beginPath(); x.ellipse(hI.x - (k + 1) * 4 * hI.dir, GY, 11, 3, 0, 0, 7); if (hI.on) x.fill(); Art.chibi(x, hI.x - (k + 1) * 4 * hI.dir, hI.y + PH - (L.wings ? 14 : 0), L.wings ? 1 : 1.14, L, { t: t + k, walk: hI.walk, dir: hI.dir, air: !hI.on }); });
+    /* 동료: 주인공이 지나온 길을 따라 일정 거리(64px)씩 떨어져 따라온다. 멈춰 있어도 간격 유지 */
+    const trail = D => { let acc = 0; for (let j = hist.length - 1; j > 0; j--) { const a = hist[j], b = hist[j - 1], d = Math.hypot(a.x - b.x, a.y - b.y); if (acc + d >= D) { const u = (D - acc) / d; return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, on: b.on, dir: a.dir }; } acc += d; } return hist[0] || p; };
+    const gaps = []; S.party.reduce((acc, id, k) => { const g = acc + 58 + (id === 'ignis' || S.party[k - 1] === 'ignis' ? 20 : 0); gaps.push(g); return g; }, 0);
+    for (let k = S.party.length - 1; k >= 0; k--) { const id = S.party[k], hI = trail(gaps[k]), L = compC(id), fdir = Math.abs(hI.x - p.x) > 8 ? Math.sign(p.x - hI.x) : p.dir; if (hI.on) { x.fillStyle = 'rgba(20,6,60,.2)'; x.beginPath(); x.ellipse(hI.x, hI.y + PH, 13, 3.5, 0, 0, 7); x.fill(); } Art.chibi(x, hI.x, hI.y + PH, L.wings ? 1 : 1.14, L, { t: t + k * 1.7, walk: !!p.walk, dir: fdir, air: !hI.on }); }
     // player
     if (p.on) { x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(p.x, p.y + PH, 14, 4, 0, 0, 7); x.fill(); }
     if (!(p.inv > 0 && Math.floor(t * 14) % 2)) Art.chibi(x, p.x, p.y + PH, 1.2, S.look, { t, walk: p.walk, dir: p.dir, air: !p.on });
