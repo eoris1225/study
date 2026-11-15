@@ -4,19 +4,25 @@
 const Cut = (() => {
   const VW = 1280, VH = 720;
   function play(shots, onDone) {
-    const ov = mk('div', 'cutov'), cv = mk('canvas', 'cutcv'), sub = mk('div', 'cutsub'), skip = mk('button', 'cutskip', '건너뛰기 ▸▸'), prog = mk('div', 'cutprog');
-    ov.append(cv, prog, sub, skip); document.body.appendChild(ov);
+    const ov = mk('div', 'cutov'), cv = mk('canvas', 'cutcv'), sub = mk('div', 'cutsub'), skip = mk('button', 'cutskip', '건너뛰기 ▸▸'), prog = mk('div', 'cutprog'), ctl = mk('div', 'cutctl'), bPrev = mk('button', '', '⏮ 이전'), bPause = mk('button', '', '⏸ 멈춤'), bNext = mk('button', '', '다음 ⏭'), big = mk('div', 'cutbig', '⏸');
+    ctl.append(bPrev, bPause, bNext); ov.append(cv, prog, sub, big, ctl, skip); document.body.appendChild(ov);
     const x = cv.getContext('2d');
-    let i = -1, t0 = 0, raf = 0, shown = '', alive = true;
+    let i = -1, t0 = 0, raf = 0, shown = '', alive = true, paused = false, pAt = 0;
     const fit = () => { const d = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(ov.clientWidth * d); cv.height = Math.round(ov.clientHeight * d); };
     fit(); window.addEventListener('resize', fit);
-    const end = () => { if (!alive) return; alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', fit); ov.remove(); onDone && onDone(); };
-    const next = () => { i++; if (i >= shots.length) return end(); t0 = performance.now(); shown = ''; sub.innerHTML = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'done' : k === i ? 'on' : ''}"></i>`).join(''); };
+    const end = () => { if (!alive) return; alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', fit); window.removeEventListener('keydown', onKey); ov.remove(); onDone && onDone(); };
+    const setPause = v => { if (v === paused) return; const now = performance.now(); if (v) pAt = now; else t0 += now - pAt; paused = v; bPause.textContent = v ? '▶ 재생' : '⏸ 멈춤'; ov.classList.toggle('paused', v); };
+    const go = j => { i = Math.max(0, j) - 1; next(); };
+    const next = () => { i++; if (i >= shots.length) return end(); t0 = performance.now(); pAt = t0; shown = ''; sub.innerHTML = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'done' : k === i ? 'on' : ''}"></i>`).join(''); };
     skip.onclick = e => { e.stopPropagation(); end(); };
-    ov.onclick = () => { const s = shots[i], t = (performance.now() - t0) / 1000; if (t < .35) return; next(); };
+    ov.onclick = () => setPause(!paused);
+    bPause.onclick = e => { e.stopPropagation(); setPause(!paused); };
+    bNext.onclick = e => { e.stopPropagation(); next(); };
+    bPrev.onclick = e => { e.stopPropagation(); const t = ((paused ? pAt : performance.now()) - t0) / 1000; go(t > 2 ? i : i - 1); };
+    const onKey = e => { if (e.code === 'Space') { e.preventDefault(); setPause(!paused); } else if (e.code === 'ArrowRight') next(); else if (e.code === 'ArrowLeft') bPrev.onclick(e); }; window.addEventListener('keydown', onKey);
     const frame = now => {
       if (!alive) return;
-      const s = shots[i], t = (now - t0) / 1000, k = Math.min(1, t / s.dur);
+      const s = shots[i], t = ((paused ? pAt : now) - t0) / 1000, k = Math.min(1, t / s.dur);
       const sc = Math.max(cv.width / VW, cv.height / VH), ox = (cv.width - VW * sc) / 2, oy = (cv.height - VH * sc) / 2;
       x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = s.base || '#2a1a7a'; x.fillRect(0, 0, cv.width, cv.height);
       x.setTransform(sc, 0, 0, sc, ox, oy); x.lineCap = 'round'; x.lineJoin = 'round';
@@ -24,7 +30,7 @@ const Cut = (() => {
       let cur = null; for (const L of s.lines || []) if (t >= L[0]) cur = L;
       const key = cur ? cur[0] + cur[2] : '';
       if (key !== shown) { shown = key; sub.innerHTML = cur ? `${cur[1] !== 'narr' ? `<span class="who" style="--who:${whoColor(cur[1])}">${T(whoName(cur[1]))}</span>` : ''}<div class="txt">${T(cur[2])}</div>` : ''; }
-      if (t > s.dur + (s.hold ?? 1.2)) next();
+      if (!paused && t > s.dur + (s.hold ?? 1.2)) next();
       raf = requestAnimationFrame(frame);
     };
     next(); raf = requestAnimationFrame(frame);
