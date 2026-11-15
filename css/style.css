@@ -222,3 +222,25 @@ canvas.cv{border:2px solid var(--line);border-radius:14px}
 
 .lesson .btnrow{position:static!important}
 .paper img{max-width:min(100%,660px)}
+
+/* ---------- 영화식 하단 자막 (월드 대화) ---------- */
+#stage.dlgmode{justify-content:flex-end;padding:0 max(16px,env(safe-area-inset-left)) max(14px,env(safe-area-inset-bottom));background:linear-gradient(transparent 62%,rgba(20,6,60,.42))}
+#stage.dlgmode>*{max-width:980px}
+#stage.dlgmode .vn{flex:1;justify-content:flex-end;gap:14px}
+#stage.dlgmode .dlg{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;background:none!important;border:0!important;border-radius:0;padding:0 0 4px;min-height:0;gap:2px;font-style:normal}
+#stage.dlgmode .dlg .port{display:none}
+#stage.dlgmode .dlg>div{display:flex;flex-direction:column;align-items:center}
+#stage.dlgmode .dlg .who{display:inline-block;margin:0 0 6px;padding:2px 12px;border-radius:999px;font-size:14px;font-weight:800;letter-spacing:.5px;color:#2a0f5e;background:var(--who,#ffd23f);box-shadow:0 2px 0 rgba(42,15,94,.35)}
+#stage.dlgmode .dlg .txt{font-size:clamp(17px,2.5vw,25px);line-height:1.45;font-weight:800;color:#fff;max-width:30em;word-break:keep-all;overflow-wrap:break-word;
+  text-shadow:0 0 3px #2a0f5e,0 0 3px #2a0f5e,0 2px 0 #2a0f5e,2px 0 0 #2a0f5e,-2px 0 0 #2a0f5e,0 -2px 0 #2a0f5e,0 3px 8px rgba(20,6,60,.6);animation:subIn .28s ease-out}
+#stage.dlgmode .dlg.narr .txt{color:#fff6d6}
+#stage.dlgmode .dlg .txt b,#stage.dlgmode .dlg .txt strong{color:#ffd23f}
+#stage.dlgmode .dlg .more{font-size:0;margin-top:4px;color:#fff;opacity:.85;animation:subBob 1s ease-in-out infinite}
+#stage.dlgmode .dlg .more::after{content:'▾';font-size:18px;text-shadow:0 0 3px #2a0f5e,0 2px 0 #2a0f5e}
+#stage.dlgmode .choices{align-items:center;gap:8px}
+#stage.dlgmode .choices button{background:#fff!important;color:#2a0f5e;border:0;border-radius:999px;padding:10px 22px;font-size:16px;font-weight:800;box-shadow:0 4px 0 rgba(42,15,94,.35);text-align:center;max-width:100%}
+#stage.dlgmode .choices button:hover{background:#ffd23f!important;color:#2a0f5e}
+#stage.dlgmode .gp{background:rgba(31,24,85,.92)}
+@keyframes subIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes subBob{50%{transform:translateY(3px)}}
+@media(orientation:landscape) and (max-height:520px){#stage.dlgmode .dlg .txt{font-size:17px}#stage.dlgmode .dlg .who{font-size:12px}#stage.dlgmode .choices button{padding:7px 16px;font-size:14px}}

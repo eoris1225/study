@@ -145,7 +145,7 @@ const World = (() => {
       else if (ev.kind === 'portal') Art.portal(x, X + 10, GY, t);
       else if (ev.kind === 'recruit') { if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, 16, 4, 0, 0, 7); x.fill(); Art.chibi(x, X, GY, 1.35, compC(ev.id), { t, dir: -1 }); } }
       else if (!ev.done) { x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(X, GY, ev.kind === 'boss' ? 50 : 28, 6, 0, 0, 7); x.fill(); Art.monster(x, X, GY, ev.kind === 'boss' ? 2 : 1.15, (i + ch) % 4, ev.kind === 'boss' ? '#b0457a' : th.slime, t, ev.kind === 'boss'); }
-      if (ev === next && !busy) { x.fillStyle = '#ffd166'; x.font = 'bold 30px serif'; x.textAlign = 'center'; x.fillText(ev.kind === 'camp' ? '🏕' : ev.kind === 'portal' ? '✦' : '❗', X, GY - (ev.kind === 'boss' ? 150 : 96) + Math.sin(t * 5) * 5); }
+      if (ev === next && !busy) Art.marker(x, X, GY - (ev.kind === 'boss' ? 160 : ev.kind === 'recruit' ? 120 : 108), t, ev.kind);
     });
     for (const o of orbs) if (!o.got && o.x > cam - 20 && o.x < cam + W + 20) Art.orb(x, o.x, o.y, t);
     for (const s of slimes) if (s.x > cam - 40 && s.x < cam + W + 40 && (!s.dead || s.dead < .35)) Art.slime(x, s.x, s.y, th.slime, t + s.a, !!s.dead);

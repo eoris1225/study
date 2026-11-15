@@ -34,11 +34,13 @@ function openModal(build) { const b = $('#modalBody'); b.innerHTML = ''; $('#mod
 function closeModal() { $('#modalBox').classList.remove('wide'); $('#modal').hidden = true; $('#modalBody').innerHTML = ''; }
 
 /* ---------- VN primitives ---------- */
+function whoColor(w) { return { me: '#ffd23f', ignis: '#ff9a6a', clausia: '#9fe0ff', resona: '#b6f27a' }[w] || '#ffffff'; }
 function renderSay(el, st, onNext) {
   el.innerHTML = '';
   const v = mk('div', 'vn'); const info = whoInfo(st.who);
   if (st.art) v.appendChild(mk('div', 'scene', st.art));
   const d = mk('div', 'dlg' + (info ? '' : ' narr'));
+  d.style.setProperty('--who', whoColor(st.who));
   if (info) d.appendChild(mk('div', 'port', info.port));
   const body = mk('div'); if (info) body.appendChild(mk('div', 'who', info.name));
   body.appendChild(mk('div', 'txt', T(st.text))); body.appendChild(mk('div', 'more', '▼ 눌러서 계속'));
