@@ -48,28 +48,57 @@ const headPath = (x, R, dx = 0, dy = 0) => { const p = headPts(R); x.beginPath()
 const rimLine = (x, R, a0, a1, col, w, k = .84) => { const p = headPts(R), n = p.length / 2, i0 = Math.round(a0 * n), i1 = Math.round(a1 * n); x.strokeStyle = col; x.lineWidth = w; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); for (let i = i0; i <= i1; i++) { const j = (i % n) * 2; i === i0 ? x.moveTo(p[j] * k, p[j + 1] * k) : x.lineTo(p[j] * k, p[j + 1] * k); } x.stroke(); };
 const INK = '#2a1746';
 /* 얼굴: 얼굴 아래쪽에 작은 반쯤 감긴 눈 + 눈꺼풀 선, 짧은 눈썹, 알약 볼터치, 코·입은 짧은 선 */
-const face = (x, kind, R, t, blink, look, skinD, hairD, mouthOpen) => {
-  const fx = R * .2 + look, ey = R * .2;
+/* 얼굴: 큼직한 둥근 눈(흰자·반짝이 없음), 두꺼운 둥근 눈썹, 동그란 코, 작은 알약 입, 번지는 볼 */
+const softDot = (x, cx, cy, r, rgb, a) => { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill(); };
+const face = (x, kind, R, t, blink, look, skin, hairD, eyeC, mouthOpen) => {
+  const fx = R * .14 + look, ey = R * .14, er = R * (kind === 'ignis' ? .15 : .18), ec = mix(eyeC || '#4a2a8a', '#2a1746', .66);
+  for (const d of [-1, 1]) softDot(x, fx + d * R * .48, ey + R * .38, R * .3, '255,70,120', .38);
+  x.lineCap = 'round';
   for (const d of [-1, 1]) {
-    const cx = fx + d * R * .37, rx = R * .135, ry = R * .17;
-    x.lineCap = 'round';
-    if (blink) { x.strokeStyle = INK; x.lineWidth = R * .075; x.beginPath(); x.moveTo(cx - rx, ey + ry * .1); x.quadraticCurveTo(cx, ey + ry * .55, cx + rx, ey + ry * .1); x.stroke(); }
-    else {
-      x.fillStyle = INK; x.beginPath(); x.ellipse(cx, ey, rx, ry, 0, -.4, Math.PI + .4); x.closePath(); x.fill();
-      x.fillStyle = '#fff'; circ(x, cx + rx * .4, ey + ry * .05, R * .04);
-      x.strokeStyle = hairD; x.lineWidth = R * .065; x.beginPath(); x.moveTo(cx - rx * 1.3, ey - ry * .32); x.lineTo(cx + rx * 1.25, ey - ry * .5); x.stroke();
-    }
-    x.strokeStyle = hairD; x.lineWidth = R * .09; x.beginPath(); x.moveTo(cx - rx * .9, ey - R * .33 + (kind === 'ignis' ? d * R * .03 : 0)); x.lineTo(cx + rx * 1.0, ey - R * .37 - (kind === 'ignis' ? d * R * .05 : 0)); x.stroke();
-    x.fillStyle = 'rgba(255,84,140,.5)'; rr(x, cx - R * .17, ey + R * .25, R * .32, R * .08, R * .04); x.fill();
-    x.fillStyle = 'rgba(255,190,210,.5)'; rr(x, cx - R * .1, ey + R * .37, R * .16, R * .045, R * .022); x.fill();
+    const cx = fx + d * R * .41;
+    if (blink) { x.strokeStyle = ec; x.lineWidth = R * .09; x.beginPath(); x.arc(cx, ey - er * .3, er * .9, .5, Math.PI - .5); x.stroke(); }
+    else { x.fillStyle = ec; x.beginPath(); x.ellipse(cx, ey, er, er * 1.08, 0, 0, TAU); x.fill(); }
+    x.strokeStyle = hairD; x.lineWidth = R * .14; x.beginPath();
+    const tilt = kind === 'ignis' ? d * R * .07 : kind === 'clausia' ? -d * R * .03 : 0;
+    x.moveTo(cx - R * .14, ey - R * .37 + tilt); x.lineTo(cx + R * .14, ey - R * .41 - tilt); x.stroke();
   }
-  x.strokeStyle = skinD; x.lineWidth = R * .075; x.lineCap = 'round'; x.beginPath(); x.moveTo(fx + R * .05, ey + R * .1); x.quadraticCurveTo(fx + R * .16, ey + R * .24, fx + R * .03, ey + R * .28); x.stroke();
+  x.fillStyle = mix(skin, '#ff4f6d', .32); circ(x, fx + R * .07, ey + R * .25, R * .11);
+  x.fillStyle = 'rgba(255,255,255,.35)'; circ(x, fx + R * .1, ey + R * .21, R * .04);
   if (kind === 'ignis') return;
-  x.strokeStyle = '#a3365e';
-  if (mouthOpen) { x.fillStyle = '#a3365e'; x.beginPath(); x.ellipse(fx + R * .04, ey + R * .45, R * .1, R * .05 + mouthOpen * R * .07, 0, 0, TAU); x.fill(); }
-  else { x.lineWidth = R * .075; x.beginPath(); x.arc(fx + R * .04, ey + R * .34, R * .11, .35, Math.PI - .35); x.stroke(); }
+  x.fillStyle = '#c23a5e';
+  if (mouthOpen) { x.beginPath(); x.ellipse(fx + R * .05, ey + R * .5, R * .11, R * .05 + mouthOpen * R * .08, 0, 0, TAU); x.fill(); }
+  else { rr(x, fx + R * .05 - R * .13, ey + R * .45, R * .26, R * .085, R * .042); x.fill(); }
 };
-/* 수염: 턱을 덮는 덩어리 하나 + 두 갈래 콧수염 + 결 선 */
+const ears = (x, R, skin, skinD) => { for (const d of [-1, 1]) { x.fillStyle = d < 0 ? skinD : mix(skin, skinD, .4); circ(x, d * R * .97, R * .2, R * .23); x.fillStyle = mix(skinD, '#c2557a', .25); circ(x, d * R * 1.0, R * .22, R * .1); } };
+/* 머리카락 앞쪽 실루엣 (채우기 전 경로만) */
+const hairShape = (x, st, R, sway) => {
+  x.beginPath();
+  if (st === 3) {
+    x.moveTo(-R * 1.04, R * .1); x.quadraticCurveTo(-R * 1.2, -R * .65, -R * .85, -R * 1.0);
+    const tips = [[-R * 1.15, -R * 1.65, -R * .5, -R * 1.12], [-R * .4, -R * 2.0, R * .05, -R * 1.18], [R * .4, -R * 1.85, R * .6, -R * 1.05], [R * 1.12, -R * 1.25, R * .98, -R * .6]];
+    for (const [tx, ty, bx, by] of tips) { const s = sway * R * .25; x.quadraticCurveTo(tx + R * .05 + s, ty + R * .55, tx + s, ty); x.quadraticCurveTo(tx + R * .3 + s, ty + R * .45, bx, by); }
+    x.quadraticCurveTo(R * 1.12, -R * .3, R * 1.02, R * .0);
+    x.quadraticCurveTo(R * .62, -R * .3, R * .3, -R * .28); x.quadraticCurveTo(R * .05, -R * .6, -R * .3, -R * .3); x.quadraticCurveTo(-R * .62, -R * .5, -R * .8, -R * .02); x.closePath();
+  } else {
+    x.moveTo(-R * 1.08, R * .3); x.quadraticCurveTo(-R * 1.24, -R * .95, -R * .15, -R * 1.16); x.quadraticCurveTo(R * .95, -R * 1.22, R * 1.1, -R * .12);
+    x.lineTo(R * 1.02, R * .1);
+    x.quadraticCurveTo(R * .92, -R * .2, R * .62, -R * .26); x.quadraticCurveTo(R * .5, -R * .08, R * .28, -R * .34);
+    x.quadraticCurveTo(R * .1, -R * .12, -R * .12, -R * .36); x.quadraticCurveTo(-R * .3, -R * .1, -R * .55, -R * .22);
+    x.quadraticCurveTo(-R * .74, R * .02, -R * 1.08, R * .3); x.closePath();
+  }
+};
+const capsule = (x, cx, cy, len, w, rot) => { x.save(); x.translate(cx, cy); x.rotate(rot); rr(x, -len / 2, -w / 2, len, w, w / 2); x.fill(); x.restore(); };
+const hairFront = (x, L, R, sway, hair, hairD, hairL, shadowCol) => {
+  const st = L.hairStyle | 0;
+  hairShape(x, st, R, sway);
+  if (shadowCol) { x.fillStyle = shadowCol; x.fill(); return; }
+  const g = x.createLinearGradient(R * .6, -R * 1.4, -R * .9, R * .3); g.addColorStop(0, lt(hair, .14)); g.addColorStop(.5, hair); g.addColorStop(1, hairD);
+  x.fillStyle = g; x.fill();
+  x.fillStyle = mix(hair, '#ffffff', .28);
+  if (st === 3) { capsule(x, -R * .35, -R * 1.25, R * .5, R * .13, -1.2); capsule(x, R * .25, -R * 1.05, R * .36, R * .12, -1.0); }
+  else { capsule(x, R * .1, -R * .92, R * .62, R * .15, -.12); capsule(x, -R * .55, -R * .7, R * .34, R * .13, -.9); capsule(x, R * .72, -R * .5, R * .26, R * .11, 1.0); }
+  if (st === 4) { x.fillStyle = '#ffd166'; rr(x, -R * .98, -R * .72, R * .32, R * .26, R * .12); x.fill(); }
+};
 const beard = (x, R, look, hair, hairD, hairL) => {
   const fx = R * .2 + look, ey = R * .2;
   x.fillStyle = hair; x.beginPath(); x.moveTo(-R * .82, R * .02); x.quadraticCurveTo(-R * .95, R * .85, -R * .2, R * 1.3); x.quadraticCurveTo(R * .45, R * 1.6, R * .8, R * 1.05); x.quadraticCurveTo(R * 1.05, R * .55, R * .97, R * .05); x.quadraticCurveTo(R * .75, R * .55, R * .3, R * .62); x.quadraticCurveTo(-R * .25, R * .62, -R * .55, R * .12); x.closePath(); x.fill();
@@ -90,24 +119,6 @@ const hairBack = (x, L, R, hy, sway, hair, hairD, t) => {
   x.restore();
 };
 /* 머리카락 앞쪽: 위를 덮는 덩어리 + 옆으로 넘긴 앞머리 + 결을 따르는 밝은 선 */
-const hairFront = (x, L, R, sway, hair, hairD, hairL) => {
-  const st = L.hairStyle | 0; x.fillStyle = hair; x.beginPath();
-  if (st === 3) {
-    x.moveTo(-R * 1.04, R * .1); x.quadraticCurveTo(-R * 1.2, -R * .65, -R * .85, -R * 1.0);
-    const tips = [[-R * 1.15, -R * 1.65, -R * .5, -R * 1.12], [-R * .4, -R * 2.0, R * .05, -R * 1.18], [R * .4, -R * 1.85, R * .6, -R * 1.05], [R * 1.12, -R * 1.25, R * .98, -R * .6]];
-    for (const [tx, ty, bx, by] of tips) { const s = sway * R * .25; x.quadraticCurveTo(tx + R * .05 + s, ty + R * .55, tx + s, ty); x.quadraticCurveTo(tx + R * .3 + s, ty + R * .45, bx, by); }
-    x.quadraticCurveTo(R * 1.12, -R * .3, R * 1.02, R * .0);
-    x.quadraticCurveTo(R * .62, -R * .3, R * .3, -R * .28); x.quadraticCurveTo(R * .05, -R * .6, -R * .3, -R * .3); x.quadraticCurveTo(-R * .62, -R * .5, -R * .8, -R * .02); x.closePath(); x.fill();
-  } else {
-    x.moveTo(-R * 1.07, R * .28); x.quadraticCurveTo(-R * 1.22, -R * .95, -R * .15, -R * 1.14); x.quadraticCurveTo(R * .92, -R * 1.2, R * 1.08, -R * .12);
-    x.lineTo(R * 1.0, R * .08); x.quadraticCurveTo(R * .6, -R * .18, R * .18, -R * .52); x.quadraticCurveTo(-R * .2, -R * .05, -R * .72, R * .02); x.quadraticCurveTo(-R * .86, R * .12, -R * 1.07, R * .28); x.closePath(); x.fill();
-    x.fillStyle = hairD; x.beginPath(); x.moveTo(-R * 1.07, R * .28); x.quadraticCurveTo(-R * 1.22, -R * .95, -R * .15, -R * 1.14); x.quadraticCurveTo(-R * .9, -R * .8, -R * .82, R * .08); x.closePath(); x.fill();
-  }
-  x.strokeStyle = hairL; x.lineCap = 'round'; x.lineWidth = Math.max(1.1, R * .085);
-  x.beginPath(); x.moveTo(-R * .45, -R * .86); x.quadraticCurveTo(-R * .02, -R * 1.02, R * .42, -R * .86); x.stroke();
-  x.beginPath(); x.moveTo(R * .58, -R * .66); x.quadraticCurveTo(R * .72, -R * .55, R * .78, -R * .38); x.stroke();
-  if (st === 4) { x.fillStyle = '#ffd166'; rr(x, -R * .98, -R * .72, R * .32, R * .26, R * .12); x.fill(); }
-};
 const accDraw = (x, a, R, hy, sway) => {
   if (a === 1) { x.fillStyle = '#ff5f8f'; poly(x, [R * .5, hy - R * .9, R * 1.25, hy - R * 1.35, R * 1.15, hy - R * .55]); poly(x, [R * .5, hy - R * .9, -R * .15, hy - R * 1.35, -R * .05, hy - R * .6]); x.fillStyle = '#ffd1dc'; circ(x, R * .5, hy - R * .9, 2.6); }
   if (a === 2) { const c = '#40238f'; x.fillStyle = dk(c, .3); ell(x, 0, hy - R * .78, R * 1.5, R * .32); x.fillStyle = c; x.beginPath(); x.moveTo(-R * .85, hy - R * .82); x.quadraticCurveTo(-R * .2, hy - R * 2.1, R * .5 - sway * 6, hy - R * 2.7); x.quadraticCurveTo(R * .55, hy - R * 1.6, R * .85, hy - R * .82); x.closePath(); x.fill(); x.fillStyle = '#ffcf4a'; x.beginPath(); x.moveTo(-R * .82, hy - R * .9); x.quadraticCurveTo(0, hy - R * .68, R * .82, hy - R * .9); x.lineTo(R * .76, hy - R * 1.12); x.quadraticCurveTo(0, hy - R * .9, -R * .76, hy - R * 1.12); x.closePath(); x.fill(); spark(x, R * .5 - sway * 6, hy - R * 2.7, 3, '#fff3b0'); }
@@ -170,14 +181,15 @@ Art.chibi = (x, X, Y, s, L, o = {}) => {
   /* --- 몸통 --- */
   x.save(); x.translate(0, hipY); x.rotate(tiltB);
   const bw = R.bw, bh = R.bh + (kind === 'hero' ? 0 : 0), top = shY - hipY;
+  const bodyG = x.createLinearGradient(bw * .5, top, -bw * .5, 6); bodyG.addColorStop(0, lt(out, .2)); bodyG.addColorStop(.55, out); bodyG.addColorStop(1, dk(out, .14));
   if (kind === 'hero') {
-    x.fillStyle = out; x.beginPath(); x.moveTo(-bw * .36, top + 2); x.quadraticCurveTo(0, top - 2, bw * .36, top + 2); x.quadraticCurveTo(bw * .62, top * .4, bw * .56, 4); x.quadraticCurveTo(0, 8, -bw * .56, 4); x.quadraticCurveTo(-bw * .62, top * .4, -bw * .36, top + 2); x.fill();
+    x.fillStyle = bodyG; x.beginPath(); x.moveTo(-bw * .36, top + 2); x.quadraticCurveTo(0, top - 2, bw * .36, top + 2); x.quadraticCurveTo(bw * .62, top * .4, bw * .56, 4); x.quadraticCurveTo(0, 8, -bw * .56, 4); x.quadraticCurveTo(-bw * .62, top * .4, -bw * .36, top + 2); x.fill();
     x.fillStyle = outD; x.beginPath(); x.moveTo(-bw * .36, top + 2); x.quadraticCurveTo(-bw * .62, top * .4, -bw * .56, 4); x.quadraticCurveTo(-bw * .25, 6.4, -bw * .1, 6.6); x.quadraticCurveTo(-bw * .34, top * .4, -bw * .2, top + .6); x.fill();
     x.fillStyle = outL; x.beginPath(); x.moveTo(-bw * .5, 1.2); x.quadraticCurveTo(0, 5, bw * .5, 1.2); x.lineTo(bw * .56, 4); x.quadraticCurveTo(0, 8, -bw * .56, 4); x.fill();
     x.fillStyle = '#ffcf4a'; rr(x, -bw * .42, top * .34, bw * .84, 2.6, 1.3); x.fill(); x.fillStyle = '#fff3b0'; circ(x, 1.5, top * .34 + 1.3, 2.3);
     x.fillStyle = lt(out, .5); x.beginPath(); x.moveTo(-bw * .3, top + 2.4); x.quadraticCurveTo(1, top + 7, bw * .34, top + 2.4); x.quadraticCurveTo(1, top + 3.4, -bw * .3, top + 2.4); x.fill();
   } else if (kind === 'ignis') {
-    x.fillStyle = out; x.beginPath(); x.moveTo(-bw * .5, top + 5); x.quadraticCurveTo(-bw * .52, top - 1, -bw * .3, top - 2); x.lineTo(bw * .34, top - 2); x.quadraticCurveTo(bw * .56, top - 1, bw * .52, top + 6); x.lineTo(bw * .36, 2); x.quadraticCurveTo(0, 6, -bw * .34, 2); x.closePath(); x.fill();
+    x.fillStyle = bodyG; x.beginPath(); x.moveTo(-bw * .5, top + 5); x.quadraticCurveTo(-bw * .52, top - 1, -bw * .3, top - 2); x.lineTo(bw * .34, top - 2); x.quadraticCurveTo(bw * .56, top - 1, bw * .52, top + 6); x.lineTo(bw * .36, 2); x.quadraticCurveTo(0, 6, -bw * .34, 2); x.closePath(); x.fill();
     x.fillStyle = outD; x.beginPath(); x.moveTo(-bw * .5, top + 5); x.quadraticCurveTo(-bw * .52, top - 1, -bw * .3, top - 2); x.lineTo(-bw * .12, top - 2); x.quadraticCurveTo(-bw * .3, top * .5, -bw * .14, 4); x.quadraticCurveTo(-bw * .26, 3.4, -bw * .34, 2); x.closePath(); x.fill();
     /* 가죽 앞치마 + 벨트 + 압력계 */
     x.fillStyle = '#6b3320'; x.beginPath(); x.moveTo(-bw * .16, top + 3); x.lineTo(bw * .3, top + 3); x.lineTo(bw * .34, 2.4); x.quadraticCurveTo(bw * .1, 5, -bw * .2, 3.6); x.closePath(); x.fill();
@@ -188,7 +200,7 @@ Art.chibi = (x, X, Y, s, L, o = {}) => {
   } else if (kind === 'clausia') {
     /* 로브: 밑단이 물결친다 */
     const hem = 8, wv = i => Math.sin(t * 3 + i * 1.3) * 1.6;
-    x.fillStyle = out; x.beginPath(); x.moveTo(-bw * .36, top + 2); x.quadraticCurveTo(0, top - 2, bw * .36, top + 2); x.quadraticCurveTo(bw * .9, top * .45, bw * 1.0 - sway * 2, hem + wv(0));
+    x.fillStyle = bodyG; x.beginPath(); x.moveTo(-bw * .36, top + 2); x.quadraticCurveTo(0, top - 2, bw * .36, top + 2); x.quadraticCurveTo(bw * .9, top * .45, bw * 1.0 - sway * 2, hem + wv(0));
     for (let i = 1; i <= 4; i++) x.quadraticCurveTo(bw * (1 - i * .5) + bw * .25 - sway * 3, hem + 5 + wv(i), bw * (1 - i * .5) - sway * 3, hem + wv(i + 2));
     x.quadraticCurveTo(-bw * .9, top * .45, -bw * .36, top + 2); x.fill();
     x.fillStyle = outD; x.beginPath(); x.moveTo(-bw * .36, top + 2); x.quadraticCurveTo(-bw * .9, top * .45, -bw - sway * 3, hem + wv(6)); x.quadraticCurveTo(-bw * .6 - sway * 3, hem + 4, -bw * .3 - sway * 3, hem + wv(3)); x.quadraticCurveTo(-bw * .5, top * .5, -bw * .16, top + 1); x.fill();
@@ -196,7 +208,7 @@ Art.chibi = (x, X, Y, s, L, o = {}) => {
     for (let i = 0; i < 3; i++) spark(x, -4 + i * 5 - sway * 2, top * .5 + i * 6, 1.6 + (i & 1), 'rgba(215,245,255,.9)');
     x.fillStyle = '#7fd8ff'; rr(x, -bw * .56, top * .36, bw * 1.12, 2.4, 1.2); x.fill();
   } else {
-    x.fillStyle = out; x.beginPath(); x.ellipse(0, top * .5 + 1, bw * .56, -top * .62 + 2, 0, 0, TAU); x.fill();
+    x.fillStyle = bodyG; x.beginPath(); x.ellipse(0, top * .5 + 1, bw * .56, -top * .62 + 2, 0, 0, TAU); x.fill();
     x.fillStyle = outD; x.beginPath(); x.ellipse(-bw * .22, top * .5 + 1.6, bw * .32, -top * .5 + 1, 0, 0, TAU); x.fill();
     x.fillStyle = '#fff3b0'; for (let i = 0; i < 4; i++) poly(x, [-bw * .5 + i * bw * .27, top + 3.6, -bw * .5 + (i + .5) * bw * .27, top + 8, -bw * .5 + (i + 1) * bw * .27, top + 3.6]);
     x.fillStyle = '#ff9f43'; circ(x, 1, top * .45, 1.8);
@@ -207,12 +219,12 @@ Art.chibi = (x, X, Y, s, L, o = {}) => {
   x.save(); x.translate(walk ? 1.2 : 0, headY); x.rotate((walk ? .05 : 0) + Math.sin(t * .9 + kind.length) * .035);
   const HR = R.headR, elf = fly && kind !== 'ignis', look = Math.sin(t * .47 + kind.length * 2) > .82 ? -HR * .14 : 0;
   if (elf) { x.fillStyle = skinD; x.beginPath(); x.moveTo(-HR * .85, -HR * .1); x.quadraticCurveTo(-HR * 1.35, -HR * .5, -HR * 1.6, -HR * .75); x.quadraticCurveTo(-HR * 1.3, -HR * .05, -HR * .88, HR * .35); x.fill(); }
-  x.fillStyle = skinD; headPath(x, HR); x.fill();
-  x.save(); headPath(x, HR); x.clip(); x.fillStyle = skin; headPath(x, HR, HR * .1, -HR * .1); x.fill(); x.restore();
+  if (!elf) ears(x, HR, skin, skinD);
+  { const g = x.createLinearGradient(HR * .7, -HR, -HR * .8, HR); g.addColorStop(0, lt(skin, .12)); g.addColorStop(.55, skin); g.addColorStop(1, mix(skin, '#e0457a', .22)); x.fillStyle = g; headPath(x, HR); x.fill(); }
+  x.save(); headPath(x, HR); x.clip(); x.translate(-HR * .04, HR * .16); hairFront(x, L, HR, sway, hair, hairD, hairL, mix(skin, '#c2306a', .3)); x.restore();
   if (elf) { x.fillStyle = skin; x.beginPath(); x.moveTo(HR * .9, -HR * .12); x.quadraticCurveTo(HR * 1.35, -HR * .5, HR * 1.6, -HR * .78); x.quadraticCurveTo(HR * 1.35, -HR * .05, HR * .92, HR * .32); x.fill(); x.fillStyle = skinD; x.beginPath(); x.moveTo(HR * 1.0, -HR * .08); x.quadraticCurveTo(HR * 1.3, -HR * .4, HR * 1.42, -HR * .58); x.quadraticCurveTo(HR * 1.22, -HR * .12, HR * 1.0, HR * .12); x.fill(); }
-  face(x, kind, HR, t, blink, look, mix(skin, '#c2557a', .45), hairD, kind === 'resona' ? Math.abs(Math.sin(t * 6.5)) : 0);
+  face(x, kind, HR, t, blink, look, skin, hairD, L.eye, kind === 'resona' ? Math.abs(Math.sin(t * 6.5)) : 0);
   if (kind === 'ignis') beard(x, HR, look, hair, hairD, hairL);
-  rimLine(x, HR, .3, .46, 'rgba(255,228,120,.95)', HR * .085);
   hairFront(x, L, HR, sway, hair, hairD, hairL);
   if (kind === 'clausia') {
     const c = out, tip = sway * 7 + Math.sin(t * 1.7 - 1) * 3;

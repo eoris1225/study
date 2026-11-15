@@ -6,9 +6,9 @@ const KEY = 'twilight_entropy_save_v1';
 let S;
 
 const CH = {
-  ignis: { name: '이그니스', title: '열역학 1법칙의 기관사 (인간)', joint: '단열 강타 — 보스전 생명 +1', look: { rig: 'ignis', skin: '#f3cfae', hair: '#e2552b', hairStyle: 3, eye: '#ffb300', outfit: '#8a2a1a', wings: false, acc: 5 } },
-  clausia: { name: '클라우지아', title: '엔트로피의 마법사 (얼음 요정)', joint: '카르노의 가호 — 보스전 생명 +1', look: { rig: 'clausia', skin: '#f6e6e0', hair: '#b9c7ff', hairStyle: 1, eye: '#5aa9ff', outfit: '#3a3a8a', wings: true, wingColor: 'rgba(170,220,255,.7)', acc: 2 } },
-  resona: { name: '레조나', title: '탄성파의 음유시인 (숲 요정)', joint: '공명 화음 — 보스전 생명 +1', look: { rig: 'resona', skin: '#f8dcc4', hair: '#6fe3c1', hairStyle: 2, eye: '#2f9e6f', outfit: '#1f7a5a', wings: true, wingColor: 'rgba(210,255,170,.7)', acc: 3 } }
+  ignis: { name: '이그니스', title: '열역학 1법칙의 기관사 (인간)', joint: '단열 강타 — 보스전 생명 +1', look: { rig: 'ignis', skin: '#f9a77c', hair: '#e2552b', hairStyle: 3, eye: '#ffb300', outfit: '#8a2a1a', wings: false, acc: 5 } },
+  clausia: { name: '클라우지아', title: '엔트로피의 마법사 (얼음 요정)', joint: '카르노의 가호 — 보스전 생명 +1', look: { rig: 'clausia', skin: '#ffc2c0', hair: '#b9c7ff', hairStyle: 1, eye: '#5aa9ff', outfit: '#3a3a8a', wings: true, wingColor: 'rgba(170,220,255,.7)', acc: 2 } },
+  resona: { name: '레조나', title: '탄성파의 음유시인 (숲 요정)', joint: '공명 화음 — 보스전 생명 +1', look: { rig: 'resona', skin: '#ffbb96', hair: '#6fe3c1', hairStyle: 2, eye: '#2f9e6f', outfit: '#1f7a5a', wings: true, wingColor: 'rgba(210,255,170,.7)', acc: 3 } }
 };
 const TRAITS = { heat: ['🔥 열의 성향', '열역학 챕터에서 생명 +1'], entropy: ['❄️ 엔트로피의 성향', '제2법칙 챕터에서 생명 +1'], wave: ['🎵 파동의 성향', '진동·파동·소리 챕터에서 생명 +1'] };
 
@@ -24,7 +24,7 @@ function whoInfo(w) {
 function T(s) { return String(s).replace(/\{name\}/g, S.name).replace(/\{(ignis|clausia|resona)\}/g, (_, id) => compC(id).name); }
 
 function fresh() {
-  return { name: '조율사', look: { skin: '#f6d9c0', hair: '#5a4a8a', hairStyle: 0, eye: '#6b4a2f', outfit: '#6a3fa0', wings: false, wingColor: 'rgba(255,220,250,.7)', acc: 0 }, orbs: 0, trait: 'heat', ch: 0, step: 0, maxCh: 0, appr: { ignis: 0, clausia: 0, resona: 0 }, party: [], custom: {}, talks: {}, mistakes: [], cleared: {} };
+  return { name: '조율사', look: { skin: '#ffb594', hair: '#5a4a8a', hairStyle: 0, eye: '#6b4a2f', outfit: '#6a3fa0', wings: false, wingColor: 'rgba(255,220,250,.7)', acc: 0 }, orbs: 0, trait: 'heat', ch: 0, step: 0, maxCh: 0, appr: { ignis: 0, clausia: 0, resona: 0 }, party: [], custom: {}, talks: {}, mistakes: [], cleared: {} };
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
 function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.appr) { const f = fresh(); return Object.assign(f, s, { look: Object.assign(f.look, s.look || {}) }); } } catch (e) { } return null; }
