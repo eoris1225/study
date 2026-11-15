@@ -89,13 +89,13 @@ Art.portal = (x, X, Y, t) => { for (let i = 0; i < 3; i++) { x.strokeStyle = `rg
 
 /* 배경 */
 Art.THEMES = [
-  { sky: ['#1a1026', '#5a2418'], far: '#2a1620', mid: '#3d1f1c', g1: '#5a4038', g2: '#3a2a26', top: '#c9a37a', deco: 'gear', part: 'ember', slime: '#ff8a5c' },
-  { sky: ['#1c1a2a', '#6b4a1c'], far: '#2a2430', mid: '#3d3226', g1: '#5c5046', g2: '#3a332e', top: '#d9b25f', deco: 'chimney', part: 'smoke', slime: '#c9a15c' },
-  { sky: ['#07122b', '#2a5c8a'], far: '#12305a', mid: '#1d4a7a', g1: '#9fc4e6', g2: '#5b86b3', top: '#f2fbff', deco: 'crystal', part: 'snow', slime: '#8fd3ff' },
-  { sky: ['#0b2a2a', '#2f7a5c'], far: '#11403a', mid: '#1c5a48', g1: '#4d7a4a', g2: '#33523a', top: '#9fe07a', deco: 'string', part: 'leaf', slime: '#9be36f' },
-  { sky: ['#0b2440', '#3a9ac4'], far: '#12507a', mid: '#1c6a94', g1: '#e0c890', g2: '#b89a62', top: '#fff0c0', deco: 'wave', part: 'bubble', slime: '#6fd0e3' },
-  { sky: ['#140c2e', '#4a2a7a'], far: '#22164a', mid: '#33206a', g1: '#6a5a8a', g2: '#463a62', top: '#c9b6ff', deco: 'arch', part: 'note', slime: '#c58cff' },
-  { sky: ['#1a1030', '#c4743a'], far: '#3a2040', mid: '#5a3038', g1: '#7a6048', g2: '#4f3d30', top: '#ffd166', deco: 'harp', part: 'note', slime: '#ffd166' }
+  { sky: ['#2a1466', '#ff5e62'], far: '#2a1620', mid: '#3d1f1c', g1: '#5a4038', g2: '#3a2a26', top: '#c9a37a', deco: 'gear', part: 'ember', slime: '#ff8a5c' },
+  { sky: ['#1f1a5c', '#ffb347'], far: '#2a2430', mid: '#3d3226', g1: '#5c5046', g2: '#3a332e', top: '#d9b25f', deco: 'chimney', part: 'smoke', slime: '#c9a15c' },
+  { sky: ['#0b1f66', '#3fd0ff'], far: '#12305a', mid: '#1d4a7a', g1: '#9fc4e6', g2: '#5b86b3', top: '#f2fbff', deco: 'crystal', part: 'snow', slime: '#8fd3ff' },
+  { sky: ['#0d3b4f', '#39e6a0'], far: '#11403a', mid: '#1c5a48', g1: '#4d7a4a', g2: '#33523a', top: '#9fe07a', deco: 'string', part: 'leaf', slime: '#9be36f' },
+  { sky: ['#102a7a', '#45d4ff'], far: '#12507a', mid: '#1c6a94', g1: '#e0c890', g2: '#b89a62', top: '#fff0c0', deco: 'wave', part: 'bubble', slime: '#6fd0e3' },
+  { sky: ['#2b0f6b', '#b56bff'], far: '#22164a', mid: '#33206a', g1: '#6a5a8a', g2: '#463a62', top: '#c9b6ff', deco: 'arch', part: 'note', slime: '#c58cff' },
+  { sky: ['#2a1466', '#ff9f43'], far: '#3a2040', mid: '#5a3038', g1: '#7a6048', g2: '#4f3d30', top: '#ffd166', deco: 'harp', part: 'note', slime: '#ffd166' }
 ];
 Art.bg = (x, W, H, cam, th, t, GY) => {
   const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, th.sky[0]); g.addColorStop(1, th.sky[1]); x.fillStyle = g; x.fillRect(0, 0, W, H);

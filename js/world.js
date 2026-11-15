@@ -90,7 +90,7 @@ const World = (() => {
     if (ev.kind === 'recruit') { burst(ev.x + 50, GY - 40, '#9fe3ff', 24); say('동료가 되었다!', '#9fe3ff'); }
     if (ev === events[events.length - 1]) {
       S.cleared[ch] = true; S.ch = ch + 1; S.step = 0; save(); banner = '✦ 챕터 클리어 ✦'; bannerT = 2.2; busy = true;
-      setTimeout(() => { if (G.chapters[S.ch]) load(); else { stop(); ending(); } }, 2000);
+      const doneCh = ch; setTimeout(() => { const go = () => { if (G.chapters[S.ch]) load(); else { stop(); ending(); } }; const secs = PSEC.filter(q => q.ch === doneCh); if (!secs.length) return go(); const sg = stage(); sg.className = 'full'; sg.innerHTML = ''; const d = mk('div', 'gp', `<h2>🎉 ${doneCh + 1}장 클리어!</h2><div class="brief">이제 이 단원의 <b>실제 학교 문제</b>를 풀어 볼 차례예요. 문제집에서 풀고 오면 실력이 붙어요.</div>`); const r = mk('div', 'btnrow'); secs.forEach(q => { const bt = mk('button', 'pri', '📝 ' + q.title); bt.onclick = () => openWorkbook(q.id); r.appendChild(bt); }); const nx = mk('button', '', '다음 장으로 ▶'); nx.onclick = go; r.appendChild(nx); d.appendChild(r); sg.appendChild(d); }, 2000);
     }
   }
 

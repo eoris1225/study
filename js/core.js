@@ -31,7 +31,7 @@ function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s &
 
 /* ---------- modal ---------- */
 function openModal(build) { const b = $('#modalBody'); b.innerHTML = ''; $('#modal').hidden = false; build(b); }
-function closeModal() { $('#modal').hidden = true; $('#modalBody').innerHTML = ''; }
+function closeModal() { $('#modalBox').classList.remove('wide'); $('#modal').hidden = true; $('#modalBody').innerHTML = ''; }
 
 /* ---------- VN primitives ---------- */
 function renderSay(el, st, onNext) {
@@ -95,7 +95,7 @@ function lessonView(el, les, onDone, doneLabel) {
       const ch = mk('div', 'choices'), fb = mk('div', 'msg'); nx.disabled = true;
       c.a.forEach((a, k) => { const b = mk('button', '', a); b.onclick = () => { if (k === c.c) { fb.className = 'msg good'; fb.innerHTML = '✔ 맞아요! ' + c.why; nx.disabled = false;[...ch.children].forEach(x => x.disabled = true); b.style.borderColor = 'var(--green)'; } else { fb.className = 'msg bad'; fb.innerHTML = '✖ 다시 생각해 봐요. ' + (c.hint || ''); b.disabled = true; } }; ch.appendChild(b); });
       box.appendChild(ch); box.appendChild(fb);
-    } else { box.appendChild(mk('h2', '', c.h)); box.appendChild(mk('div', 'brief lbody', T(c.b))); }
+    } else { box.appendChild(mk('h2', '', c.h)); const fx = (window.CARD_FX || {})[les.id + ':' + i]; if (fx) mountFx(box, fx); box.appendChild(mk('div', 'brief lbody', T(c.b))); }
     nav.appendChild(prev); nav.appendChild(nx); box.appendChild(nav); el.appendChild(box); el.scrollTop = 0;
   })();
 }
@@ -161,7 +161,7 @@ function recruit(el, st, next) {
   f.appendChild(l1); f.appendChild(l2); f.appendChild(b); el.appendChild(f); draw();
 }
 function ending() {
-  showFull(st => { st.innerHTML = `<div class="title"><div style="font-size:70px">🌒</div><h1>다음 악장을 기다리며</h1><p>지금까지 조율한 법칙은 마도서에 모두 기록되었다.<br>다음 교재 페이지가 도착하면 새로운 챕터가 이어진다.<br><br>그동안 <b>📖 마도서 → 훈련장</b>에서 미니게임을 반복해 손에 익히자.</p><div class="btns"><button class="pri" onclick="openBook()">📖 마도서 / 훈련장</button><button onclick="openMenu()">챕터 다시 플레이</button></div></div>`; });
+  showFull(st => { st.innerHTML = `<div class="title"><div style="font-size:70px">🌒</div><h1>다음 악장을 기다리며</h1><p>지금까지 조율한 법칙은 마도서에 모두 기록되었다.<br>다음 교재 페이지가 도착하면 새로운 챕터가 이어진다.<br><br>그동안 <b>📖 마도서 → 훈련장</b>에서 미니게임을 반복해 손에 익히자.</p><div class="btns"><button class="pri" onclick="openWorkbook()">📝 실전 문제집 풀기</button><button onclick="openBook()">📖 마도서 / 훈련장</button><button onclick="openMenu()">챕터 다시 플레이</button></div></div>`; });
 }
 
 /* ---------- camp / status / book / menu ---------- */
@@ -246,7 +246,8 @@ function titleScreen() {
   const bs = st.querySelector('.btns');
   st.querySelector('#tArt').innerHTML = '<div class="trio">' + ['ignis', 'clausia', 'resona'].map(id => avatar(CH[id].look, 84)).join('') + '</div>';
   if (sv) { const c = mk('button', 'pri', `이어하기 — ${sv.name} (${Math.min(sv.ch + 1, G.chapters.length)}장)`); c.onclick = () => { S = G.S = sv; goFull(); run(); }; bs.appendChild(c); }
-  const n = mk('button', sv ? '' : 'pri', '새로운 여정'); n.onclick = () => { if (sv && !confirm('기존 저장을 덮어쓰고 새로 시작할까요?')) return; customize(); }; bs.appendChild(n);
+  const wbb = mk('button', '', '📝 실전 문제집 바로 풀기'); wbb.onclick = () => { if (!S) S = G.S = sv || fresh(); openWorkbook(); };
+  const n = mk('button', sv ? '' : 'pri', '새로운 여정'); n.onclick = () => { if (sv && !confirm('기존 저장을 덮어쓰고 새로 시작할까요?')) return; customize(); }; bs.appendChild(n); bs.appendChild(wbb);
 }
 function goFull() { try { const e = document.documentElement; if (('ontouchstart' in window) && e.requestFullscreen && !document.fullscreenElement) e.requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => { })).catch(() => { }); } catch (e) { } }
 function customize() {
@@ -267,7 +268,7 @@ function customize() {
 }
 
 G.boot = () => {
-  $('#bCamp').onclick = () => S && openCamp(); $('#bBook').onclick = () => S && openBook(); $('#bStat').onclick = () => S && openStat(); $('#bMenu').onclick = () => S && openMenu();
+  $('#bCamp').onclick = () => S && openCamp(); $('#bBook').onclick = () => S && openBook(); $('#bStat').onclick = () => S && openStat(); $('#bMenu').onclick = () => S && openMenu(); $('#bWb').onclick = () => S && openWorkbook();
   $('#modalX').onclick = closeModal;
   titleScreen();
 };

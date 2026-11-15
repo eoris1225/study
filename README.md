@@ -11,3 +11,11 @@
 - `js/core.js` — 세이브, 대화, 야영지, 마도서, 캐릭터 커스텀
 - `js/minigames.js` — 미니게임 12종
 - `js/ch1.js` ~ `js/ch7.js` — 챕터별 스토리·기믹·교재 정리 노트 (새 챕터는 파일을 추가하고 `index.html`에 등록)
+
+## 실전 문제집
+
+`docs/`의 수준별 평가 PDF 문항 123개를 `problems/`에 문항별 이미지로 잘라 넣고, `js/problems.js`에 정답·힌트·단계별 풀이를 담았습니다. 게임 안의 📝 버튼으로 엽니다.
+
+- `js/scenes.js` — 만져 보는 애니메이션 장면, 공식 관계 탐구
+- `js/lessons*.js` — 개념 수업
+- `js/workbook.js` — 문제집 화면
