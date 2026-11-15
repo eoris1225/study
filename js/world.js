@@ -156,6 +156,7 @@ const World = (() => {
     if (!(p.inv > 0 && Math.floor(t * 14) % 2)) Art.chibi(x, p.x, p.y + PH, 1, S.look, { t, walk: p.walk, dir: p.dir, air: !p.on });
     for (const f of fx) { x.globalAlpha = Math.max(0, f.life / .7); x.fillStyle = f.col; x.fillRect(f.x - 3, f.y - 3, 6, 6); } x.globalAlpha = 1;
     for (const f of floatTxt) { x.globalAlpha = Math.min(1, f.life * 2); x.fillStyle = f.col; x.font = 'bold 18px serif'; x.textAlign = 'center'; x.strokeStyle = '#000'; x.lineWidth = 3; x.strokeText(f.s, f.x, f.y); x.fillText(f.s, f.x, f.y); } x.globalAlpha = 1;
+    x.translate(cam, 0); Art.fg(x, W, H, cam, th, t, GY);
     x.restore();
     // HUD
     x.textAlign = 'left'; x.font = '22px serif'; x.fillStyle = '#ff6b8a'; x.fillText('❤'.repeat(p.hp) + '♡'.repeat(3 - p.hp), 14, 30);
