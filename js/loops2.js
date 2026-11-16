@@ -88,7 +88,7 @@ LOOPS.fate = {
 
 /* 연결: 회차 적용, 운명 장면, 기억으로 넘기기, 회차 보너스 */
 (() => {
-  const _run = run; run = function () { if (S) Loops.ensure(); _run(); };
+  const _run = run; run = function () { if (S) Loops.ensure(); const lp = Math.min(3, S.loop || 1); S.woke = S.woke || {}; if (S.ch === 0 && S.step === 0 && !S.woke[lp] && typeof Stage !== 'undefined') { S.woke[lp] = 1; save(); World.stop(); return Stage.play(STAGES['wake' + lp](), () => _run()); } _run(); };
   const _gp = gamePanel; gamePanel = function (el, st, ci, si, onWin) {
     const key = ci + ':' + st.title, win = () => { S.won = S.won || {}; S.won[key] = 1; save(); onWin(); }; _gp(el, st, ci, si, win);
     if ((S.loop || 1) > 1 && (S.won || {})[key]) { const row = el.querySelector('.btnrow'); if (row) { const b = mk('button', 'pri', '⏪ 기억대로 처리 (이미 겪은 싸움)'); b.onclick = win; row.insertBefore(b, row.firstChild); } }

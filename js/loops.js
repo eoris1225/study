@@ -10,7 +10,7 @@ const Loops = (() => {
     const loop = Math.min(3, S.loop || 1); if (!base) base = G.chapters.map(ch => ({ title: ch.title, ev: ch.steps.filter(q => q.t !== 'say' && q.t !== 'choice' && q.t !== 'fate') }));
     G.chapters.forEach((ch, ci) => {
       const B = (LOOPS[loop] || [])[ci] || {}, out = [], put = k => (B[k] || []).forEach(l => out.push(line(l))), ev = base[ci].ev; let bossSeen = false; const lastBoss = ev.map(e => !!e.boss).lastIndexOf(true);
-      put('start');
+      if (ci !== 0) put('start');
       ev.forEach((e, k) => {
         if (e.t === 'recruit') put('pre_' + e.id); if (e.t === 'camp') put('camp'); if (e.boss && !bossSeen) { bossSeen = true; put('boss'); }
         if (ci === 6 && k === lastBoss) { if (loop === 1) { out.push({ t: 'fate', k: 'die1' }); return; } if (loop === 3) out.push({ t: 'fate', k: 'stop3' }); }
@@ -28,12 +28,12 @@ const Loops = (() => {
       const info = w === 'n' ? null : w === 'b' ? { name: BOSS.n } : whoInfo(WHO[w]); who.innerHTML = info ? `${info.port || ''}<span>${info.name}</span>` : ''; tx.className = 'dtxt' + (w === 't' ? ' th' : w === 'n' ? ' nar' : ''); tx.innerHTML = T(w === 't' ? `(${s})` : s); tx.style.animation = 'none'; void tx.offsetWidth; tx.style.animation = ''; };
     st.onclick = go; go();
   }
-  function restart(n) { S.loop = n; S.ch = 0; S.step = 0; S.party = []; S.cleared = {}; S.cuts = {}; S.appr = { ignis: 0, clausia: 0, resona: 0 }; S.talks = {}; if (n >= 3) { S.up = S.up || {}; S.up.dj = 1; S.up.mag = 1; } save(); apply(); run(); }
+  function restart(n) { S.loop = n; S.ch = 0; S.step = 0; S.party = []; S.cleared = {}; S.cuts = {}; S.woke = S.woke || {}; delete S.woke[n]; S.appr = { ignis: 0, clausia: 0, resona: 0 }; S.talks = {}; if (n >= 3) { S.up = S.up || {}; S.up.dj = 1; S.up.mag = 1; } save(); apply(); run(); }
   function fate(s, nx) {
-    const D = LOOPS.fate[s.k];
-    if (s.k === 'die1') return drama(D, () => restart(2)); if (s.k === 'die2') return drama(D, () => restart(3));
-    if (s.k === 'stop3') return drama(D, nx);
-    drama(D, () => { S.loop = 4; S.done = 1; save(); nx(); });
+    World.stop(); const show = (cb) => (typeof Stage !== 'undefined' && STAGES[s.k]) ? Stage.play(STAGES[s.k](), cb) : drama(LOOPS.fate[s.k], cb);
+    if (s.k === 'die1') return show(() => restart(2)); if (s.k === 'die2') return show(() => restart(3));
+    if (s.k === 'stop3') return show(nx);
+    show(() => { S.loop = 4; S.done = 1; save(); nx(); });
   }
   return { apply, ensure, fate, restart, drama };
 })();
