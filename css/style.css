@@ -272,3 +272,5 @@ canvas.cv{border:2px solid var(--line);border-radius:14px}
 .inkbar button.on{background:#7a2cf0;color:#fff}
 .inkcols{display:flex;gap:6px;align-items:center}.inkcols i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px #cfc6f5}.inkcols i.on{box-shadow:0 0 0 3px #231046}
 .inkbar input[type=range]{width:90px;accent-color:#7a2cf0}
+
+.shop{background:rgba(122,44,240,.12);border-radius:16px;padding:10px;margin:8px 0;display:grid;gap:6px}.shop button{text-align:left}
