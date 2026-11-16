@@ -274,3 +274,17 @@ canvas.cv{border:2px solid var(--line);border-radius:14px}
 .inkbar input[type=range]{width:90px;accent-color:#7a2cf0}
 
 .shop{background:rgba(122,44,240,.12);border-radius:16px;padding:10px;margin:8px 0;display:grid;gap:6px}.shop button{text-align:left}
+
+/* 회차 드라마 */
+.th{font-style:italic;opacity:.85}
+#stage.drama{display:flex;align-items:center;justify-content:center;background:#0b0820;cursor:pointer;transition:background 1.2s;padding:20px}
+#stage.drama[data-fx=red]{background:#3a0614}#stage.drama[data-fx=black]{background:#000}#stage.drama[data-fx=white]{background:#f4f1ff}#stage.drama[data-fx=gold]{background:linear-gradient(#ffb347,#ff5e8a)}#stage.drama[data-fx=shake]{background:#1a0f3a}
+#stage.drama.hit{animation:dhit .5s}
+@keyframes dhit{0%{transform:translate(0,0);filter:brightness(2.2)}20%{transform:translate(-10px,6px)}40%{transform:translate(9px,-7px)}60%{transform:translate(-6px,4px)}100%{transform:none;filter:none}}
+.dbox{max-width:760px!important;width:100%;text-align:center;color:#fff}
+#stage.drama[data-fx=white] .dbox{color:#231046}
+.dwho{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:92px;margin-bottom:10px}.dwho img{width:64px;height:64px}.dwho span{background:#ffd23f;color:#231046;font-weight:800;border-radius:999px;padding:2px 14px;font-size:14px}
+.dtxt{font-size:clamp(19px,3vw,30px);font-weight:800;line-height:1.6;word-break:keep-all;animation:dfade .7s ease-out}
+.dtxt.th{font-style:italic;font-weight:600;opacity:.9}.dtxt.nar{font-weight:600;opacity:.95}.dtxt b{color:#ffd23f}
+@keyframes dfade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.dnext{margin-top:22px;opacity:.5;animation:dbob 1s infinite alternate}@keyframes dbob{to{transform:translateY(6px)}}

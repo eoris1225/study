@@ -80,6 +80,7 @@ const World = (() => {
       else if (s.t === 'choice') { sg.className = 'dlgmode'; renderChoice(sg, s, nx); }
       else if (s.t === 'game') { sg.className = 'full'; gamePanel(sg, s, ch, i, nx); sg.scrollTop = 0; }
       else if (s.t === 'recruit') { sg.className = 'full'; recruit(sg, s, nx); }
+      else if (s.t === 'fate') Loops.fate(s, () => { $('#game').hidden = false; cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame); nx(); });
       else if (s.t === 'camp') {
         sg.className = 'dlgmode'; sg.innerHTML = ''; const d = mk('div', 'gp', '<h2>🏕 야영지</h2><div class="brief">모닥불이 타오른다. 동료들과 이야기를 나누고 다음 여정을 준비하자. (체력 회복!)</div>'); p.hp = 3;
         const r = mk('div', 'btnrow'), a = mk('button', '', '💬 동료와 대화'), b = mk('button', 'pri', '길을 떠난다'); a.onclick = openCamp; b.onclick = nx; r.appendChild(a); r.appendChild(b); d.appendChild(r); sg.appendChild(d);
