@@ -3,7 +3,7 @@
 const World = (() => {
   const H = 540, GY = 430, PW = 26, PH = 50;
   let cv, x, W = 960, VH = 540, sc = 1, raf = 0, last = 0, t = 0;
-  let ch, th, plats, orbs, slimes, events, endX, p, cam, hist, fx, busy, banner, bannerT, floatTxt;
+  let zones = []; let ch, th, plats, orbs, slimes, events, endX, p, cam, hist, fx, busy, banner, bannerT, floatTxt;
   const keys = {}, pad = { l: 0, r: 0, j: 0 };
   const stage = () => $('#stage');
   function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let q = Math.imul(a ^ a >>> 15, 1 | a); q = q + Math.imul(q ^ q >>> 7, 61 | q) ^ q; return ((q ^ q >>> 14) >>> 0) / 4294967296; }; }
@@ -20,11 +20,12 @@ const World = (() => {
   }
   function build(ci) {
     ch = ci; th = Art.THEMES[ci % Art.THEMES.length]; const R = rng(ci * 7919 + 101), steps = G.chapters[ci].steps;
-    plats = []; orbs = []; slimes = []; events = groupEvents(steps); fx = []; floatTxt = [];
+    plats = []; orbs = []; slimes = []; zones = []; events = groupEvents(steps); fx = []; floatTxt = [];
     let cur = 0, spanStart = -400; const ground = (a, b) => plats.push({ x: a, y: GY, w: b - a, h: 300, g: 1 });
     events.forEach((ev, i) => {
-      const dist = i === 0 ? 420 : 1050 + R() * 500, ex = cur + dist; let pos = cur + (i === 0 ? 9999 : 260);
+      const dist = i === 0 ? 420 : 1500 + R() * 600, ex = cur + dist; let pos = cur + (i === 0 ? 9999 : 260);
       while (pos < ex - 780) {
+        if (R() < .55 && pos < ex - 1100) { const gk = Gim.pick(ci, R()); pos += Gim.make[gk](pos, { plats, orbs, zones, GY, ground: a => ground(spanStart, a), span: v => { spanStart = v; } }); continue; }
         const r = Math.floor(R() * 5);
         if (r === 0) { slimes.push({ x: pos + 120, y: GY, a: pos + 30, b: pos + 230, d: 1, dead: 0 }); for (let k = 0; k < 3; k++) orbs.push({ x: pos + 70 + k * 40, y: GY - 120 }); pos += 330; }
         else if (r === 1) { const w = 120 + R() * 30; ground(spanStart, pos); spanStart = pos + w; for (let k = 0; k < 3; k++) orbs.push({ x: pos + w / 2 + (k - 1) * 40, y: GY - 90 - (k === 1 ? 30 : 0) }); pos += w + 210; }
@@ -102,21 +103,24 @@ const World = (() => {
       const tv = (Rr ? 1 : 0) - (L ? 1 : 0); p.vx += (tv * 250 - p.vx) * Math.min(1, dt * 12); if (tv) p.dir = tv; p.walk = Math.abs(p.vx) > 30;
       p.coy = p.on ? .1 : p.coy - dt;
       if (J && p.coy > 0 && !p.jl) { p.vy = -590; p.coy = 0; p.on = false; } p.jl = J;
-      if (!J && p.vy < -220) p.vy = -220;
+      if (!J && p.vy < -220 && !(p.boost > 0)) p.vy = -220;
       if (J && S.look.wings && p.vy > 110) p.vy = 110; // 요정은 점프를 누르고 있으면 활공
     } else { p.vx *= .8; p.walk = false; }
+    if (p.boost > 0) p.boost -= dt; Gim.tick(dt, busy);
+    for (const q of plats) if (q.up) { const ox = q.x, oy = q.y; q.up(dt, t, p, p.gq === q); if (p.gq === q) { p.x += q.x - ox; p.y += q.y - oy; } }
+    for (const z of zones) z.up(dt, t, p);
     p.vy += 1500 * dt; if (p.inv > 0) p.inv -= dt;
     // X
     let nx = p.x + p.vx * dt; if (nx < -150) nx = -150; if (next && nx > next.x - 46) nx = next.x - 46; if (nx > endX) nx = endX;
-    for (const q of plats) if (nx + PW / 2 > q.x && nx - PW / 2 < q.x + q.w && p.y + PH > q.y + 4 && p.y < q.y + q.h) { if (q.g || p.y + PH > q.y + 10) { nx = p.vx > 0 ? q.x - PW / 2 : q.x + q.w + PW / 2; p.vx = 0; } }
+    for (const q of plats) if (nx + PW / 2 > q.x && nx - PW / 2 < q.x + q.w && p.y + PH > q.y + 4 && p.y < q.y + q.h) { if (!q.step && (q.g || p.y + PH > q.y + 10)) { nx = p.vx > 0 ? q.x - PW / 2 : q.x + q.w + PW / 2; p.vx = 0; } }
     p.x = nx;
     // Y
-    let ny = p.y + p.vy * dt; p.on = false;
+    let ny = p.y + p.vy * dt; p.on = false; const pg = p.gq; p.gq = null;
     for (const q of plats) if (p.x + PW / 2 > q.x + 2 && p.x - PW / 2 < q.x + q.w - 2) {
-      if (p.vy >= 0 && p.y + PH <= q.y + 6 && ny + PH >= q.y) { ny = q.y - PH; p.vy = 0; p.on = true; if (q.g) p.safe = Math.max(q.x + 30, Math.min(q.x + q.w - 30, p.x)); }
+      if (p.vy >= 0 && p.y + PH <= q.y + (q.step || 6) && ny + PH >= q.y) { ny = q.y - PH; p.vy = 0; p.on = true; if (!q.g || !p.gq) p.gq = q; if (q.g) p.safe = Math.max(q.x + 30, Math.min(q.x + q.w - 30, p.x)); }
       else if (!q.g && p.vy < 0 && p.y >= q.y + q.h - 4 && ny <= q.y + q.h) { ny = q.y + q.h; p.vy = 0; }
     }
-    p.y = ny;
+    p.y = ny; if (p.gq && p.gq !== pg && p.gq.land) p.gq.land(p);
     if (p.y > H + 120) { p.inv = 0; hurt(); p.x = p.safe; p.y = GY - PH - 60; p.vx = p.vy = 0; }
     // orbs
     for (const o of orbs) if (!o.got && Math.abs(o.x - p.x) < 26 && Math.abs(o.y - (p.y + PH / 2)) < 36) { o.got = 1; S.orbs = (S.orbs || 0) + 1; burst(o.x, o.y, '#ffe27a', 5); if (S.orbs % 25 === 0) { say('공명 조각 ' + S.orbs + '개! 전투 생명 +1', '#ffe27a'); save(); } }
@@ -137,7 +141,8 @@ const World = (() => {
     x.save(); x.fillStyle = th.sky[0]; x.fillRect(0, 0, W, VH); x.translate(0, VH - H);
     Art.bg(x, W, H, cam, th, t, GY); if (VH > H) { x.fillStyle = th.sky[0]; x.fillRect(0, -(VH - H), W, VH - H + 1); }
     x.translate(-cam, 0);
-    for (const q of plats) if (q.x + q.w > cam && q.x < cam + W) Art.ground(x, q.x, q.y, q.w, q.h, th, !q.g);
+    for (const q of plats) if (q.x + q.w > cam && q.x < cam + W) { if (q.draw) q.draw(x, t); else Art.ground(x, q.x, q.y, q.w, q.h, th, !q.g); }
+    for (const z of zones) if (z.x + 300 > cam && z.x - 200 < cam + W) z.draw(x, t);
     const next = events.find(e => !e.done);
     events.forEach((ev, i) => {
       if (ev.x < cam - 300 || ev.x > cam + W + 300) return; const X = ev.x + 50;
@@ -154,6 +159,7 @@ const World = (() => {
     const trail = D => { let acc = 0; for (let j = hist.length - 1; j > 0; j--) { const a = hist[j], b = hist[j - 1], d = Math.hypot(a.x - b.x, a.y - b.y); if (acc + d >= D) { const u = (D - acc) / d; return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, on: b.on, dir: a.dir }; } acc += d; } return hist[0] || p; };
     const gaps = []; S.party.reduce((acc, id, k) => { const g = acc + 58 + (id === 'ignis' || S.party[k - 1] === 'ignis' ? 20 : 0); gaps.push(g); return g; }, 0);
     for (let k = S.party.length - 1; k >= 0; k--) { const id = S.party[k], hI = trail(gaps[k]), L = compC(id), fdir = Math.abs(hI.x - p.x) > 8 ? Math.sign(p.x - hI.x) : p.dir; if (hI.on) { x.fillStyle = 'rgba(20,6,60,.2)'; x.beginPath(); x.ellipse(hI.x, hI.y + PH, 13, 3.5, 0, 0, 7); x.fill(); } Art.chibi(x, hI.x, hI.y + PH, L.wings ? 1 : 1.14, L, { t: t + k * 1.7, walk: !!p.walk, dir: fdir, air: !hI.on }); }
+    Gim.bubble(x, id => { const k = S.party.indexOf(id); if (k < 0) return null; const h = trail(gaps[k]); return { x: h.x, y: h.y + PH }; });
     // player
     if (p.on) { x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(p.x, p.y + PH, 14, 4, 0, 0, 7); x.fill(); }
     if (!(p.inv > 0 && Math.floor(t * 14) % 2)) Art.chibi(x, p.x, p.y + PH, 1.2, S.look, { t, walk: p.walk, dir: p.dir, air: !p.on });
@@ -169,5 +175,6 @@ const World = (() => {
     $('#pad').style.display = busy ? 'none' : '';
   }
   function frame(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); raf = requestAnimationFrame(frame); }
-  return { load, stop, _dbg: () => ({ p, plats, slimes, events, busy, GY }) };
+  function skip() { const n = events.find(e => !e.done); if (!n) return; S.step = n.to + 1; if (n === events[events.length - 1]) { S.cleared[ch] = true; S.ch = ch + 1; S.step = 0; } save(); const sg = stage(); sg.className = ''; sg.innerHTML = ''; run(); }
+  return { skip, load, stop, _dbg: () => ({ p, plats, slimes, events, busy, GY }) };
 })();

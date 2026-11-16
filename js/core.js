@@ -237,7 +237,9 @@ function openMenu() {
     b.appendChild(mk('h2', '', '☰ 메뉴'));
     b.appendChild(mk('p', 'dim', '진행 상황은 이 브라우저에 자동 저장된다.'));
     const lst = mk('div', 'list'); b.appendChild(lst);
-    G.chapters.forEach((ch, ci) => { if (ci > S.maxCh) return; const bt = mk('button', '', `${S.cleared[ci] ? '✓' : '▶'} ${ch.title} — 처음부터`); bt.onclick = () => { S.ch = ci; S.step = 0; save(); closeModal(); run(); }; lst.appendChild(bt); });
+    const sk = mk('button', 'pri', '⏭ 지금 구간 건너뛰기 (다음 만남으로)'); sk.onclick = () => { closeModal(); World.skip(); }; lst.appendChild(sk);
+    const nav = mk('div', 'btnrow'), pv = mk('button', '', '◀ 이전 장'), nx = mk('button', '', '다음 장 ▶'); pv.disabled = S.ch <= 0; nx.disabled = S.ch >= G.chapters.length - 1; pv.onclick = () => { S.ch--; S.step = 0; save(); closeModal(); run(); }; nx.onclick = () => { S.ch++; S.step = 0; save(); closeModal(); run(); }; nav.append(pv, nx); lst.appendChild(nav);
+    G.chapters.forEach((ch, ci) => { const bt = mk('button', '', `${S.cleared[ci] ? '✓' : '▶'} ${ch.title} — 처음부터`); bt.onclick = () => { S.ch = ci; S.step = 0; save(); closeModal(); run(); }; lst.appendChild(bt); });
     const ex = mk('button', '', '💾 세이브 코드 내보내기 / 불러오기'); lst.appendChild(ex);
     ex.onclick = () => { const v = prompt('아래 코드를 복사해 보관하거나, 다른 기기의 코드를 붙여넣고 확인을 누르세요.', btoa(unescape(encodeURIComponent(JSON.stringify(S))))); if (v) { try { const s = JSON.parse(decodeURIComponent(escape(atob(v)))); if (s && s.appr) { S = G.S = Object.assign(fresh(), s); save(); closeModal(); run(); } } catch (e) { alert('코드를 읽을 수 없다.'); } } };
     const nw = mk('button', '', '⚠ 새로 시작 (저장 삭제)'); lst.appendChild(nw);
