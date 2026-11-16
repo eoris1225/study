@@ -48,7 +48,7 @@ const World = (() => {
   function load() {
     $('#game').hidden = false; stage().className = ''; stage().innerHTML = '';
     if (!cv) { cv = $('#world'); x = cv.getContext('2d'); addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 200)); bind(); }
-    resize(); build(S.ch);
+    resize(); Gim.reset(); build(S.ch);
     let sx = 80; events.forEach(ev => { if (S.step > ev.to) { ev.done = true; sx = ev.sx; } });
     spawnAt(sx); busy = false; banner = G.chapters[S.ch].title; bannerT = 3.2;
     $('#chTitle').textContent = G.chapters[S.ch].title;

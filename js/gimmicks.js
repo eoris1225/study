@@ -5,7 +5,7 @@ const Gim = (() => {
   const pill = (x, X, Y, s, col = '#fff', fg = '#2a0f5e') => { x.font = '800 13px system-ui,sans-serif'; const w = x.measureText(s).width + 18; x.fillStyle = 'rgba(42,15,94,.25)'; rrp(x, X - w / 2, Y - 9, w, 24, 12); x.fill(); x.fillStyle = col; rrp(x, X - w / 2, Y - 12, w, 24, 12); x.fill(); x.fillStyle = fg; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(s, X, Y + 1); x.textBaseline = 'alphabetic'; };
   const rrp = (x, a, b, w, h, r) => { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); };
   const plank = (x, q, col) => { x.fillStyle = 'rgba(42,15,94,.25)'; rrp(x, q.x, q.y + 4, q.w, q.h, 7); x.fill(); x.fillStyle = col; rrp(x, q.x, q.y, q.w, q.h, 7); x.fill(); x.fillStyle = 'rgba(255,255,255,.45)'; rrp(x, q.x + 5, q.y + 3, q.w - 10, 4, 2); x.fill(); };
-  const first = {}; const note = (k, lines) => { if (!first[k]) { first[k] = 1; say(lines); } };
+  let first = {}; const note = (k, lines) => { if (!first[k]) { first[k] = 1; say(lines); } };
   /* c: {plats, orbs, zones, GY, ground(a), span(v)} → 사용한 길이 */
   const make = {
     lift(pos, c) { // 등압 팽창 리프트: 올라서면 가열 → 부피 증가 → 높은 턱으로
@@ -59,5 +59,6 @@ const Gim = (() => {
   function say(lines) { const ok = lines.filter(l => S.party.includes(l[0])); if (ok.length) queue = ok.slice(); }
   function tick(dt, busy) { if (busy) { cur = null; queue = []; return; } if (cur) { cur.life -= dt; if (cur.life <= 0) cur = null; return; } if (queue.length) { const l = queue.shift(); cur = { id: l[0], s: T(l[1]), life: 1.6 + l[1].length * .06 }; Sfx.play('talk'); wait = 7 + Math.random() * 6; return; } wait -= dt; if (wait <= 0 && S.party.length) { say(BANTER[(used++ * 5 + S.party.length) % BANTER.length]); wait = 3; } }
   function bubble(x, pos) { if (!cur) return; const q = pos(cur.id); if (!q) return; x.font = '800 15px system-ui,sans-serif'; const words = cur.s.split(' '), lines = ['']; words.forEach(w => { if (x.measureText(lines[lines.length - 1] + ' ' + w).width > 230) lines.push(w); else lines[lines.length - 1] += (lines[lines.length - 1] ? ' ' : '') + w; }); const w = Math.max(...lines.map(l => x.measureText(l).width)) + 26, h = lines.length * 20 + 16, k = Math.min(1, (1.6 + cur.s.length * .06 - cur.life) * 6, cur.life * 5), X = q.x, Y = q.y - 86; x.save(); x.translate(X, Y); x.scale(k, k); x.fillStyle = 'rgba(42,15,94,.25)'; rrp(x, -w / 2, -h + 4, w, h, 14); x.fill(); x.fillStyle = '#fff'; rrp(x, -w / 2, -h, w, h, 14); x.fill(); x.beginPath(); x.moveTo(-8, -1); x.lineTo(0, 12); x.lineTo(8, -1); x.fill(); x.fillStyle = '#2a0f5e'; x.textAlign = 'center'; lines.forEach((l, i) => x.fillText(l, 0, -h + 24 + i * 20)); x.restore(); }
-  return { pick: (ci, r) => { const s = SETS[ci % SETS.length]; return s[Math.floor(r * s.length)]; }, make, tick, bubble, say };
+  const reset = () => { first = {}; queue = []; cur = null; wait = 6; };
+  return { reset, pick: (ci, r) => { const s = SETS[ci % SETS.length]; return s[Math.floor(r * s.length)]; }, make, tick, bubble, say };
 })();
