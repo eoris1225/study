@@ -14,7 +14,8 @@ const Loops = (() => {
       ev.forEach((e, k) => {
         if (e.t === 'recruit') put('pre_' + e.id); if (e.t === 'camp') put('camp'); if (e.boss && !bossSeen) { bossSeen = true; put('boss'); }
         if (ci === 6 && k === lastBoss) { if (loop === 1) { out.push({ t: 'fate', k: 'die1' }); return; } if (loop === 3) out.push({ t: 'fate', k: 'stop3' }); }
-        out.push(e); if (e.t === 'recruit') put('post_' + e.id);
+        const gz = ci === 0 && e.t === 'game' && /눈금/.test(e.title || ''); if (gz) out.push({ t: 'fate', k: 'gauge0' });
+        out.push(e); if (gz) out.push({ t: 'fate', k: 'gauge1' }); if (e.t === 'recruit') put('post_' + e.id);
         if (ci === 6 && k === lastBoss) out.push({ t: 'fate', k: loop === 2 ? 'die2' : 'happy' });
       });
       put('end'); ch.steps = out; ch.title = base[ci].title.replace(/ — .*/, '') + (loop > 1 ? ` · ${loop}회차` : '');
@@ -32,7 +33,7 @@ const Loops = (() => {
   function fate(s, nx) {
     World.stop(); const show = (cb) => (typeof Stage !== 'undefined' && STAGES[s.k]) ? Stage.play(STAGES[s.k](), cb) : drama(LOOPS.fate[s.k], cb);
     if (s.k === 'die1') return show(() => restart(2)); if (s.k === 'die2') return show(() => restart(3));
-    if (s.k === 'stop3') return show(nx);
+    if (s.k === 'stop3' || s.k.startsWith('gauge')) return show(nx);
     show(() => { S.loop = 4; S.done = 1; save(); nx(); });
   }
   return { apply, ensure, fate, restart, drama };
@@ -41,7 +42,7 @@ const Loops = (() => {
 /* ══════════ 1회차 — 아무것도 모르던 때 ══════════ */
 LOOPS[1] = [
   { start: [['n', '세계가 식어 가고 있었다. 사람들은 그것을 <b>침묵</b>이라고 불렀다.'], ['t', '어제까지 나는 편의점 야간 알바였다. 폐기 삼각김밥으로 저녁을 때우던.'], ['t', '그런데 눈을 떠 보니 손에 낡은 음차가 들려 있고, 다들 나를 “조율사님”이라고 부른다.'], ['m', '…저기, 사람 잘못 보신 것 같은데요.'], ['n', '아무도 듣지 않았다. 세상을 구할 사람이 필요했고, 마침 당신이 거기 서 있었다.']],
-    pre_ignis: [['n', '식어 버린 보일러 옆에 덩치 큰 남자가 엎어져 있다.'], ['i', '배… 고파…'], ['t', '죽어 가는 줄 알았는데 배가 고픈 거였다.']],
+    pre_ignis: [['n', '눈금은 올라왔는데, 남자는 도로 바닥에 엎어졌다.'], ['i', '배… 고파…'], ['t', '엔진 말고 위장도 비어 있었다.']],
     post_ignis: [['i', '살았다! 난 이그니스. 은혜는 꼭 갚는 놈이야. 이거 다 끝나면 내가 고기 산다. 진짜로.'], ['m', '아니, 저는 그냥 지나가던…'], ['i', '지나가던 사람이 제일 믿을 만해! 가자, 조율사!'], ['t', '목소리가 너무 커서 거절할 타이밍을 놓쳤다.']],
     camp: [['i', '야, 너 원래 뭐 하던 사람이야?'], ['m', '편의점… 알바요.'], ['i', '편의점이 뭔진 모르겠지만 멋진데? 밤새 사람들 먹을 걸 지키는 거잖아.'], ['t', '그렇게 말해 준 사람은 처음이었다.']],
     boss: [['i', '겁나냐? 나도 겁나. 근데 둘이 겁나면 덜 겁나더라.']],
