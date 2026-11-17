@@ -9,7 +9,7 @@ const Loops = (() => {
   function apply() {
     const loop = Math.min(3, S.loop || 1); if (!base) base = G.chapters.map(ch => ({ title: ch.title, ev: ch.steps.filter(q => q.t !== 'say' && q.t !== 'choice' && q.t !== 'fate') }));
     G.chapters.forEach((ch, ci) => {
-      const B = (LOOPS[loop] || [])[ci] || {}, out = [], put = k => (B[k] || []).forEach(l => out.push(line(l))), ev = base[ci].ev; let bossSeen = false; const lastBoss = ev.map(e => !!e.boss).lastIndexOf(true);
+      const B = (LOOPS[loop] || [])[ci] || {}, out = [], put = k => { if (!B[k] || !B[k].length) return; if (typeof Stage !== 'undefined') out.push({ t: 'fate', k: 'beat', beat: k, ci, lines: B[k] }); else B[k].forEach(l => out.push(line(l))); }, ev = base[ci].ev; let bossSeen = false; const lastBoss = ev.map(e => !!e.boss).lastIndexOf(true);
       if (ci !== 0) put('start');
       ev.forEach((e, k) => {
         if (e.t === 'recruit') put('pre_' + e.id); if (e.t === 'camp') put('camp'); if (e.boss && !bossSeen) { bossSeen = true; put('boss'); }
@@ -33,6 +33,7 @@ const Loops = (() => {
   function fate(s, nx) {
     World.stop(); const show = (cb) => (typeof Stage !== 'undefined' && STAGES[s.k]) ? Stage.play(STAGES[s.k](), cb) : drama(LOOPS.fate[s.k], cb);
     if (s.k === 'die1') return show(() => restart(2)); if (s.k === 'die2') return show(() => restart(3));
+    if (s.k === 'beat') return Stage.play(STAGES.beat(s), nx);
     if (s.k === 'stop3' || s.k.startsWith('gauge')) return show(nx);
     show(() => { S.loop = 4; S.done = 1; save(); nx(); });
   }

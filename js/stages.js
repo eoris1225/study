@@ -16,9 +16,19 @@ const STAGES = (() => {
       { bg: 'shrine', lines: sl(L, 0, 4), act: [{ id: 'me', x: 600, pose: 'lie' }], fx: [{ k: 'flash', at: [0, .12] }] },
       { bg: 'shrine', lines: sl(L, 4, 5), min: 4, act: [{ id: 'me', x: 600, pose: 'rise', at: [.1, .7] }] }]; },
     gauge0: () => { const lp = Math.min(3, S.loop || 1), L = { 1: [['n', '식어 버린 보일러 옆에 누가 쓰러져 있다. 가슴에 박힌 엔진의 눈금이 바닥을 가리킨다.'], ['t', '…사람 가슴에 왜 눈금이 달려 있지.'], ['i', '으… 눈금이… 안 올라가…']], 2: [['t', '저 눈금. 지난번엔 한참을 헤맸다.'], ['i', '으…'], ['m', '가만있어. 금방 올려 줄게.']], 3: [['t', '눈금 바닥. 삼십 초면 된다.'], ['m', '숨 쉬어. 올린다.']] }[lp];
-      return [{ bg: 'boiler', lines: L, act: [{ id: 'ignis', x: 560, pose: 'lie', s: 3.4 }, { id: 'me', x: 180, pose: 'walk', x1: 380, at: [.05, .35] }], fx: [{ k: 'gauge', a: .04, b: .04, flick: 1, tx: 600, at: [0, 1] }] }]; },
+      return [{ bg: 'boiler', lines: L, act: [{ id: 'ignis', x: 620, pose: 'lie', s: 3.4 }, { id: 'me', x: 120, pose: 'walk', x1: 300, at: [.05, .35] }], fx: [{ k: 'gauge', a: .04, b: .04, flick: 1, tx: 660, at: [0, 1] }] }]; },
     gauge1: () => { const lp = Math.min(3, S.loop || 1), L = { 1: [['n', '눈금이 떨리더니, 천천히 올라갔다.'], ['i', '…어? 따뜻해.'], ['t', '방금 내가 사람을 살린 건가. 편의점 알바가.']], 2: [['n', '눈금이 올라갔다.'], ['t', '따뜻하다. 살아 있다. …됐다. 하나.']], 3: [['n', '눈금이 올라갔다.'], ['i', '너… 손이 익숙한데? 처음 하는 솜씨가 아니야.'], ['m', '기분 탓이야.']] }[lp];
-      return [{ bg: 'boiler', min: 7, lines: L, act: [{ id: 'ignis', x: 560, pose: 'rise', at: [.5, .75], s: 3.4 }, { id: 'me', x: 380 }], fx: [{ k: 'gauge', a: .04, b: .82, tx: 600, at: [.08, .45] }, { k: 'flash', at: [.4, .55] }] }]; },
+      return [{ bg: 'boiler', min: 7, lines: L, act: [{ id: 'ignis', x: 620, pose: 'rise', at: [.5, .75], s: 3.4 }, { id: 'me', x: 300 }], fx: [{ k: 'gauge', a: .04, b: .82, tx: 660, at: [.08, .45] }, { k: 'flash', at: [.4, .55] }] }]; },
+    beat: (st) => { // 장 중간 대목: 그 장의 배경 위에서 일행이 움직인다
+      const lp = Math.min(3, S.loop || 1), k = st.beat, ci = st.ci, X0 = { resona: 150, clausia: 290, ignis: 430, me: 570 }, who = ['resona', 'clausia', 'ignis'].filter(id => S.party.includes(id)).concat('me'), newc = k.startsWith('pre_') || k.startsWith('post_') ? k.split('_')[1] : null;
+      const lines = st.lines.map(l => [l[0], l[1]]), sc = { bg: 'ch', ci, lines, act: [], fx: [] };
+      if (k === 'camp') { sc.night = 1; const seats = lp === 3 && ci < 6 ? { resona: 330, clausia: 450, ignis: 830, me: 1120 } : lp === 3 ? { resona: 760, clausia: 450, ignis: 880, me: 560 } : { resona: 330, clausia: 450, ignis: 830, me: 950 }; who.forEach(id => sc.act.push({ id, x: seats[id], pose: 'sit', dir: seats[id] > 640 ? -1 : 1 })); sc.fx.push({ k: 'fire', x: 640, at: [0, 1] }); }
+      else if (k === 'boss') { who.forEach(id => sc.act.push({ id, x: X0[id] - 60 })); sc.boss = { pose: 'rise', at: [.02, .3], s: ci === 6 ? 6.5 : 4.2, x: 1010 }; sc.fx.push({ k: 'red', at: [0, .4] }, { k: 'shake', at: [.2, .3] }); }
+      else if (k === 'start') who.forEach((id, i) => sc.act.push({ id, x: X0[id] - 520, pose: 'walk', x1: X0[id], at: [0, .32] }));
+      else if (newc && k.startsWith('pre_')) { who.filter(id => id !== newc).forEach(id => sc.act.push({ id, x: X0[id] - 420, pose: 'walk', x1: X0[id] - 80, at: [0, .25] })); sc.act.push(newc === 'ignis' ? { id: newc, x: 900, pose: 'lie' } : { id: newc, x: 900, dir: -1, sing: newc === 'resona' }); }
+      else if (newc) { who.filter(id => id !== newc).forEach(id => sc.act.push({ id, x: X0[id] - 80 + (id === 'me' ? 120 : 0) })); sc.act.push(newc === 'ignis' ? { id: newc, x: 900, pose: 'rise', at: [0, .12] } : { id: newc, x: 900, pose: 'walk', x1: 760, at: [.05, .25] }); sc.act[sc.act.length - 1].dir = -1; }
+      else { who.forEach(id => sc.act.push({ id, x: X0[id], pose: id === 'me' ? 'stand' : (lp === 1 ? 'jumpjoy' : 'stand') })); }
+      return [sc]; },
     die1: () => { const L = LOOPS.fate.die1; return [
       { bg: 'tomb', lines: sl(L, 0, 3), act: party(), boss: { pose: 'cast' }, fx: [{ k: 'red', at: [.1, .7] }, { k: 'shake', at: [.6, .8] }] },
       { bg: 'tomb', lines: sl(L, 3, 7), act: party({ over: { ignis: { pose: 'ash', x: 720, at: [.45, .95] } } }), boss: { pose: 'cast' }, fx: [{ k: 'flash', at: [.35, .6] }] },

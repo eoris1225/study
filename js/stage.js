@@ -36,6 +36,10 @@ const Stage = (() => {
       x.fillStyle = '#2a1038'; x.fillRect(-50, GY, 1400, 200); x.fillStyle = '#6b3468'; rrp(x, -50, GY - 6, 1400, 20, 8); x.fill();
       for (let i = 0; i < 14; i++) E(x, (i * 173 + t * 8) % 1300, 100 + (i * 67) % 400, 2, 2, 'rgba(255,220,200,.35)');
     },
+    ch(x, t, sc) { // 그 장의 맵 배경 그대로 + 밤이면 어둡게
+      const th = Art.THEMES[(sc.ci || 0) % Art.THEMES.length]; x.save(); x.translate(-60, 0); Art.bg(x, 1400, 720, 260 + t * 6, th, t, GY); Art.ground(x, -40, GY, 1500, 240, th, false); x.restore();
+      if (sc.night) { x.fillStyle = 'rgba(16,8,70,.55)'; x.fillRect(-200, -200, 1680, 1120); for (let i = 0; i < 24; i++) E(x, (i * 211) % 1280, (i * 67) % 300, 2, 2, `rgba(255,255,255,${.4 + .4 * Math.sin(t * 2 + i)})`); }
+    },
     void(x, t) { grad(x, '#05030f', '#140a2e'); for (let i = 0; i < 16; i++) E(x, (i * 173) % 1280, (i * 91 + t * 10) % 720, 2, 2, 'rgba(255,255,255,.25)'); }
   };
   const look = id => id === 'me' ? S.look : compC(id);
@@ -44,13 +48,14 @@ const Stage = (() => {
     const p = a.pose || 'stand';
     if (p === 'walk') { X = a.x + (a.x1 - a.x) * e; walk = u > 0 && u < 1; dir = Math.sign(a.x1 - a.x) || 1; }
     else if (p === 'lie') rot = 1; else if (p === 'rise') { rot = 1 - e; if (u > 0 && u < 1) Y -= Math.sin(u * Math.PI) * 10; } else if (p === 'fall') rot = e;
-    else if (p === 'ash' || p === 'shatter' || p === 'fade' || p === 'light') alpha = 1 - e; else if (p === 'lift') { Y -= e * 150; air = true; } else if (p === 'jumpjoy') { Y -= Math.abs(Math.sin(t * 6)) * 40; air = true; } else if (p === 'sit') Y += 34;
+    else if (p === 'ash' || p === 'shatter' || p === 'fade' || p === 'light') alpha = 1 - e; else if (p === 'lift') { Y -= e * 150; air = true; } else if (p === 'jumpjoy') { Y -= Math.abs(Math.sin(t * 6)) * 40; air = true; } 
     if (alpha <= 0) return;
     if (!rot) E(x, X, GY + 4, 16 * s, 4 * s, `rgba(20,6,60,${.25 * alpha})`);
     if (p === 'ash' && u > 0) { E(x, X, Y - 100, 150 * (1 - e) + 40, 150 * (1 - e) + 40, `rgba(255,255,255,${.5 * (1 - e)})`); for (let i = 0; i < 22; i++) { const pp = cl(u * 1.4 - i * .02); E(x, X + Math.sin(i * 2.3) * 60 * pp + Math.sin(t * 3 + i) * 6, Y - 60 - i * 5 - pp * 260, 5 - pp * 3, 5 - pp * 3, i % 2 ? `rgba(255,140,60,${1 - pp})` : `rgba(90,70,90,${1 - pp})`); } }
     if (p === 'shatter' && u > 0) for (let i = 0; i < 18; i++) { const an = i * .7, d = e * (120 + i * 12); x.save(); x.translate(X + Math.cos(an) * d, Y - 90 + Math.sin(an) * d + e * e * 120); x.rotate(an + e * 4); x.fillStyle = `rgba(190,235,255,${1 - e * .8})`; x.beginPath(); x.moveTo(-10, 0); x.lineTo(0, -16); x.lineTo(12, 4); x.fill(); x.restore(); }
     if (p === 'light' && u > 0) { E(x, X, Y - 90, 60 + e * 260, 60 + e * 260, `rgba(255,255,255,${.6 * (1 - e) + .2})`); for (let i = 0; i < 16; i++) E(x, X + Math.sin(i * 1.9) * 80 * e, Y - 40 - i * 14 - e * 200, 5, 5, `rgba(255,240,180,${1 - e})`); }
     x.save(); x.globalAlpha = alpha; x.translate(X, Y); if (rot) { x.translate(0, -8 * s * rot); x.rotate(-rot * Math.PI / 2 * (a.flip ? -1 : 1)); }
+    if (p === 'sit') { x.fillStyle = '#5a3a2a'; x.beginPath(); x.ellipse(0, -6, 17 * s, 5 * s, 0, 0, 7); x.fill(); x.translate(0, -10); x.scale(1, .86); }
     Art.chibi(x, 0, 0, s, L, { t: t + (a.id.length), walk, dir, air }); x.restore();
     if (a.sing) for (let i = 0; i < 4; i++) { const pp = (t * .45 + i / 4) % 1; x.globalAlpha = (1 - pp) * alpha; x.fillStyle = '#fff'; x.font = '800 40px sans-serif'; x.fillText(i % 2 ? '♪' : '♫', X + 30 + pp * 80 + Math.sin(t * 2 + i) * 16, Y - 190 - pp * 170); x.globalAlpha = 1; }
   }
@@ -74,13 +79,15 @@ const Stage = (() => {
       x.fillStyle = on ? '#3a2a4a' : '#8a7a92'; x.font = '800 30px system-ui,sans-serif'; x.textAlign = 'center'; x.fillText(on ? '♥ ' + Math.round(lv * 100) : '· · ·', 0, 70); x.restore();
       x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = 4; x.setLineDash([8, 10]); x.beginPath(); x.moveTo(cx - 150, cy + 90); x.lineTo(f.tx || 560, GY - 60); x.stroke(); x.setLineDash([]);
       if (on) for (let i = 0; i < 5; i++) { const pp = (t * .5 + i / 5) % 1; E(x, (f.tx || 560) - 40 + i * 20 + Math.sin(t * 2 + i) * 8, GY - 120 - pp * 200, 10 + pp * 22, 10 + pp * 22, `rgba(255,255,255,${.5 * (1 - pp)})`); } }
-    else if (f.k === 'fire') { Art.campfire(x, f.x || 640, GY + 6, t); }
+    else if (f.k === 'fire') { const X = f.x || 640; E(x, X, GY - 60, 230, 200, 'rgba(255,170,60,.22)'); x.strokeStyle = '#5a3a2a'; x.lineWidth = 16; x.lineCap = 'round'; x.beginPath(); x.moveTo(X - 46, GY + 2); x.lineTo(X + 46, GY - 14); x.moveTo(X - 46, GY - 14); x.lineTo(X + 46, GY + 2); x.stroke();
+      [['#ff5470', 46, 120], ['#ff8a3d', 34, 92], ['#ffd23f', 20, 60]].forEach(([c, w, h], i) => { const hh = h + Math.sin(t * 9 + i * 2) * 14; x.fillStyle = c; x.beginPath(); x.moveTo(X - w, GY - 10); x.quadraticCurveTo(X - w * .5 + Math.sin(t * 7 + i) * 10, GY - hh * .7, X + Math.sin(t * 5 + i) * 8, GY - 10 - hh); x.quadraticCurveTo(X + w * .7, GY - hh * .5, X + w, GY - 10); x.fill(); });
+      for (let i = 0; i < 6; i++) { const pp = (t * .5 + i / 6) % 1; E(x, X + Math.sin(i * 2 + t) * 30, GY - 120 - pp * 220, 3, 3, `rgba(255,200,90,${1 - pp})`); } }
     else if (f.k === 'grab' && u > 0) { x.strokeStyle = '#fff'; x.lineWidth = 8; x.globalAlpha = bell; for (let i = 0; i < 6; i++) { const an = i * 1.05; x.beginPath(); x.moveTo((f.x || 640) + Math.cos(an) * 50, GY - 150 + Math.sin(an) * 50); x.lineTo((f.x || 640) + Math.cos(an) * 90, GY - 150 + Math.sin(an) * 90); x.stroke(); } x.globalAlpha = 1; }
   }
   const dur = s => 1.7 + s.replace(/<[^>]+>/g, '').length * .075;
   function build(scenes) {
     return scenes.map(sc => { let t0 = .5; const lines = (sc.lines || []).map(([w, s]) => { const L = [t0, w === 'n' ? 'narr' : w === 't' ? 'me' : w === 'm' ? 'me' : w === 'b' ? '침묵의 지휘자' : ({ i: 'ignis', c: 'clausia', r: 'resona' }[w]), w === 't' ? `<i>(${s})</i>` : s]; t0 += dur(s); return L; }); const D = Math.max(sc.min || 3, t0 + .3);
-      return { dur: D, hold: .2, base: '#0b0820', lines, draw(x, t, k) { const sh = (sc.fx || []).find(f => f.k === 'shake' && k >= f.at[0] && k <= f.at[1]); x.save(); if (sh) x.translate((Math.random() - .5) * 26, (Math.random() - .5) * 18); const z = 1 + .04 * k; x.translate(640, 360); x.scale(z, z); x.translate(-640, -360); (BG[sc.bg] || BG.void)(x, t); (sc.fx || []).filter(f => f.under).forEach(f => fx(x, f, t, k)); if (sc.boss) boss(x, sc.boss, t, k); (sc.act || []).forEach(a => actor(x, a, t, k)); (sc.fx || []).filter(f => !f.under && f.k !== 'shake').forEach(f => fx(x, f, t, k)); x.restore(); } }; });
+      return { dur: D, hold: .2, base: '#0b0820', lines, draw(x, t, k) { const sh = (sc.fx || []).find(f => f.k === 'shake' && k >= f.at[0] && k <= f.at[1]); x.save(); if (sh) x.translate((Math.random() - .5) * 26, (Math.random() - .5) * 18); const z = 1 + .04 * k; x.translate(640, 360); x.scale(z, z); x.translate(-640, -360); (BG[sc.bg] || BG.void)(x, t, sc); (sc.fx || []).filter(f => f.under).forEach(f => fx(x, f, t, k)); if (sc.boss) boss(x, sc.boss, t, k); (sc.act || []).forEach(a => actor(x, a, t, k)); (sc.fx || []).filter(f => !f.under && f.k !== 'shake').forEach(f => fx(x, f, t, k)); x.restore(); } }; });
   }
   const play = (scenes, cb) => Cut.play(build(scenes), cb);
   return { play, build };
