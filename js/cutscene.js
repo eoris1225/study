@@ -13,7 +13,7 @@ const Cut = (() => {
     const end = () => { if (!alive) return; alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', fit); window.removeEventListener('keydown', onKey); ov.remove(); onDone && onDone(); };
     const setPause = v => { if (v === paused) return; const now = performance.now(); if (v) pAt = now; else t0 += now - pAt; paused = v; bPause.textContent = v ? '▶ 재생' : '⏸ 멈춤'; ov.classList.toggle('paused', v); };
     const go = j => { i = Math.max(0, j) - 1; next(); };
-    const next = () => { i++; if (i >= shots.length) return end(); t0 = performance.now(); pAt = t0; shown = ''; sub.innerHTML = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'done' : k === i ? 'on' : ''}"></i>`).join(''); };
+    const next = () => { if (i >= 0) Sfx.play('whoosh'); i++; if (i >= shots.length) return end(); t0 = performance.now(); pAt = t0; shown = ''; sub.innerHTML = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'done' : k === i ? 'on' : ''}"></i>`).join(''); };
     skip.onclick = e => { e.stopPropagation(); end(); };
     ov.onclick = () => setPause(!paused);
     bPause.onclick = e => { e.stopPropagation(); setPause(!paused); };
@@ -29,7 +29,7 @@ const Cut = (() => {
       s.draw(x, t, k);
       let cur = null; for (const L of s.lines || []) if (t >= L[0]) cur = L;
       const key = cur ? cur[0] + cur[2] : '';
-      if (key !== shown) { shown = key; sub.innerHTML = cur ? `${cur[1] !== 'narr' ? `<span class="who" style="--who:${whoColor(cur[1])}">${T(whoName(cur[1]))}</span>` : ''}<div class="txt">${T(cur[2])}</div>` : ''; }
+      if (key !== shown) { shown = key; if (cur) Sfx.voice(cur[1], cur[2]); sub.innerHTML = cur ? `${cur[1] !== 'narr' ? `<span class="who" style="--who:${whoColor(cur[1])}">${T(whoName(cur[1]))}</span>` : ''}<div class="txt">${T(cur[2])}</div>` : ''; }
       if (!paused && t > s.dur + (s.hold ?? 1.2)) next();
       raf = requestAnimationFrame(frame);
     };

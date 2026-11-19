@@ -50,7 +50,7 @@ const World = (() => {
     if (!cv) { cv = $('#world'); x = cv.getContext('2d'); addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 200)); bind(); }
     resize(); Gim.reset(); build(S.ch);
     let sx = 80; events.forEach(ev => { if (S.step > ev.to) { ev.done = true; sx = ev.sx; } });
-    spawnAt(sx); busy = false; banner = G.chapters[S.ch].title; bannerT = 3.2;
+    spawnAt(sx); busy = false; banner = G.chapters[S.ch].title; bannerT = 3.2; Sfx.play('banner'); Sfx.music('ch' + (S.ch % 7));
     $('#chTitle').textContent = G.chapters[S.ch].title;
     cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(frame);
   }
@@ -71,6 +71,7 @@ const World = (() => {
   }
 
   function runEvent(ev) {
+    if (ev.kind === 'camp') Sfx.music('camp'); else if (ev.kind === 'boss') Sfx.music('boss'); Sfx.play('whoosh');
     busy = true; p.vx = 0; pad.l = pad.r = pad.j = 0; for (const k in keys) keys[k] = 0;
     const steps = G.chapters[ch].steps, sg = stage(); let i = Math.max(ev.from, S.step);
     (function go() {
@@ -98,11 +99,11 @@ const World = (() => {
   }
 
   function update(dt) {
-    t += dt; if (bannerT > 0) bannerT -= dt;
+    t += dt; if (bannerT > 0) bannerT -= dt; if (!busy) Sfx.music('ch' + (ch % 7));
     const next = events.find(e => !e.done);
     if (!busy && $('#modal').hidden) {
       const L = keys.ArrowLeft || keys.KeyA || pad.l, Rr = keys.ArrowRight || keys.KeyD || pad.r, J = keys.Space || keys.ArrowUp || keys.KeyW || pad.j;
-      const tv = (Rr ? 1 : 0) - (L ? 1 : 0); p.vx += (tv * 250 - p.vx) * Math.min(1, dt * 12); if (tv) p.dir = tv; p.walk = Math.abs(p.vx) > 30;
+      const tv = (Rr ? 1 : 0) - (L ? 1 : 0); p.vx += (tv * 250 - p.vx) * Math.min(1, dt * 12); if (tv) p.dir = tv; p.walk = Math.abs(p.vx) > 30; if (p.walk && p.on) { p.stT = (p.stT || 0) - dt; if (p.stT <= 0) { p.stT = .26; Sfx.play('step'); } }
       p.coy = p.on ? .1 : p.coy - dt;
       if (J && p.coy > 0 && !p.jl) { const pv = p.gq && p.gq.vyp < -40 ? p.gq.vyp * 2.3 : 0; p.vy = -590 + pv; if (pv) { p.boost = .5; say('타이밍 점프!', '#fff'); Sfx.play('spring'); } else Sfx.play('jump'); p.coy = 0; p.on = false; p.dj = 1; burst(p.x, p.y + PH, '#ffffff', 4); }
       else if (J && !p.jl && !p.on && p.dj && (S.up || {}).dj) { p.vy = -520; p.dj = 0; Sfx.play('jump2'); burst(p.x, p.y + PH, '#ffd23f', 8); } p.jl = J;

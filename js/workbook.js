@@ -41,8 +41,8 @@ function openWorkbook(secId) {
         const r = get();
         if (r === null) { fb.className = 'msg bad'; fb.textContent = '답을 먼저 골라(적어) 주세요.'; return; }
         if (r === 'self') { revealAll(); fb.className = 'msg'; fb.innerHTML = '내 답과 비교해 보세요. '; const o1 = mk('button', '', '⭕ 맞았어요'), o2 = mk('button', '', '❌ 틀렸어요'); o1.onclick = () => { S.wb[p.n] = 1; save(); fb.innerHTML = '👍 좋아요!'; }; o2.onclick = () => { S.wb[p.n] = 2; save(); fb.innerHTML = '괜찮아요. 풀이를 한 단계씩 따라가 보세요.'; }; fb.appendChild(o1); fb.appendChild(o2); return; }
-        if (r) { fb.className = 'msg good'; fb.innerHTML = '🎉 정답! <small>풀이도 확인해 보세요.</small>'; mark(usedSol ? 2 : 1); if (!usedSol) { solv.innerHTML = `<div class="solans">✅ 정답: <b>${p.ans}</b></div>`; shown = 0; step(); } }
-        else { tries++; fb.className = 'msg bad'; fb.innerHTML = tries === 1 ? '❌ 아쉬워요. 💡 힌트: ' + p.hint : '❌ 다시 틀렸어요. [📖 풀이 보기]로 한 단계씩 따라가 보세요.'; }
+        if (r) { Sfx.play('win'); fb.className = 'msg good'; fb.innerHTML = '🎉 정답! <small>풀이도 확인해 보세요.</small>'; mark(usedSol ? 2 : 1); if (!usedSol) { solv.innerHTML = `<div class="solans">✅ 정답: <b>${p.ans}</b></div>`; shown = 0; step(); } }
+        else { tries++; Sfx.play('wrong'); fb.className = 'msg bad'; fb.innerHTML = tries === 1 ? '❌ 아쉬워요. 💡 힌트: ' + p.hint : '❌ 다시 틀렸어요. [📖 풀이 보기]로 한 단계씩 따라가 보세요.'; }
       };
       row.appendChild(chk); row.appendChild(hb); row.appendChild(sb); b.appendChild(ans); b.appendChild(row); b.appendChild(fb); b.appendChild(solv); b.appendChild(more);
       const nav = mk('div', 'btnrow'), pv = mk('button', '', '◀ 이전 문제'), nx = mk('button', '', '다음 문제 ▶'); pv.disabled = idx === 0; nx.disabled = idx === list.length - 1; pv.onclick = () => show(list[idx - 1]); nx.onclick = () => show(list[idx + 1]);
