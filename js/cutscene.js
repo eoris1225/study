@@ -22,7 +22,7 @@ const Cut = (() => {
     const onKey = e => { if (e.code === 'Space') { e.preventDefault(); setPause(!paused); } else if (e.code === 'ArrowRight') next(); else if (e.code === 'ArrowLeft') bPrev.onclick(e); }; window.addEventListener('keydown', onKey);
     const frame = now => {
       if (!alive) return;
-      const s = shots[i], t = ((paused ? pAt : now) - t0) / 1000, k = Math.min(1, t / s.dur);
+      const s = shots[i], t = Math.max(0, ((paused ? pAt : now) - t0) / 1000), k = Math.min(1, t / s.dur);
       const sc = Math.max(cv.width / VW, cv.height / VH), ox = (cv.width - VW * sc) / 2, oy = (cv.height - VH * sc) / 2;
       x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = s.base || '#2a1a7a'; x.fillRect(0, 0, cv.width, cv.height);
       x.setTransform(sc, 0, 0, sc, ox, oy); x.lineCap = 'round'; x.lineJoin = 'round';
