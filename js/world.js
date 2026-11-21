@@ -184,7 +184,7 @@ const World = (() => {
     if (bannerT > 0) { const k = Math.min(1, bannerT), e = bannerT > 2 ? Art.ease.back(Math.min(1, (3.2 - bannerT) * 4 + .2)) : 1; x.globalAlpha = k; x.font = '800 26px system-ui,sans-serif'; x.textAlign = 'center'; const bw = x.measureText(banner).width + 64, by = VH * .3; x.save(); x.translate(W / 2, by); x.scale(e, e); x.fillStyle = 'rgba(42,15,94,.25)'; rr(x, -bw / 2, 6, bw, 58, 29); x.fill(); x.fillStyle = '#fff'; rr(x, -bw / 2, 0, bw, 58, 29); x.fill(); x.fillStyle = '#ff5f8f'; rr(x, -bw / 2 + 10, 10, 8, 38, 4); x.fill(); x.fillStyle = '#2a0f5e'; x.fillText(banner, 4, 39); x.restore(); x.globalAlpha = 1; }
     $('#pad').style.display = busy ? 'none' : '';
   }
-  function frame(now) { const dt = Math.min(.033, (now - last) / 1000); last = now; update(dt); draw(); raf = requestAnimationFrame(frame); }
+  function frame(now) { const dt = Math.max(0, Math.min(.033, (now - last) / 1000)); last = now; update(dt); draw(); raf = requestAnimationFrame(frame); }
   function skip() { const n = events.find(e => !e.done); if (!n) return; S.step = n.to + 1; if (n === events[events.length - 1]) { S.cleared[ch] = true; S.ch = ch + 1; S.step = 0; } save(); const sg = stage(); sg.className = ''; sg.innerHTML = ''; run(); }
   return { skip, load, stop, _dbg: () => ({ p, plats, slimes, events, busy, GY }) };
 })();

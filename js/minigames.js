@@ -4,7 +4,7 @@ const fmt = (x, d = 2) => { if (!isFinite(x)) return '∞'; const a = Math.abs(x
 const sgn = (x, d = 1) => (x >= 0 ? '+' : '') + fmt(x, d);
 function cv(el, w = 640, h = 360) { const c = mk('canvas', 'cv'); c.width = w; c.height = h; el.appendChild(c); return c; }
 function hud(el) { const d = mk('div', 'hud'); el.appendChild(d); return d; }
-function loop(el, fn) { let last = performance.now(), stop = false; function f(now) { if (stop || !el.isConnected) return; const dt = Math.min(.05, (now - last) / 1000); last = now; fn(dt, now / 1000); requestAnimationFrame(f); } requestAnimationFrame(f); return () => { stop = true; }; }
+function loop(el, fn) { let last = performance.now(), stop = false; function f(now) { if (stop || !el.isConnected) return; const dt = Math.max(0, Math.min(.05, (now - last) / 1000)); last = now; fn(dt, now / 1000); requestAnimationFrame(f); } requestAnimationFrame(f); return () => { stop = true; }; }
 function onKey(el, fn) { const h = e => { if (!el.isConnected) return window.removeEventListener('keydown', h); fn(e); }; window.addEventListener('keydown', h); }
 function lifeUI(el, n) { const d = mk('div', 'lives'); el.appendChild(d); const o = { n, hit() { o.n--; o.draw(); return o.n <= 0; }, draw() { d.innerHTML = '생명 ' + '❤'.repeat(Math.max(0, o.n)) + '<span class="dim">' + '♡'.repeat(Math.max(0, n - o.n)) + '</span>'; } }; o.draw(); return o; }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
