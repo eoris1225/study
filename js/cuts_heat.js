@@ -8,16 +8,6 @@ window.CUTS = window.CUTS || {};
   const lerp = (a, b, k) => a + (b - a) * k;
   const formula = (x, s, k, y = 600, size = 38) => pill(x, 640, y, s, k, '#ffd23f', '#2a0f5e', size);
 
-  /* ---------- 1z 기체의 법칙 ---------- */
-  CUTS['1z'] = [
-    { dur: 8, base: '#b8325e', lines: [[0, 'ignis', '실린더 속 기체를 꾹 눌러 보자. 온도는 그대로 두고.'], [3, 'narr', '부피가 반이 되면 분자가 벽을 두 배로 자주 때린다. 압력 <b>두 배</b>.'], [5.8, 'narr', '온도가 일정하면 <b>PV = 일정</b>. 보일 법칙.']],
-      draw(x, t) { warm(x, t); const k = E.io(seg(t, 1, 3)), top = lerp(200, 380, k); cyl(x, 420, 560, 260, 420, top, t, { n: 16, speed: 1 }); arrow(x, 420, 70, 420, top - 130, '#fff', 12, seg(t, .6, 1.2));
-        bar(x, 760, 300, 360, lerp(1, .5, k), 1, '#7fd8ff', 'V'); bar(x, 760, 380, 360, lerp(1, 2, k), 2, '#ff6fa8', 'P'); formula(x, 'P × V = 일정', seg(t, 5.8, 6.3), 520); chr(x, 'ignis', 160, 590, 2.4, t); } },
-    { dur: 8, base: '#b8325e', lines: [[0, 'narr', '이번엔 압력을 그대로 두고 데운다.'], [2.6, 'narr', '분자가 빨라져 피스톤을 밀어 올린다. 절대 온도가 두 배면 부피도 <b>두 배</b>.'], [5.8, 'narr', '압력이 일정하면 <b>V ∝ T</b>. 샤를 법칙.']],
-      draw(x, t) { warm(x, t); const k = E.io(seg(t, 1.6, 4.6)), top = lerp(380, 200, k); cyl(x, 420, 520, 260, 400, top, t, { n: 14, speed: 1 + k * 1.6, weights: 2, rod: false }); flame(x, 420, 560, 1, t, seg(t, .6, 1));
-        thermo(x, 700, 470, 260, .35 + k * .5, '#ff4f6d', 'T'); bar(x, 820, 300, 320, lerp(1, 2, k), 2, '#7fd8ff', 'V'); formula(x, 'V / T = 일정', seg(t, 5.8, 6.3), 420); } }
-  ];
-
   /* ---------- 1a 압력과 일 ---------- */
   CUTS['1a'] = [
     { dur: 8.5, base: '#b8325e', lines: [[0, 'narr', '압력은 넓이마다 누르는 힘. <b>P = F / A</b>.'], [2.6, 'narr', '기체가 넓이 A인 피스톤을 압력 P로 밀면 힘은 <b>F = PA</b>.'], [5, 'narr', '피스톤이 Δs만큼 밀려나면 일 W = FΔs = PAΔs = <b>PΔV</b>.']],

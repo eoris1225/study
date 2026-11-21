@@ -1,6 +1,6 @@
 'use strict';
 /* 실전 문제집 화면 */
-const SECLES = { A: ['1z'], B: ['1a', '1b', '1c'], C: ['1d', '1e', '1g'], D: ['2a', '2c', '2d'], E: ['3a', '3b', '3d', '3e'], F: ['4a', '4b', '4c', '4d', '4e'], G: ['5a', '5b', '5c', '5e', '5f'], H: ['6a', '6b', '6c', '6d'], I: ['7a', '7b', '7c', '7d'] };
+const SECLES = { B: ['1a', '1b', '1c'], C: ['1d', '1e', '1g'], D: ['2a', '2c', '2d'], E: ['3a', '3b', '3d', '3e'], F: ['4a', '4b', '4c', '4d', '4e'], G: ['5a', '5b', '5c', '5e', '5f'], H: ['6a', '6b', '6c', '6d'], I: ['7a', '7b', '7c', '7d'] };
 const lesById = id => { for (const k in LESSONS) { const l = LESSONS[k].find(l => l.id === id); if (l) return l; } };
 function wbStat() { S.wb = S.wb || {}; const done = PROBS.filter(p => S.wb[p.n]).length; return { done, total: PROBS.length }; }
 function openWorkbook(secId) {
