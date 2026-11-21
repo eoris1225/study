@@ -296,3 +296,14 @@ canvas.cv{border:2px solid var(--line);border-radius:14px}
 .pbbox .paper{background:#fff;border-radius:14px;padding:10px}.pbbox .paper img{display:block;max-width:min(100%,680px);height:auto;margin:0 auto}
 
 .forge .blank.wrongb{border:2px solid #ff5470;color:#ff9ab0;background:rgba(255,84,112,.15)}
+
+/* 한손 조작 */
+#pad .oh{display:none}
+#pad.ohL .pl,#pad.ohL .pr,#pad.ohR .pl,#pad.ohR .pr{display:none}
+#pad.ohL,#pad.ohR{touch-action:none}
+#pad.ohL .oh,#pad.ohR .oh{display:grid;grid-template-columns:repeat(3,auto);gap:6px;pointer-events:auto;touch-action:none;padding:6px;border-radius:24px}
+#pad.ohR{justify-content:flex-end}#pad.ohL{justify-content:flex-start}
+#pad .oh button{margin:0;width:70px;height:70px}
+#pad .oh .ohj{font-size:16px;font-weight:bold}
+#pad button.on,#pad button:active{background:rgba(217,178,95,.55)}
+@media (max-height:500px){#pad .oh button{width:58px;height:58px}}

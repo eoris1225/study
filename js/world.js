@@ -59,8 +59,14 @@ const World = (() => {
   function bind() {
     addEventListener('keydown', e => { if ($('#game').hidden) return; keys[e.code] = 1; if (!busy && $('#modal').hidden && ['Space', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); });
     addEventListener('keyup', e => { keys[e.code] = 0; });
-    const hook = (id, k) => { const b = $(id); b.oncontextmenu = e => e.preventDefault(); b.onpointerdown = e => { pad[k] = 1; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { } }; b.onpointerup = b.onpointercancel = b.onlostpointercapture = () => pad[k] = 0; };
-    hook('#pL', 'l'); hook('#pR', 'r'); hook('#pJ', 'j');
+    const P = $('#pad'), act = {}; P.oncontextmenu = e => e.preventDefault();
+    const at = e => { const el = document.elementFromPoint(e.clientX, e.clientY); const b = el && el.closest && el.closest('#pad button[data-k]'); return b ? b.dataset.k : ''; };
+    const upd = () => { pad.l = pad.r = pad.j = 0; P.querySelectorAll('button.on').forEach(b => b.classList.remove('on')); for (const id in act) { const k = act[id]; for (const c of k) pad[c] = 1; P.querySelectorAll('button[data-k="' + k + '"]').forEach(b => b.classList.add('on')); } };
+    P.addEventListener('pointerdown', e => { const k = at(e); if (!k) return; e.preventDefault(); act[e.pointerId] = k; try { P.setPointerCapture(e.pointerId); } catch (_) { } upd(); });
+    P.addEventListener('pointermove', e => { if (!(e.pointerId in act)) return; const k = at(e); if (k && k !== act[e.pointerId]) { act[e.pointerId] = k; upd(); } });
+    const end = e => { if (e.pointerId in act) { delete act[e.pointerId]; upd(); } };
+    P.addEventListener('pointerup', end); P.addEventListener('pointercancel', end); P.addEventListener('lostpointercapture', end);
+    World.hand = () => { P.classList.remove('ohL', 'ohR'); if (S.hand) P.classList.add('oh' + S.hand); }; World.hand();
   }
 
   function say(text, col = '#ffd166') { floatTxt.push({ x: p.x, y: p.y - 30, s: text, col, life: 1.1 }); }
