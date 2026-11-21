@@ -58,6 +58,6 @@ I: [
   for (const k in INTRO) if (DEEP[k]) DEEP[k].mid = INTRO[k].concat(DEEP[k].mid);
   const SEC1 = { A: '1z', B: '1a', C: '1d', D: '2a', E: '3b', F: '4a', G: '5a', H: '6b', I: '7a' };
   for (const k in SEC1) { const L = lesById(SEC1[k]); if (!L) continue; const g = INTRO[k].filter(c => /기호 사전/.test(c.h)).map(c => Object.assign({ extra: true }, c)); L.cards.unshift(...g); }
-  const L7 = lesById('7b'); if (L7) { const qi = L7.cards.findIndex(c => c.q); L7.cards.splice(qi < 0 ? L7.cards.length : qi, 0, ...INTRO.I.slice(0, 5).map(c => Object.assign({ extra: true }, c))); }
+  const L7 = lesById('7b'); if (L7) { L7.cards.splice(0, 0, ...INTRO.I.slice(0, 5).map(c => Object.assign({ extra: true }, c))); }
   const L7c = lesById('7c'); if (L7c) { const qi = L7c.cards.findIndex(c => c.q); L7c.cards.splice(qi < 0 ? L7c.cards.length : qi, 0, Object.assign({ extra: true }, INTRO.I[5])); }
 })();
