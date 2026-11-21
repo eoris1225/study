@@ -294,3 +294,5 @@ canvas.cv{border:2px solid var(--line);border-radius:14px}
 .lv{display:inline-block;border-radius:999px;padding:0 10px;font-size:12px;font-weight:800;margin-left:4px;color:#231046}.lv1{background:#5dfc9b}.lv2{background:#ffd23f}.lv3{background:#ff6f91;color:#fff}
 .pbprog{display:flex;gap:5px;align-items:center}.pbprog i{width:20px;height:6px;border-radius:3px;background:rgba(255,255,255,.25)}.pbprog i.on{background:#ffd23f}.pbprog i.done{background:#5dfc9b}
 .pbbox .paper{background:#fff;border-radius:14px;padding:10px}.pbbox .paper img{display:block;max-width:min(100%,680px);height:auto;margin:0 auto}
+
+.forge .blank.wrongb{border:2px solid #ff5470;color:#ff9ab0;background:rgba(255,84,112,.15)}

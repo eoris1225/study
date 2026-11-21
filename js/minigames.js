@@ -96,20 +96,34 @@ MG.tuner = (cfg, el, done, ctx) => {
 /* ============ 수식 조립 ============ */
 MG.forge = (cfg, el, done, ctx) => {
   const L = lifeUI(el, ctx.lives), box = mk('div', 'forge'); el.appendChild(box); let si = 0;
+  const num = s => { s = String(s).replace(/,/g, '').replace('−', '-').trim(); const m = s.match(/^(-?[\d.]+)\s*\/\s*([\d.]+)$/); return m ? m[1] / m[2] : parseFloat(s); };
   (function step() {
-    const st = cfg.steps[si]; box.innerHTML = '';
+    const st = cfg.steps[si]; box.innerHTML = ''; let miss = 0, hints = 0, bad = new Set(), inp;
     box.appendChild(mk('div', 'prob', `<b>[${si + 1}/${cfg.steps.length}]</b> ${T(st.problem)}`));
     const ex = mk('div', 'expr'); box.appendChild(ex); const blanks = st.expr.filter(e => typeof e === 'object'), fill = blanks.map(() => null);
-    const draw = () => { ex.innerHTML = ''; let bi = 0; st.expr.forEach(e => { if (typeof e === 'string') ex.appendChild(mk('span', '', e)); else { const i = bi++; const b = mk('span', 'blank', fill[i] == null ? '?' : fill[i]); b.onclick = () => { fill[i] = null; draw(); }; ex.appendChild(b); } }); };
+    const exprText = () => { let bi = 0; return st.expr.map(e => typeof e === 'string' ? e : `<b>${fill[bi++] ?? '?'}</b>`).join(''); };
+    const draw = () => { ex.innerHTML = ''; let bi = 0; st.expr.forEach(e => { if (typeof e === 'string') ex.appendChild(mk('span', '', e)); else { const i = bi++; const b = mk('span', 'blank' + (bad.has(i) ? ' wrongb' : ''), fill[i] == null ? '?' : fill[i]); b.onclick = () => { fill[i] = null; bad.delete(i); draw(); }; ex.appendChild(b); } }); };
     draw();
     const tl = mk('div', 'tiles'); shuffle(st.tiles).forEach(tn => { const b = mk('button', '', tn); b.onclick = () => { const i = fill.indexOf(null); if (i >= 0) { fill[i] = tn; draw(); } }; tl.appendChild(b); }); box.appendChild(tl);
-    let inp; if (st.answer != null) { const a = mk('div', 'ans', `<span>${st.ansLabel || '답'} =</span>`); inp = mk('input'); inp.type = 'text'; inp.inputMode = 'decimal'; inp.autocomplete = 'off'; const pm = mk('button', '', '±'); pm.type = 'button'; pm.onclick = () => { inp.value = inp.value.startsWith('-') ? inp.value.slice(1) : '-' + inp.value; }; a.appendChild(pm); a.appendChild(inp); a.appendChild(mk('span', '', st.unit || '')); box.appendChild(a); }
-    const sub = mk('button', 'pri', '수식 발동'), msg = mk('div', 'msg'); box.appendChild(sub); box.appendChild(msg);
+    if (st.answer != null) { const a = mk('div', 'ans', `<span>${st.ansLabel || '답'} =</span>`); inp = mk('input'); inp.type = 'text'; inp.inputMode = 'decimal'; inp.autocomplete = 'off'; inp.placeholder = '계산한 숫자'; const pm = mk('button', '', '±'); pm.type = 'button'; pm.onclick = () => { inp.value = inp.value.startsWith('-') ? inp.value.slice(1) : '-' + inp.value; }; a.append(pm, inp, mk('span', '', st.unit || '')); box.appendChild(a); }
+    const row = mk('div', 'btnrow'), sub = mk('button', 'pri', '수식 발동'), hb = mk('button', '', '💡 이 단계 힌트'), nxt = mk('button', 'pri', '이해했어요, 다음 ▶'), msg = mk('div', 'msg'), tip = mk('div', 'tipbox'); nxt.hidden = true; tip.hidden = true; row.append(sub, hb, nxt); box.append(row, tip, msg);
+    const advance = () => { si++; if (si >= cfg.steps.length) done(true); else step(); };
+    hb.onclick = () => { hints++; const k = Math.min(hints, blanks.length); let h = st.hint ? st.hint + '<br>' : ''; h += `빈칸 ${blanks.length}개 중 앞에서부터 ${k}개: ` + blanks.slice(0, k).map((b, i) => `<b>${i + 1}번 = ${b.b}</b>`).join(', '); if (hints > blanks.length && st.answer != null) h += `<br>계산 결과: <b>${st.answer} ${st.unit || ''}</b>`; else if (hints <= blanks.length) h += hints < blanks.length ? '<br><small>한 번 더 누르면 다음 빈칸도 알려 줘요.</small>' : (st.answer != null ? '<br><small>한 번 더 누르면 계산 결과도 알려 줘요.</small>' : ''); tip.innerHTML = '💡 ' + h; tip.hidden = false; };
+    const reveal = () => { blanks.forEach((b, i) => fill[i] = b.b); bad.clear(); draw(); if (inp) inp.value = st.answer; msg.className = 'msg'; msg.innerHTML = `📖 정답: ${exprText()}${st.answer != null ? ` = <b>${st.answer} ${st.unit || ''}</b>` : ''}${st.explain ? '<br>' + st.explain : ''}${st.hint ? '<br>' + st.hint : ''}<br><small>괜찮아요. 정답을 한 번 따라 읽고 넘어가요.</small>`; sub.hidden = true; nxt.hidden = false; };
+    nxt.onclick = advance;
     sub.onclick = () => {
-      let ok = st.anyOrder ? fill.slice().sort().join('|') === blanks.map(b => b.b).sort().join('|') : blanks.every((b, i) => fill[i] === b.b || (b.alt && b.alt.includes(fill[i])));
-      if (ok && inp) { const val = parseFloat(inp.value.replace(',', '.').replace('−', '-')); ok = isFinite(val) && Math.abs(val - st.answer) <= (st.tol != null ? st.tol : Math.abs(st.answer) * 0.011 + 1e-9); }
-      if (ok) { msg.className = 'msg good'; msg.innerHTML = '✔ ' + (st.explain || '정확하다!'); sub.disabled = true; setTimeout(() => { si++; if (si >= cfg.steps.length) done(true); else step(); }, st.explain ? 2600 : 900); }
-      else { msg.className = 'msg bad'; msg.innerHTML = '✖ 수식이 어긋났다. ' + (st.hint ? '<br>힌트: ' + st.hint : ''); if (L.hit()) done(false); }
+      if (fill.includes(null)) { msg.className = 'msg bad'; msg.innerHTML = '빈칸(?)을 모두 채워 주세요.'; return; }
+      bad = new Set(); let tilesOk;
+      if (st.anyOrder) { const want = blanks.map(b => b.b); tilesOk = fill.slice().sort().join('|') === want.slice().sort().join('|'); if (!tilesOk) fill.forEach((f, i) => { if (!want.includes(f)) bad.add(i); }); }
+      else { blanks.forEach((b, i) => { if (!(fill[i] === b.b || (b.alt && b.alt.includes(fill[i])))) bad.add(i); }); tilesOk = !bad.size; }
+      let numOk = true, note = '';
+      if (inp) { const v = num(inp.value), close = a => Math.abs(v - a) <= (st.tol != null ? st.tol : Math.abs(a) * .011 + 1e-9); numOk = isFinite(v) && close(st.answer); if (!numOk && isFinite(v)) for (const k of [100, 1000, .01, .001]) if (close(st.answer / k)) { numOk = true; note = `계산은 맞았어요! 다만 답 칸 단위가 <b>${st.unit}</b>라서 <b>${st.answer}</b>로 쓰면 돼요.<br>`; } }
+      draw();
+      if (tilesOk && numOk) { msg.className = 'msg good'; msg.innerHTML = '✔ ' + note + (st.explain || `정확해요! ${exprText()}${st.answer != null ? ` = ${st.answer} ${st.unit || ''}` : ''}`); sub.disabled = true; setTimeout(advance, st.explain || note ? 2800 : 1400); return; }
+      miss++; msg.className = 'msg bad';
+      msg.innerHTML = !tilesOk ? `✖ 빨간 칸이 틀렸어요. 눌러서 비우고 다시 골라 보세요.${inp && numOk ? '' : ''}` : (!isFinite(num(inp.value)) ? '식은 맞았어요! 이제 계산한 숫자를 답 칸에 넣어 주세요.' : '✔ 식은 맞았어요! 계산(숫자)만 다시 해 보세요.');
+      if (st.hint && miss === 1) msg.innerHTML += '<br>💡 ' + st.hint;
+      const out = L.hit(); if (out || miss >= 3) reveal();
     };
   })();
 };
