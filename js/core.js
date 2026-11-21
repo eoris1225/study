@@ -86,7 +86,7 @@ function findLesson(chIdx, st) { return ((window.LESSONS || {})[chIdx] || []).fi
 function findTip(st) { const T0 = window.TIPS || {}; const k = Object.keys(T0).find(k => st.title.includes(k)); return k ? T0[k] : null; }
 function lessonView(el, les, onDone, doneLabel, textMode) {
   if (!textMode && window.CUTS && CUTS[les.id] && typeof Cut !== 'undefined') {
-    const qs = les.cards.filter(c => c.q), after = Object.assign({}, les, { cards: qs.length ? qs : les.cards, _full: les });
+    const qs = les.cards.filter(c => c.q || c.extra), after = Object.assign({}, les, { cards: qs.length ? qs : les.cards, _full: les });
     return Cut.play(CUTS[les.id], () => lessonView(el, after, onDone, doneLabel, true));
   }
   let i = 0; S.seen = S.seen || {};

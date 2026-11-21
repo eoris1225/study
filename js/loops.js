@@ -18,7 +18,7 @@ const Loops = (() => {
         out.push(e); if (gz) out.push({ t: 'fate', k: 'gauge1' }); if (e.t === 'recruit') put('post_' + e.id);
         if (ci === 6 && k === lastBoss) out.push({ t: 'fate', k: loop === 2 ? 'die2' : 'happy' });
       });
-      put('end'); ch.steps = out; ch.title = base[ci].title.replace(/ — .*/, '') + (loop > 1 ? ` · ${loop}회차` : '');
+      put('end'); ch.steps = out; if (typeof LoopProblems === 'function') LoopProblems(ch, ci, loop); ch.title = base[ci].title.replace(/ — .*/, '') + (loop > 1 ? ` · ${loop}회차` : '');
     });
     applied = loop;
   }
