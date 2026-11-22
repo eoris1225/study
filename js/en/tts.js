@@ -83,5 +83,7 @@ const Reader = (() => {
   function line(text) { if (!ok || !SV.sceneVoice || !text) return; SS.cancel(); const C = cast(); speak(clean(text), /\?$/.test(text) ? C.ask : C.author, cfg().rate); }
   /* 단어 하나 발음: 낭독 중이면 끊지 않고 건너뜀 */
   function word(w) { if (!ok || !w || playing) return; SS.cancel(); const C = cast(); speak(w.replace(/[^A-Za-zÀ-ÿ'’\- ]/g, ''), C.author, Math.min(cfg().rate, .9)); }
-  return { word, ok, run, stop, pause, attach, one, line, playOne, cast, get playing() { return playing; } };
+  /* 문장 하나 그냥 읽기 (각인 모드) — 끝나면 resolve */
+  function say(t) { if (!ok || !t) return Promise.resolve(); stop(); const C = cast(); return speak(clean(t), /\?\s*$/.test(t) ? C.ask : C.author, cfg().rate); }
+  return { say, word, ok, run, stop, pause, attach, one, line, playOne, cast, get playing() { return playing; } };
 })();

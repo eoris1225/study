@@ -133,6 +133,7 @@ function hub() {
   const steps = [
     ['🎬', '이야기로 보기', CUR.scenes ? `지문 전체를 애니메이션으로 (장면 ${P.filter(p => EScene.has(p.id)).length}개)` : '이 지문은 애니메이션 준비 중 (읽기부터 시작하세요)', () => { if (!CUR.scenes) { Snd.play('wrong'); return; } mark('scene'); playAll(); }, seen.scene],
     ['📖', '읽기', '전체 지문 · 끊어 읽기 · 단어 터치 · 낭독', () => { mark('read'); read(); }, seen.read],
+    ...(P.some(p => Flash.has(p.id)) ? [['⚡', '각인 모드', `문장마다 쾅! 이모지 + 한 줄 핵심 + 역할 도장 → 흐름 지도 → 순서 맞추기 (${Flash.itemsOf(P).length}문장)`, () => { mark('flash'); Flash.play(Flash.itemsOf(P), CUR.title + ' — 각인 모드', 0, hub); }, seen.flash]] : []),
     ['⚔', CUR.exam ? '실전 풀이' : '실전 도전', CUR.exam ? `시험지 그대로 ${P.filter(p => p.q).length}문항 · 끝나면 채점` : '지문 전체에서 섞어 15문제 · 별 3개 도전', () => challenge(), st],
     ['📘', '문법 수업', '지문에 나온 문법을 처음부터: 개념 카드 → 확인 퀴즈', () => gramLib(), 0],
     ['🧠', '기억 카드', '영어만 보고 해석 떠올리기 → 확인 → 스스로 채점 (약한 문장부터)', () => cards(), 0],
@@ -170,7 +171,7 @@ function read() {
   P.forEach((p, i) => {
     if (p.sec !== sec) { sec = p.sec; a.appendChild(h('div', 'sech', CUR.secs[sec])); }
     const hd = h('div', 'phead', `<b>${i + 1}. ${p.name}</b>`); if (EScene.has(p.id)) { const sc = h('button', '', '🎬'); sc.title = '이 문단 장면'; sc.onclick = () => EScene.play(p.id, () => { }); hd.appendChild(sc); }
-    if (p.q) { const qb = h('button', 'qbtn', '📝 문제 풀기'); qb.onclick = () => practice(p, true); hd.appendChild(qb); } const pr = h('button', '', p.q ? '⚔ 연습' : '⚔ 이 문단만'); pr.onclick = () => practice(p); hd.appendChild(pr); a.appendChild(hd);
+    if (p.q) { const qb = h('button', 'qbtn', '📝 문제 풀기'); qb.onclick = () => practice(p, true); hd.appendChild(qb); } if (Flash.has(p.id)) { const fb = h('button', 'qbtn', '⚡ 각인'); fb.onclick = () => Flash.play(Flash.itemsOf([p]), p.name); hd.appendChild(fb); } const pr = h('button', '', p.q ? '⚔ 연습' : '⚔ 이 문단만'); pr.onclick = () => practice(p); hd.appendChild(pr); a.appendChild(hd);
     p.s.forEach((s, j) => a.appendChild(sentenceView(s, j, { pid: p.id })));
   });
   const go = h('button', 'pri big', '⚔ 실전 도전'); go.onclick = () => challenge(); a.appendChild(go);
