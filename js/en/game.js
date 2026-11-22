@@ -349,7 +349,8 @@ function runRounds(st, rounds, cfg, at) {
   show();
 }
 /* ── 문법 수업 ───────────────────────────────── */
-const topicOf = t => { const x = String(t || '').replace(/<[^>]+>/g, ' '); return (window.GRAM || []).find(g => g.re.test(x)); };
+/* 단서 단어가 가장 많이 걸리는 문법 주제 (첫 번째로 걸린 것 말고) */
+const topicOf = t => { const x = String(t || '').replace(/<[^>]+>/g, ' '); let best = null, bn = 0; (window.GRAM || []).forEach(g => { const n = (x.match(new RegExp(g.re.source, 'g')) || []).length; if (n > bn) { bn = n; best = g; } }); return best; };
 function gLink(t, label) { const g = (window.GRAM || []).find(x => x.id === t) || topicOf(t); return g ? `<button class="glink" data-g="${g.id}">📘 ${label || g.title.split(' — ')[0]}</button>` : ''; }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.glink'); if (b) { e.stopPropagation(); e.preventDefault(); gramLesson(b.dataset.g); } }, true);
 function gramLesson(id) {
