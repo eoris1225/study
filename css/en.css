@@ -226,3 +226,15 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .btmsg{position:absolute;left:12px;top:10px;max-width:58%;background:rgba(20,10,50,.65);color:#fff;border-radius:12px;padding:6px 10px;font-size:13px;line-height:1.45}.btmsg b{color:#ffd23f;margin-right:4px}.btmsg .dim{color:#c9c2e8}.btmsg.in{animation:up .25s}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .wcard{min-height:80px;border-radius:14px;background:linear-gradient(135deg,#5b6cff,#8f6bff)!important;color:#fff!important;font:700 17px Georgia,serif;box-shadow:0 3px 0 #3b45b8!important}.wcard .b{display:none;font:600 15px system-ui}.wcard.flip .f{display:none}.wcard.flip .b{display:block}.wcard.flip{background:linear-gradient(135deg,#ffb547,#ff8a3d)!important;box-shadow:0 3px 0 #c2410c!important}.wcard.locked{background:var(--line)!important;color:var(--dim)!important;box-shadow:none!important}
+
+/* 문장 필기 */
+.sent.noting{position:relative}
+.inkcv{position:absolute;left:0;top:0;z-index:2;border-radius:inherit;cursor:crosshair}
+.sent .sbtn{position:relative;z-index:3}
+.sent.inkhide .inkcv{pointer-events:none!important}
+.inkbar{position:sticky;top:120px;z-index:6;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px;margin:6px 0;border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 3px 10px rgba(42,15,94,.18)}
+.inkbar button{padding:4px 10px;min-height:36px;font-size:13px;background:#f3efff;color:#231046;border:2px solid transparent;box-shadow:none}
+.inkbar button.on{background:#7a2cf0;color:#fff}
+.inkcols{display:flex;gap:6px;align-items:center}.inkcols i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px #cfc6f5}.inkcols i.on{box-shadow:0 0 0 3px #231046}
+.inkbar input[type=range]{width:90px;accent-color:#7a2cf0}
+.inkhide-bar,.inkbar.hid{display:none}
