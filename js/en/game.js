@@ -69,7 +69,7 @@ function hub() {
   const st = SV.stars[CUR.id] || 0, seen = (SV.seen || {})[CUR.id] || {};
   a.appendChild(h('div', 'hhead', `<div class="mirror small"><span>${CUR.mark ? CUR.mark[0] : ''}</span><span class="flip">${CUR.mark ? CUR.mark[1] : ''}</span></div><p class="gist">${CUR.gist}</p><span class="st">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</span>`));
   const steps = [
-    ['🎬', '이야기로 보기', CUR.scenes ? '지문 전체를 애니메이션으로 (약 4분)' : '이 지문은 애니메이션 준비 중 (읽기부터 시작하세요)', () => { if (!CUR.scenes) { Snd.play('wrong'); return; } mark('scene'); playAll(); }, seen.scene],
+    ['🎬', '이야기로 보기', CUR.scenes ? `지문 전체를 애니메이션으로 (장면 ${P.filter(p => EScene.has(p.id)).length}개)` : '이 지문은 애니메이션 준비 중 (읽기부터 시작하세요)', () => { if (!CUR.scenes) { Snd.play('wrong'); return; } mark('scene'); playAll(); }, seen.scene],
     ['📖', '읽기', '전체 지문 · 끊어 읽기 · 단어 터치 · 낭독', () => { mark('read'); read(); }, seen.read],
     ['⚔', CUR.exam ? '실전 풀이' : '실전 도전', CUR.exam ? `시험지 그대로 ${P.filter(p => p.q).length}문항 · 끝나면 채점` : '지문 전체에서 섞어 15문제 · 별 3개 도전', () => challenge(), st],
     ['📄', '분석 노트', '출처 · 구조 · 전문 해석 · 문법 · 단어장', () => notes(), 0]

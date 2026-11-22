@@ -168,5 +168,5 @@ const EScene = (() => {
       if (!paused && t > s.dur + 1) go(i + 1); raf = requestAnimationFrame(frame); };
     go(0); raf = requestAnimationFrame(frame);
   }
-  return { play, has: id => !!SC[id] };
+  return { play, SC, has: id => !!SC[id], add: (id, shots) => { SC[id] = shots; }, K: { VW, VH, E, cl, seg, lerp, rr, circ, txt, serif, alpha, pop, bg, ground, person, pill, bottle, doc, scale, molecule, hand, whistle, sound, label, child } };
 })();
