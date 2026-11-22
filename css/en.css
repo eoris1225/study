@@ -307,3 +307,11 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 @keyframes flBurst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.2);opacity:0}}
 @media (prefers-reduced-motion:reduce){.fl *{animation-duration:.01s!important;animation-delay:0s!important}}
 .fl button{box-shadow:none;border-top:0;border-right:0;border-bottom:0;transform:none}.fl-trail button{border-bottom:4px solid var(--rc)}.fl-trail button.cur{transform:scale(1.18)}.fl-ctl button.pri{box-shadow:0 4px 0 #0006}
+
+.sctx{background:#ffffff10;border-left:4px solid #9b8cff;border-radius:8px;padding:8px 12px;margin:6px 0 8px;font-family:Georgia,serif;line-height:1.55}
+.sctx i{display:block;font-style:normal;font-family:system-ui;font-size:12px;font-weight:800;color:#b9a8ff;margin-bottom:2px}
+.sctx .dim{font-family:system-ui;font-size:14px;opacity:.7}
+.shint{margin:2px 0 8px;font-size:14px}.shint.on{background:#7a5cff;color:#fff}
+.stxt .sk{display:none;font-family:system-ui;font-size:13px;opacity:.85;margin-top:4px}
+.sko .stxt .sk{display:block}
+.iwhy .iw .iclue{margin:6px 0 0;padding:5px 8px;font-size:13px}

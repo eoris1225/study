@@ -213,7 +213,7 @@ function review() {
 /* ── 문장 삽입 풀이: 앞 문장 → 주어진 문장 → 뒤 문장을 해석과 함께 보여 주고, 단서 단어를 짚어 준다 ── */
 const CLUE = [
   [/^(yet|but|however|still|nevertheless|instead)\b/i, '역접 연결어', '앞 내용과 <b>반대되는</b> 말이 바로 앞에 있어야 해요.'],
-  [/^(so|therefore|thus|hence|as a result|consequently)\b/i, '결과 연결어', '바로 앞 문장이 이 문장의 <b>원인</b>이어야 해요.'],
+  [/^(and so|so|therefore|thus|hence|as a result|consequently)\b/i, '결과 연결어', '바로 앞 문장이 이 문장의 <b>원인</b>이어야 해요.'],
   [/^(for example|for instance|in fact|indeed)\b/i, '예시·강조', '바로 앞에 <b>일반적인 주장</b>이 있고, 이 문장이 그걸 구체화해요.'],
   [/^(also|moreover|furthermore|in addition|besides|similarly|likewise)\b/i, '추가 연결어', '앞에 <b>같은 방향의 내용</b>이 이미 하나 나와 있어야 해요.'],
   [/^(first|second|then|finally|later|after that)\b/i, '순서 표현', '앞뒤 <b>순서</b>를 맞춰 보세요.'],
@@ -221,6 +221,15 @@ const CLUE = [
   [/^(it|they|he|she|its|their|his|her)\b/i, '대명사', '<b>$1</b>이(가) 가리킬 명사가 바로 앞에 있어야 해요.'],
   [/\b(the same|the other|another|the former|the latter)\b/i, '비교·지칭', '<b>$1</b>이(가) 받는 대상이 앞에 있어야 해요.']
 ];
+/* 순서 풀이: 정답 순서대로 해석 + 각 문장이 앞 문장과 어떻게 이어지는지 */
+function orderWhy(L, plain) {
+  const rows = L.map((s, i) => { const t = plain(s).trim(); const cl = []; CLUE.forEach(([re, name, tip]) => { const m = t.match(re); if (m && cl.length < 1) cl.push(`🔎 <b>${name}</b> “${m[0]}” — ${tip.replace('$1', m[1] || m[0])}`); });
+    if (!cl.length && i === L.length - 1 && t.split(' ').length <= 7) cl.push('🔎 짧은 마무리 문장 — 앞 내용을 한마디로 정리해요.');
+    const def = !cl.length && i > 0 && t.match(/^(The|And|So)\s+\w+/); if (def) cl.push(`🔎 “${def[0]}” — 앞에서 이미 나온 것을 다시 가리키거나 앞 내용을 이어 가요.`);
+    if (!cl.length && i === L.length - 1 && t.split(' ').length <= 7) cl.push('🔎 짧은 마무리 문장 — 앞 내용을 한마디로 정리해요.');
+    return `<div class="iw ${i ? '' : 'giv'}"><i>${i + 1}</i>${t}<br><span class="dim">${(s[2] || '').replace(/<[^>]+>/g, '')}</span>${cl.length ? `<div class="iclue">${cl.join('<br>')}</div>` : ''}</div>`; });
+  return `<div class="iwhy"><div class="dim">정답 순서와 연결 고리</div>${rows.join('')}</div>`;
+}
 function insertWhy(giv, prev, next, plain) {
   const t = plain(giv[0]).trim(), ko = s => s && s[2] ? `<span class="dim">${s[2].replace(/<[^>]+>/g, '')}</span>` : '';
   const clues = []; CLUE.forEach(([re, name, tip]) => { const m = t.match(re); if (m && clues.length < 2) clues.push(`🔎 <b>${name}</b> “${m[0]}” — ${tip.replace('$1', m[1] || m[0])}`); });
@@ -316,8 +325,11 @@ function runRounds(st, rounds, cfg, at) {
     if (r.k === 'sorder' || r.k === 'insert') {
       const P2 = P[PI[r.id]]; const plain = s => fmt(s[0], 'plain').replace(/<[^>]+>/g, '').replace(/ \/ /g, ' ').replace(/^\([A-C]\)\s*|^[①-⑤]\s*/, '');
       if (r.k === 'sorder') {
-        body.appendChild(h('div', 'qk', '문장 순서 — 원래 순서대로 누르세요 (' + P2.name + ')')); let at = 0, err = 0; const built = h('div', 'built col'); body.appendChild(built); const g = h('div', 'opts col');
-        shuffle(r.part.map((x, k) => [x[0], k])).forEach(([s, k]) => { const b = h('button', 'stxt', plain(s)); b.onclick = () => { if (k === at) { b.disabled = true; b.classList.add('used'); built.appendChild(h('div', 'bk2', (at + 1) + '. ' + plain(s))); at++; Snd.play('click'); if (at === r.part.length) { if (!err) ok(6); else combo = 0; cont(err ? `완성! (실수 ${err}번)<br><small>단서: 지시어(this, these, such), 연결어(but, so, however), 대명사가 앞 문장을 가리켜요.</small>` : '✔ 완벽한 흐름!', !err); } } else { err++; b.classList.add('wrong'); setTimeout(() => b.classList.remove('wrong'), 300); Snd.play('wrong'); if (err === 2) bad(); } }; g.appendChild(b); }); body.appendChild(g);
+        body.appendChild(h('div', 'qk', '문장 순서 — 원래 순서대로 누르세요 (' + P2.name + ')')); let at = 0, err = 0;
+        const pv = P2.s[r.part[0][1] - 1]; if (pv && !/^→/.test(pv[0])) body.appendChild(h('div', 'sctx', `<i>📍 바로 앞 문장</i>${plain(pv)}<br><span class="dim">${(pv[2] || '').replace(/<[^>]+>/g, '')}</span>`));
+        const hint = h('button', 'shint', '💡 해석 보면서 풀기'); hint.onclick = () => { body.classList.toggle('sko'); hint.classList.toggle('on'); }; body.appendChild(hint);
+        const built = h('div', 'built col'); body.appendChild(built); const g = h('div', 'opts col');
+        shuffle(r.part.map((x, k) => [x[0], k])).forEach(([s, k]) => { const b = h('button', 'stxt', plain(s) + `<small class="sk">${(s[2] || '').replace(/<[^>]+>/g, '')}</small>`); b.onclick = () => { if (k === at) { b.disabled = true; b.classList.add('used'); built.appendChild(h('div', 'bk2', (at + 1) + '. ' + plain(s))); at++; Snd.play('click'); if (at === r.part.length) { if (!err) ok(6); else combo = 0; cont((err ? `완성! (실수 ${err}번)` : '✔ 완벽한 흐름!') + orderWhy(r.part.map(x => x[0]), plain), !err); } } else { err++; b.classList.add('wrong'); setTimeout(() => b.classList.remove('wrong'), 300); Snd.play('wrong'); if (err === 2) bad(); } }; g.appendChild(b); }); body.appendChild(g);
       } else {
         const giv = r.all[r.at], rest = r.all.filter((_, k) => k !== r.at); body.appendChild(h('div', 'qk', '문장 삽입 — 주어진 문장이 들어갈 곳은? (' + P2.name + ')'));
         const nums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪']; const slots = Math.min(rest.length, 5); const off = Math.max(0, Math.min(r.at - 1 - Math.floor(Math.random() * slots), rest.length - slots));
