@@ -154,10 +154,10 @@ const EScene = (() => {
     document.body.appendChild(ov); const cv = ov.querySelector('canvas'), x = cv.getContext('2d'), ko = ov.querySelector('.ko'), en = ov.querySelector('.en'), prog = ov.querySelector('.esc-prog'), bP = ov.querySelector('[data-a=pause]');
     let i = -1, t0 = 0, raf = 0, alive = true, paused = false, pAt = 0, shown = '';
     const fit = () => { const d = Math.min(2, devicePixelRatio || 1); cv.width = ov.clientWidth * d; cv.height = ov.clientHeight * d; }; fit(); addEventListener('resize', fit);
-    const end = () => { if (!alive) return; alive = false; if (typeof Reader !== 'undefined') Reader.stop(); cancelAnimationFrame(raf); removeEventListener('resize', fit); removeEventListener('keydown', key); ov.remove(); onDone && onDone(); };
+    const end = skipped => { if (!alive) return; alive = false; if (typeof Reader !== 'undefined') Reader.stop(); cancelAnimationFrame(raf); removeEventListener('resize', fit); removeEventListener('keydown', key); ov.remove(); onDone && onDone(!!skipped); };
     const setP = v => { const n = performance.now(); if (v === paused) return; if (v) { pAt = n; try { speechSynthesis.pause(); } catch (e) { } } else { t0 += n - pAt; try { speechSynthesis.resume(); } catch (e) { } } paused = v; bP.textContent = v ? '▶' : '⏸'; ov.classList.toggle('paused', v); };
-    const go = j => { if (j >= shots.length) return end(); if (i >= 0) Snd.play('whoosh'); i = Math.max(0, j); t0 = performance.now(); pAt = t0; shown = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'o' : ''}"></i>`).join(''); };
-    ov.querySelector('.esc-skip').onclick = e => { e.stopPropagation(); end(); };
+    const go = j => { if (j >= shots.length) return end(false); if (i >= 0) Snd.play('whoosh'); i = Math.max(0, j); t0 = performance.now(); pAt = t0; shown = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'o' : ''}"></i>`).join(''); };
+    ov.querySelector('.esc-skip').onclick = e => { e.stopPropagation(); end(true); };
     ov.querySelector('.esc-ctl').onclick = e => { e.stopPropagation(); const a = e.target.dataset.a; if (a === 'pause') setP(!paused); if (a === 'voice') { SV.sceneVoice = !SV.sceneVoice; save(); e.target.textContent = SV.sceneVoice ? '🔊' : '🔇'; if (!SV.sceneVoice) Reader.stop(); } if (a === 'next') go(i + 1); if (a === 'prev') { const tt = ((paused ? pAt : performance.now()) - t0) / 1000; go(tt > 2 ? i : i - 1); } };
     cv.onclick = () => setP(!paused);
     const key = e => { if (e.code === 'Space') { e.preventDefault(); setP(!paused); } if (e.code === 'ArrowRight') go(i + 1); if (e.code === 'ArrowLeft') go(i - 1); }; addEventListener('keydown', key);

@@ -8,12 +8,11 @@ const KEY = 'en_same_v1';
 let SV; try { SV = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { SV = {}; }
 SV.stars = SV.stars || {}; SV.xp = SV.xp || 0; SV.split = SV.split ?? true; SV.sceneVoice = SV.sceneVoice ?? true;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SV)); } catch (e) { } };
-const P = EN.paras, PI = Object.fromEntries(P.map((p, i) => [p.id, i]));
-
-/* 스테이지 목록: 문단 11개 + 부 끝마다 쪽지 시험 */
-const STAGES = [];
-P.forEach((p, i) => { STAGES.push({ id: p.id, type: 'para', p, n: i + 1 }); if (p.id === 'p5') STAGES.push({ id: 'b1', type: 'boss', sec: 1, name: '쪽지 시험 ① 화학의 책임' }); if (p.id === 'p7') STAGES.push({ id: 'b2', type: 'boss', sec: 2, name: '쪽지 시험 ② 과학과 윤리' }); if (p.id === 'p11') STAGES.push({ id: 'b3', type: 'boss', sec: 3, name: '최종 쪽지 시험 ③ 규제와 맺음' }); });
-const unlocked = k => k === 0 || SV.free || (SV.stars[STAGES[k - 1].id] || 0) > 0;
+/* 지문 서랍: 지문 하나 = 한 판. 새 지문은 window.PASSAGES에 같은 모양으로 넣으면 된다 (quest·장면은 없어도 됨) */
+const LIB = [Object.assign(window.EN, { id: 'same', quest: window.QUEST, scenes: true, mark: ['The Same', 'The Same'] })].concat(window.PASSAGES || []);
+let CUR = LIB[0], P = CUR.paras, PI = {};
+function use(ps) { CUR = ps; window.EN = ps; window.QUEST = ps.quest || {}; P = ps.paras; PI = Object.fromEntries(P.map((p, i) => [p.id, i])); SV.cur = ps.id; save(); }
+use(LIB.find(x => x.id === SV.cur) || LIB[0]);
 
 /* ── 인물 ─────────────────────────────────────────── */
 const WHO = { s: { n: '서진', c: '#ff8a3d' }, h: { n: '하람 선배', c: '#5b6cff' }, n: { n: '', c: '#999' } };
@@ -27,31 +26,8 @@ function face(who, size = 64) {
 
 /* 장면 사이 대화 — 방과 후 도서관, 수행평가 사흘 전. 플레이어(너)의 대사는 쓰지 않는다. */
 const TALK = {
-  p1: { in: [['n', '방과 후 도서관. 히터가 탁탁 소리를 내며 돈다. 책상 위엔 7쪽짜리 유인물과 서진의 해석 노트.'], ['s', '수행평가 사흘 남았거든? 근데 나 이거 다 해석해 놨어. 너는 검토만 해 주면 돼.'], ['n', '딸깍. 서진이 펜 뚜껑을 눌렀다.'], ['h', '다 했다는 사람 노트치고 포스트잇이 너무 많은데.'], ['s', '그건… 장식이에요, 선배님.']],
-    out: [['h', 'physician을 물리학자라고 쓴 거. 지워.'], ['s', '…지웠어요.'], ['n', '노트 귀퉁이에 “의사!!”가 세 번 적혔다.']] },
-  p2: { in: [['s', '람바다는 춤 이름 아니에요?'], ['h', 'lambaste. 철자부터 다르잖아.'], ['n', '딸깍, 딸깍. 서진이 모를 때 누르는 횟수다.']],
-    out: [['h', '천연이라고 다 안전한 거 아냐. 우리 할머니가 산에서 버섯을 따 오셨는데…'], ['s', '…따 오셨는데요?'], ['h', '배탈. 지금 잘 계셔.']] },
-  p3: { in: [['s', '재앙 목록 나온다. 이거 다 외워요?'], ['h', '외우는 게 아니라, “고를 수 있을 만큼 많다”가 포인트.'], ['s', 'to choose from. from 뒤에 아무것도 없는 거 이상하지 않아요?'], ['h', '없는 게 아니라 앞으로 간 거야.']],
-    out: [['s', 'exculpation 시험에 나오면 저 끝나요.'], ['h', '그럼 오늘 외워.'], ['n', '대답 대신 서진이 손바닥에 ex + culpa라고 썼다.']] },
-  p4: { in: [['s', 'credit은 알아요. 신용카드.'], ['h', '그럼 take credit for는?'], ['s', '카드를… 가져가다?'], ['n', '마침 히터가 탁 꺼졌다.']],
-    out: [['h', '아무도 호루라기를 안 불었다는 거. 난 그게 이 글에서 제일 무서운 문장 같아.'], ['n', '서진이 그 줄에 밑줄을 그었다. 이번엔 딸깍 소리가 없었다.']] },
-  p5: { in: [['n', '하람 선배가 휴대폰을 책상 밑으로 내린다. 화면에 “거울상 이성질체 뜻”.'], ['s', '선배도 검색해요?'], ['h', '…확인하는 거야.']],
-    out: [['s', '무해한 게 몸속에서 해로운 걸로 바뀐다. 반전 영화네요.'], ['h', '세상은 결코 단순하지 않다.'], ['s', '그거 지문이잖아요.'], ['h', '그러니까.']] },
-  p6: { in: [['s', 'Were the science done well. 이거 문법 틀린 거 아니에요?'], ['h', '도치. if를 빼면 자리가 바뀌어.'], ['s', '선배, 그거 한 번만 더요.'], ['n', '선배가 펜 뚜껑을 열었다. 설명이 길어진다는 뜻이다.']],
-    out: [['s', 'cannot afford. 저 매달 용돈으로 체험 중이에요.'], ['h', '그럼 이 문장은 잘 알겠네.']] },
-  p7: { in: [['s', 'banality… 바나나…'], ['h', '아니야.'], ['s', '아직 말 안 끝났는데요.'], ['h', '바나나 아니야.']],
-    out: [['s', '근데 이 사람들, 그냥 회사 다닌 거잖아요.'], ['h', '그래서 무서운 거야.'], ['n', '한동안 아무도 말하지 않았다. 히터만 탁탁거렸다.']] },
-  p8: { in: [['s', 'overboard. 배(board) 위로(over). 이건 확실해요.'], ['h', '배 밖으로 떨어지는 거야.'], ['s', '…그것도 위로 넘어가긴 했잖아요.']],
-    out: [['h', '이건 글쓴이 생각이 아니라 반대쪽 주장이야. so this argument goes.'], ['s', '아, “카더라”요?'], ['h', '…대충 맞아.']] },
-  p9: { in: [['s', 'lost랑 saved. 쌤이 동그라미 세 번 친 데예요.'], ['h', '그럼 세 번 볼 가치가 있겠네.']],
-    out: [['s', '이 문단은 저 안 틀렸죠?'], ['h', '하나 틀렸어.'], ['s', '하나면 선방이죠.']] },
-  p10: { in: [['s', 'If there be. be가 왜 원형이에요?'], ['h', '옛날 말투야. If there is로 읽으면 돼.'], ['s', '그럼 처음부터 그렇게 쓰지.']],
-    out: [['n', '서진이 “팔천 명” 옆에 숫자를 크게 적었다. 지웠다가, 다시 적었다.']] },
-  p11: { in: [['h', '마지막 문단. 제목이 여기서 나와.'], ['s', '같고도 다른… 우리 반 쌍둥이 얘기 같은데.'], ['h', '아니야.'], ['s', '아직 말 안 끝났는데요.']],
-    out: [['h', '끝. 수고했어.'], ['s', '선배, 저 이제 이거 다 해석할 수 있어요.'], ['h', '노트 줘 봐.'], ['n', '서진은 노트를 품에 안고 일어났다. 포스트잇 두 장이 바닥에 떨어졌다.']] },
-  b1: { in: [['h', '1부 끝. 쪽지 시험 볼게. 서진이 너도.'], ['s', '저는 검토받는 쪽인데요?'], ['h', '그러니까 너도.']], out: [['h', '통과.'], ['s', '선배, 방금 웃었죠?']] },
-  b2: { in: [['h', '2부 쪽지 시험. 이번엔 문장이 길어.'], ['s', '딸깍딸깍딸깍.']], out: [['s', '악의 평범성… 이제 바나나 생각 안 나요.'], ['h', '다행이네.']] },
-  b3: { in: [['h', '마지막. 전부 섞어서 낸다.'], ['s', '선배, 이거 수행평가보다 어려운 거 아니에요?'], ['h', '그래야 수행평가가 쉽지.']], out: [['n', '창밖은 벌써 어둡다. 사서 선생님이 불을 하나씩 끄기 시작했다.'], ['h', '수행평가 날, 잘 봐.'], ['s', '선배도 수능 잘 보세요.'], ['h', '…응.']] }
+  same: { in: [['n', '방과 후 도서관. 히터가 탁탁 소리를 내며 돈다. 책상 위엔 7쪽짜리 유인물과 서진의 해석 노트.'], ['s', '수행평가 사흘 남았거든? 근데 나 이거 다 해석해 놨어. 너는 검토만 해 주면 돼.'], ['n', '딸깍. 서진이 펜 뚜껑을 눌렀다.'], ['h', '다 했다는 사람 노트치고 포스트잇이 너무 많은데.'], ['s', '그건… 장식이에요, 선배님.']],
+    out: [['h', '끝. 수고했어.'], ['s', '선배, 저 이제 이거 다 해석할 수 있어요.'], ['h', '노트 줘 봐.'], ['n', '서진은 노트를 품에 안고 일어났다. 포스트잇 두 장이 바닥에 떨어졌다.']] }
 };
 
 /* ── 화면 틀 ─────────────────────────────────────── */
@@ -81,34 +57,28 @@ function showTip(el) {
 }
 document.addEventListener('click', e => { const w = e.target.closest && e.target.closest('.w'); if (w) { e.stopPropagation(); showTip(w); } else if (tip) { tip.remove(); tip = null; } }, true);
 
-/* ── 홈 / 지도 ───────────────────────────────────── */
+/* ── 홈(지문 서랍) / 지문 허브 ─────────────────── */
 function home() {
   Snd.music('title'); const a = screen('home');
-  a.innerHTML = `<div class="hero"><div class="mirror"><span>The Same</span><span class="flip">The Same</span></div><h1>같고도 다른</h1><p class="sub">영어 지문 RPG · <i>The Same and Not the Same</i> (Roald Hoffmann)</p><p class="dim">방과 후 도서관, 수행평가 사흘 전. 서진의 해석 노트를 같이 고쳐 주세요.</p></div>`;
-  const bs = h('div', 'btns'); const done = STAGES.filter(s => SV.stars[s.id]).length;
-  const go = h('button', 'pri', done ? `▶ 이어하기 (${done}/${STAGES.length})` : '▶ 시작하기'); go.onclick = map;
-  const nt = h('button', '', '📄 지문 분석 노트 (원문·해석·문법)'); nt.onclick = notes;
-  const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics';
-  bs.append(go, nt, ph); a.appendChild(bs);
+  a.innerHTML = `<div class="hero"><div class="mirror"><span>Read</span><span class="flip">Read</span></div><h1>영어 지문 RPG</h1><p class="dim">지문 하나가 한 판이에요. 이야기로 보고 → 읽고 → 실전 도전.</p></div>`;
+  const list = h('div', 'lib'); LIB.forEach(ps => { const st = SV.stars[ps.id] || 0; const c = h('button', 'pcard', `<b>${ps.title}</b><small>${ps.source.split('—')[0].split(',')[0]}</small><span class="st">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</span><span class="dim">${ps.paras.length}문단 · ${ps.paras.reduce((n, p) => n + p.s.length, 0)}문장</span>`); c.onclick = () => { use(ps); Snd.play('click'); hub(); }; list.appendChild(c); }); a.appendChild(list);
+  const bs = h('div', 'btns'); const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics'; bs.append(ph); a.appendChild(bs);
 }
-function map() {
-  Snd.music('camp'); const a = screen('map'); a.appendChild(topbar('도서관 지도'));
-  const wrap = h('div', 'mapwrap'); let sec = -1;
-  STAGES.forEach((st, k) => {
-    const s = st.type === 'para' ? st.p.sec : st.sec; if (st.type === 'para' && s !== sec) { sec = s; wrap.appendChild(h('div', 'sech', EN.secs[s])); }
-    const lock = !unlocked(k), stars = SV.stars[st.id] || 0; const n = h('button', `node ${st.type} ${lock ? 'lock' : ''} ${stars ? 'clear' : ''}`);
-    n.innerHTML = st.type === 'para' ? `<span class="num">${st.n}</span><span class="nm">${st.p.name}</span><span class="st">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>` : `<span class="num">📝</span><span class="nm">${st.name}</span><span class="st">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</span>`;
-    n.onclick = () => { if (lock) { Snd.play('wrong'); n.classList.add('shake'); setTimeout(() => n.classList.remove('shake'), 400); return; } Snd.play('click'); st.type === 'para' ? stage(st) : boss(st); };
-    wrap.appendChild(n);
-  });
-  a.appendChild(wrap);
-  const fr = h('label', 'free', `<input type="checkbox" ${SV.free ? 'checked' : ''}> 자유 모드 (모든 문단 열기)`); fr.querySelector('input').onchange = e => { SV.free = e.target.checked; save(); map(); }; a.appendChild(fr);
+function hub() {
+  Snd.music('camp'); const a = screen('hubs'); a.appendChild(topbar(CUR.title, ['지문 목록', home]));
+  const st = SV.stars[CUR.id] || 0, seen = (SV.seen || {})[CUR.id] || {};
+  a.appendChild(h('div', 'hhead', `<div class="mirror small"><span>${CUR.mark ? CUR.mark[0] : ''}</span><span class="flip">${CUR.mark ? CUR.mark[1] : ''}</span></div><p class="gist">${CUR.gist}</p><span class="st">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</span>`));
+  const steps = [
+    ['🎬', '이야기로 보기', CUR.scenes ? '지문 전체를 애니메이션으로 (약 4분)' : '이 지문은 장면이 아직 없어요', () => { mark('scene'); playAll(); }, seen.scene],
+    ['📖', '읽기', '전체 지문 · 끊어 읽기 · 단어 터치 · 낭독', () => { mark('read'); read(); }, seen.read],
+    ['⚔', '실전 도전', '지문 전체에서 섞어 15문제 · 별 3개 도전', () => challenge(), st],
+    ['📄', '분석 노트', '출처 · 구조 · 전문 해석 · 문법 · 단어장', () => notes(), 0]
+  ];
+  const g = h('div', 'steps'); steps.forEach(([ic, t, d, f, done], k) => { const b = h('button', 'step' + (done ? ' done' : ''), `<span class="ic">${ic}</span><b>${k + 1}. ${t}</b><small>${d}</small>`); b.onclick = () => { Snd.play('click'); f(); }; g.appendChild(b); }); a.appendChild(g);
+  if (!seen.intro && TALK[CUR.id]) { mark('intro'); talk(TALK[CUR.id].in, () => { }); }
 }
-
-/* ── 문단 스테이지 ───────────────────────────────── */
-function stage(st) {
-  talk(TALK[st.id] && TALK[st.id].in, () => EScene.play(st.id, () => read(st)));
-}
+function mark(k) { SV.seen = SV.seen || {}; (SV.seen[CUR.id] = SV.seen[CUR.id] || {})[k] = 1; save(); }
+function playAll(from = 0, back = hub) { const ids = P.map(p => p.id).filter(id => EScene.has(id)); if (!ids.length) return back(); const go = k => { if (k >= ids.length) return back(); EScene.play(ids[k], skipped => skipped ? back() : go(k + 1)); }; go(from); }
 function sentenceView(s, idx, opts = {}) {
   const [en, ko, tr, g] = s; const ens = en.split(' / '), kos = ko.split(' | ');
   const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(c)}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
@@ -117,41 +87,41 @@ function sentenceView(s, idx, opts = {}) {
   if (opts.open) el.classList.add('show-kos', 'show-tr', 'show-gr');
   return el;
 }
-function read(st) {
-  Snd.music('camp'); const p = st.p, a = screen('read'); a.appendChild(topbar(`${st.n}. ${p.name}`, ['지도', map]));
+function read() {
+  Snd.music('camp'); const a = screen('read'); a.appendChild(topbar(CUR.title + ' — 읽기', ['허브', hub]));
   const tools = h('div', 'tools'); const sp = h('button', SV.split ? 'on' : '', '/ 끊어 읽기 표시'); sp.onclick = () => { SV.split = !SV.split; save(); a.classList.toggle('nosplit', !SV.split); sp.classList.toggle('on', SV.split); };
-  const re = h('button', '', '🎬 장면 다시 보기'); re.onclick = () => EScene.play(p.id, () => { });
   const all = h('button', '', '모두 펼치기'); all.onclick = () => a.querySelectorAll('.sent').forEach(s => s.classList.add('show-kos', 'show-tr', 'show-gr'));
-  tools.append(sp, re, all); a.appendChild(tools); a.classList.toggle('nosplit', !SV.split);
-  a.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장마다 [끊어 해석] → [전체 해석] → [문법 메모] 순서로 열어 보세요.'));
+  const fold = h('button', '', '모두 접기'); fold.onclick = () => a.querySelectorAll('.sent').forEach(s => s.classList.remove('show-kos', 'show-tr', 'show-gr'));
+  tools.append(sp, all, fold); a.appendChild(tools); a.classList.toggle('nosplit', !SV.split);
+  a.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장마다 [끊어 해석] → [전체 해석] → [문법 메모]. 문단 제목 옆 버튼으로 그 문단 장면을 보거나 그 문단만 연습할 수 있어요.'));
   Reader.attach(a, () => [...a.querySelectorAll('.sent')].map(e => e._it));
-  p.s.forEach((s, i) => a.appendChild(sentenceView(s, i, { pid: p.id })));
-  const go = h('button', 'pri big', '⚔ 도전 시작'); go.onclick = () => challenge(st); a.appendChild(go);
+  let sec = -1;
+  P.forEach((p, i) => {
+    if (p.sec !== sec) { sec = p.sec; a.appendChild(h('div', 'sech', CUR.secs[sec])); }
+    const hd = h('div', 'phead', `<b>${i + 1}. ${p.name}</b>`); if (EScene.has(p.id)) { const sc = h('button', '', '🎬'); sc.title = '이 문단 장면'; sc.onclick = () => EScene.play(p.id, () => { }); hd.appendChild(sc); }
+    const pr = h('button', '', '⚔ 이 문단만'); pr.onclick = () => practice(p); hd.appendChild(pr); a.appendChild(hd);
+    p.s.forEach((s, j) => a.appendChild(sentenceView(s, j, { pid: p.id })));
+  });
+  const go = h('button', 'pri big', '⚔ 실전 도전'); go.onclick = () => challenge(); a.appendChild(go);
 }
 
 /* ── 도전 ───────────────────────────────────────── */
-function allVoc() { return Object.values(QUEST).flatMap(q => q.voc); }
-function makeRounds(ids, nVoc = 5, opt = {}) {
-  const R = [];
-  ids.forEach(id => { const q = QUEST[id], p = P[PI[id]];
-    shuffle(q.voc).slice(0, opt.boss ? 2 : nVoc).forEach(v => R.push({ k: 'voc', v, id }));
-    q.wrong.slice(0, opt.boss ? 1 : 2).forEach(w => R.push({ k: 'wrong', w, id }));
-    const long = p.s.map((s, i) => [s, i]).filter(([s]) => s[0].split(' / ').length >= 3); shuffle(long).slice(0, opt.boss ? 1 : 2).forEach(([s, i]) => R.push({ k: 'order', s, i, id }));
-    shuffle(q.gram).slice(0, opt.boss ? 1 : 3).forEach(g => R.push({ k: 'gram', g, id }));
-  });
-  if (opt.boss) return shuffle(R).slice(0, opt.boss);
-  const order = { voc: 0, wrong: 1, order: 2, gram: 3 }; return R.sort((a, b) => order[a.k] - order[b.k]);
+function autoVoc(p) { const seen = new Set(); const out = []; p.s.forEach(s => s[0].replace(/<[^>]+>/g, '').split(/[^A-Za-zÀ-ÿ'\-]+/).forEach(w => { const k = w.toLowerCase(); if (k.length > 6 && !seen.has(k) && DICT[k]) { seen.add(k); out.push([w, DICT[k].split(/[(/,]/)[0].trim()]); } })); return out; }
+function qOf(id) { const q = QUEST[id] || {}; return { voc: q.voc && q.voc.length ? q.voc : autoVoc(P[PI[id]]), gram: q.gram || [], wrong: q.wrong || [] }; }
+function allVoc() { return P.flatMap(p => qOf(p.id).voc); }
+function pool(ids) {
+  const R = { voc: [], wrong: [], order: [], gram: [] };
+  ids.forEach(id => { const q = qOf(id), p = P[PI[id]];
+    q.voc.forEach(v => R.voc.push({ k: 'voc', v, id })); q.wrong.forEach(w => R.wrong.push({ k: 'wrong', w, id }));
+    p.s.forEach((s, i) => { if (s[0].split(' / ').length >= 3) R.order.push({ k: 'order', s, i, id }); }); q.gram.forEach(g => R.gram.push({ k: 'gram', g, id })); });
+  return R;
 }
-function challenge(st) {
-  Snd.music('tense'); runRounds(st, makeRounds([st.id]), { hearts: 3, title: `${st.n}. ${st.p.name} — 도전` });
-}
-function boss(st) {
-  const ids = P.filter(p => p.sec === st.sec).map(p => p.id);
-  talk(TALK[st.id].in, () => { Snd.music('boss'); runRounds(st, makeRounds(ids, 0, { boss: st.sec === 3 ? 14 : 12 }), { hearts: 3, title: st.name, timer: 20, boss: true }); });
-}
+function makeRounds(ids, n) { const R = pool(ids), take = (a, k) => shuffle(a).slice(0, k); const out = [...take(R.voc, n.voc), ...take(R.wrong, n.wrong), ...take(R.order, n.order), ...take(R.gram, n.gram)]; const o = { voc: 0, wrong: 1, order: 2, gram: 3 }; return out.sort((a, b) => o[a.k] - o[b.k]); }
+function challenge() { Snd.music('tense'); runRounds({ id: CUR.id, type: 'all' }, makeRounds(P.map(p => p.id), { voc: 5, wrong: 3, order: 3, gram: 4 }), { hearts: 4, title: CUR.title + ' — 실전 도전' }); }
+function practice(p) { Snd.music('tense'); runRounds({ id: CUR.id + ':' + p.id, type: 'para', p }, makeRounds([p.id], { voc: 4, wrong: 2, order: 2, gram: 3 }), { hearts: 3, title: p.name + ' — 문단 연습' }); }
 function runRounds(st, rounds, cfg) {
   const a = screen('chal' + (cfg.boss ? ' bossmode' : '')); let i = 0, hearts = cfg.hearts, miss = 0, combo = 0, gained = 0;
-  const top = topbar(cfg.title, ['나가기', () => confirm('도전을 그만두고 지도로 갈까요?') && map()]); a.appendChild(top);
+  const top = topbar(cfg.title, ['나가기', () => confirm('도전을 그만두고 나갈까요?') && hub()]); a.appendChild(top);
   const hud = h('div', 'hud'); a.appendChild(hud); const body = h('div', 'rbody'); a.appendChild(body);
   let timer = null;
   const drawHud = () => { hud.innerHTML = `<span class="hearts">${'♥'.repeat(Math.max(0, hearts))}<s>${'♥'.repeat(Math.max(0, cfg.hearts - hearts))}</s></span><span class="bar"><i style="width:${i / rounds.length * 100}%"></i></span><span class="cnt">${i + 1 > rounds.length ? rounds.length : i + 1}/${rounds.length}</span><span class="combo ${combo >= 2 ? 'on' : ''}">${combo >= 2 ? combo + ' 콤보!' : ''}</span>` + (cfg.timer ? '<span class="tbar"><i></i></span>' : ''); };
@@ -196,32 +166,27 @@ function runRounds(st, rounds, cfg) {
   function finish() {
     const stars = miss === 0 ? 3 : miss <= 2 ? 2 : 1; const prev = SV.stars[st.id] || 0; SV.stars[st.id] = Math.max(prev, stars); SV.xp += gained + stars * 10; save(); Snd.music('happy'); Snd.play('win');
     body.innerHTML = ''; hud.innerHTML = ''; const r = h('div', 'result', `<div class="big">${'★'.repeat(stars)}<s>${'★'.repeat(3 - stars)}</s></div><h2>클리어!</h2><p>실수 ${miss}번 · 얻은 공명 ✦ ${gained + stars * 10}</p>`);
-    const nx = h('button', 'pri', '계속 ▶'); nx.onclick = () => talk(TALK[st.id] && TALK[st.id].out, () => { const k = STAGES.findIndex(s => s.id === st.id); const n = STAGES[k + 1]; if (n) { const b = h('div'); map(); } else ending(); });
-    const rt = h('button', '', '↺ 다시 도전'); rt.onclick = () => st.type === 'para' ? challenge(st) : boss(st);
+    const nx = h('button', 'pri', st.type === 'all' ? '계속 ▶' : '읽기로 돌아가기'); nx.onclick = () => st.type === 'all' ? talk(TALK[CUR.id] && !prev ? TALK[CUR.id].out : null, hub) : read();
+    const rt = h('button', '', '↺ 다시 도전'); rt.onclick = () => st.type === 'all' ? challenge() : practice(st.p);
     r.append(nx, rt); body.appendChild(r);
   }
   function fail() {
     Snd.music('sad'); body.innerHTML = ''; const r = h('div', 'result fail', `<h2>하트가 다 떨어졌어요</h2><p>괜찮아요. 틀린 문장을 다시 읽고 오면 돼요.</p>`);
-    const rd = h('button', 'pri', st.type === 'para' ? '📖 문단 다시 읽기' : '📖 지문 분석 노트'); rd.onclick = () => st.type === 'para' ? read(st) : notes();
-    const rt = h('button', '', '↺ 바로 다시 도전'); rt.onclick = () => st.type === 'para' ? challenge(st) : boss(st); r.append(rd, rt); body.appendChild(r);
+    const rd = h('button', 'pri', '📖 다시 읽기'); rd.onclick = () => read();
+    const rt = h('button', '', '↺ 바로 다시 도전'); rt.onclick = () => st.type === 'all' ? challenge() : practice(st.p); r.append(rd, rt); body.appendChild(r);
   }
   show();
 }
-function ending() {
-  Snd.music('happy'); const a = screen('home'); a.innerHTML = `<div class="hero"><div class="mirror"><span>The Same</span><span class="flip">The Same</span></div><h1>완독!</h1><p class="sub">${EN.gist}</p><p>모은 공명 ✦ ${SV.xp}</p></div>`;
-  const bs = h('div', 'btns'); const m = h('button', 'pri', '지도로'); m.onclick = map; const n = h('button', '', '📄 분석 노트'); n.onclick = notes; bs.append(m, n); a.appendChild(bs);
-}
-
 /* ── 지문 분석 노트 ─────────────────────────────── */
 function notes() {
-  Snd.music('camp'); const a = screen('notes'); a.appendChild(topbar('지문 분석 노트', ['홈', home]));
+  Snd.music('camp'); const a = screen('notes'); a.appendChild(topbar(CUR.title + ' — 분석 노트', ['허브', hub]));
   const tabs = h('div', 'tabs'); const body = h('div', 'nbody'); a.append(tabs, body);
   const T = {
     '출처·배경': () => `<h3>출처</h3><p>${EN.source}</p><p>${EN.author}</p><h3>배경: 탈리도마이드 사건</h3><ul>${EN.background.map(x => `<li>${x}</li>`).join('')}</ul>`,
     '구조·요지': () => `<h3>한 줄 요지</h3><p class="gist">${EN.gist}</p><h3>글의 흐름</h3>${EN.structure.map(([t, d]) => `<div class="stc"><b>${t}</b><p>${d}</p></div>`).join('')}<h3>문단별 지도</h3>${P.map((p, i) => `<div class="stc"><b>${i + 1}. ${p.name}</b> <span class="dim">(${EN.secs[p.sec]})</span><p>${p.s.map(s => s[2]).join(' ')}</p></div>`).join('')}`,
     '원문·해석': null,
     '문법 모음': () => P.map((p, i) => `<h3>${i + 1}. ${p.name}</h3>` + p.s.filter(s => s[3] && s[3].length).map(s => `<div class="gitem"><div class="ge">${s[0].replace(/ \/ /g, ' ')}</div>${s[3].map(g => `<div>▸ ${g}</div>`).join('')}</div>`).join('')).join(''),
-    '단어장': () => P.map((p, i) => `<h3>${i + 1}. ${p.name}</h3><div class="vgrid">${QUEST[p.id].voc.map(v => `<div><b>${v[0]}</b><span>${v[1]}</span></div>`).join('')}</div>`).join('')
+    '단어장': () => P.map((p, i) => `<h3>${i + 1}. ${p.name}</h3><div class="vgrid">${qOf(p.id).voc.map(v => `<div><b>${v[0]}</b><span>${v[1]}</span></div>`).join('')}</div>`).join('')
   };
   const open = k => { Reader.stop(); [...tabs.children].forEach(b => b.classList.toggle('on', b.textContent === k)); body.innerHTML = ''; if (k === '원문·해석') { body.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장 아래 버튼으로 끊어 해석·전체 해석·문법을 펼칠 수 있어요.')); Reader.attach(body, () => [...body.querySelectorAll('.sent')].map(e => e._it)); const all = h('button', '', '모든 해석 펼치기'); all.onclick = () => body.querySelectorAll('.sent').forEach(s => s.classList.add('show-kos', 'show-tr', 'show-gr')); body.appendChild(all); P.forEach((p, i) => { body.appendChild(h('h3', '', `${i + 1}. ${p.name} <span class="dim">${EN.secs[p.sec]}</span>`)); p.s.forEach((s, j) => body.appendChild(sentenceView(s, j, { pid: p.id }))); }); } else body.innerHTML = T[k](); };
   Object.keys(T).forEach(k => { const b = h('button', '', k); b.onclick = () => { Snd.play('click'); open(k); }; tabs.appendChild(b); });

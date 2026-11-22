@@ -143,3 +143,15 @@ button.wrong{background:var(--bad)!important;color:#fff!important;box-shadow:0 3
 .sent.speaking{box-shadow:0 0 0 3px var(--pri) inset}
 .ck.speaking{background:#ffd23f;color:#231046;border-radius:6px;box-shadow:0 0 0 3px #ffd23f}
 .say1{background:#fff3e6!important;color:#a3480a!important}
+
+/* 지문 서랍 · 허브 */
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:8px 0 18px}
+.pcard{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:18px;border-radius:20px}
+.pcard b{font:italic 800 22px Georgia,serif;color:var(--vio)}.pcard .st,.hhead .st{color:#ffb547;letter-spacing:3px;font-size:18px}
+.hhead{text-align:center;margin:6px 0 14px}.mirror.small{font-size:clamp(24px,5vw,40px)}
+.steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.step{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:16px;border-radius:20px;min-height:120px}
+.step .ic{font-size:30px}.step b{font-size:17px}.step small{color:var(--dim);line-height:1.45}
+.step.done{box-shadow:0 2px 0 var(--ok),0 0 0 2px var(--ok) inset}
+.phead{display:flex;align-items:center;gap:8px;margin:18px 0 4px}.phead b{flex:1;font-size:17px}.phead button{min-height:34px;padding:5px 10px;font-size:13px}
+.sech{font-weight:800;margin:22px 0 0;color:var(--vio);font-size:15px;border-bottom:2px solid var(--line);padding-bottom:4px}
