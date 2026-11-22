@@ -209,6 +209,25 @@ function review() {
   const list = shuffle(out.filter(Boolean)).slice(0, 20); if (!list.length) { alert('오늘 복습할 것이 없어요! 새 문제를 풀면 복습 거리가 쌓여요.'); return; }
   Snd.music('tense'); runRounds({ id: CUR.id + ':rev', type: 'all' }, list, { noHearts: 1, title: CUR.title + ' — 오늘의 복습' });
 }
+/* ── 문장 삽입 풀이: 앞 문장 → 주어진 문장 → 뒤 문장을 해석과 함께 보여 주고, 단서 단어를 짚어 준다 ── */
+const CLUE = [
+  [/^(yet|but|however|still|nevertheless|instead)\b/i, '역접 연결어', '앞 내용과 <b>반대되는</b> 말이 바로 앞에 있어야 해요.'],
+  [/^(so|therefore|thus|hence|as a result|consequently)\b/i, '결과 연결어', '바로 앞 문장이 이 문장의 <b>원인</b>이어야 해요.'],
+  [/^(for example|for instance|in fact|indeed)\b/i, '예시·강조', '바로 앞에 <b>일반적인 주장</b>이 있고, 이 문장이 그걸 구체화해요.'],
+  [/^(also|moreover|furthermore|in addition|besides|similarly|likewise)\b/i, '추가 연결어', '앞에 <b>같은 방향의 내용</b>이 이미 하나 나와 있어야 해요.'],
+  [/^(first|second|then|finally|later|after that)\b/i, '순서 표현', '앞뒤 <b>순서</b>를 맞춰 보세요.'],
+  [/\b(this|these|those|such)\b|^(that)\b/i, '지시어', '<b>$1</b>이(가) 가리키는 대상이 바로 앞 문장에 있어야 해요.'],
+  [/^(it|they|he|she|its|their|his|her)\b/i, '대명사', '<b>$1</b>이(가) 가리킬 명사가 바로 앞에 있어야 해요.'],
+  [/\b(the same|the other|another|the former|the latter)\b/i, '비교·지칭', '<b>$1</b>이(가) 받는 대상이 앞에 있어야 해요.']
+];
+function insertWhy(giv, prev, next, plain) {
+  const t = plain(giv[0]).trim(), ko = s => s && s[2] ? `<span class="dim">${s[2].replace(/<[^>]+>/g, '')}</span>` : '';
+  const clues = []; CLUE.forEach(([re, name, tip]) => { const m = t.match(re); if (m && clues.length < 2) clues.push(`🔎 <b>${name}</b> “${m[0]}” — ${tip.replace('$1', m[1] || m[0])}`); });
+  const nt = next ? plain(next[0]).trim() : ''; const nm = nt.match(/^(\S+(?: \S+)?)/);
+  if (next && /^(the system|this|these|that|such|it|they|so|but|however|yet)\b/i.test(nt)) clues.push(`🔎 뒤 문장 “${nm[0]}”는 주어진 문장 내용을 <b>이어받아요</b>.`);
+  const row = (lab, s, cls) => s ? `<div class="iw ${cls || ''}"><i>${lab}</i>${plain(s)}<br>${ko(s)}</div>` : '';
+  return `<div class="iwhy">${clues.length ? '<div class="iclue">' + clues.join('<br>') + '</div>' : ''}${row('앞', prev && prev[0])}${row('★ 주어진 문장', giv[0], 'giv')}${row('뒤', next && next[0])}<div class="dim">→ 세 문장을 이어 읽었을 때 해석이 자연스럽게 흘러가는지 확인!</div></div>`;
+}
 /* ── 이어서 풀기: 진행 중인 도전을 저장했다가 복원 ── */
 function enc(r) { const q = qOf(r.id); const d = { k: r.k, id: r.id };
   if (r.k === 'voc') d.v = r.v; else if (r.k === 'wrong') d.wi = q.wrong.indexOf(r.w); else if (r.k === 'order') d.i = r.i; else if (r.k === 'gram') d.gi = r.gi;
@@ -302,7 +321,7 @@ function runRounds(st, rounds, cfg, at) {
         const giv = r.all[r.at], rest = r.all.filter((_, k) => k !== r.at); body.appendChild(h('div', 'qk', '문장 삽입 — 주어진 문장이 들어갈 곳은? (' + P2.name + ')'));
         const nums = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪']; const slots = Math.min(rest.length, 5); const off = Math.max(0, Math.min(r.at - 1 - Math.floor(Math.random() * slots), rest.length - slots));
         let html = `<p class="given">${plain(giv[0])}</p><p>`; rest.forEach(([s], k) => { if (k > off && k - off <= slots) html += ` <b class="slot">( ${nums[k - off - 1]} )</b> `; html += plain(s) + ' '; }); if (rest.length - off <= slots && r.at === r.all.length - 1) html += ` <b class="slot">( ${nums[rest.length - off - 1]} )</b>`; html += '</p>'; body.appendChild(h('div', 'paper', `<div class="ptext">${html}</div>`));
-        const ans = r.at - off - 1; const cnt = body.querySelectorAll('.slot').length; const g = h('div', 'opts'); for (let k = 0; k < cnt; k++) { const b = h('button', '', nums[k]); b.onclick = () => { g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[ans] && g.children[ans].classList.add('right'); if (k === ans) { ok(6); cont('✔ 정답! <small>' + giv[2] + '</small>', true); } else { b.classList.add('wrong'); bad(); cont(`정답은 ${nums[ans]}. <small>앞뒤 문장의 지시어·연결어를 확인해 보세요. ${giv[2]}</small>`, false); } }; g.appendChild(b); } body.appendChild(g);
+        const ans = r.at - off - 1; const cnt = body.querySelectorAll('.slot').length; const g = h('div', 'opts'); for (let k = 0; k < cnt; k++) { const b = h('button', '', nums[k]); b.onclick = () => { g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[ans] && g.children[ans].classList.add('right'); const why = insertWhy(giv, r.all[r.at - 1], r.all[r.at + 1], plain); if (k === ans) { ok(6); cont('✔ 정답!' + why, true); } else { b.classList.add('wrong'); bad(); cont(`정답은 ${nums[ans]}.` + why, false); } }; g.appendChild(b); } body.appendChild(g);
       }
     }
     if (r.k === 'gram') {

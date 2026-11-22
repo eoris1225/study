@@ -238,3 +238,11 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .inkcols{display:flex;gap:6px;align-items:center}.inkcols i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px #cfc6f5}.inkcols i.on{box-shadow:0 0 0 3px #231046}
 .inkbar input[type=range]{width:90px;accent-color:#7a2cf0}
 .inkhide-bar,.inkbar.hid{display:none}
+
+.iwhy{margin-top:8px;font-size:14px;line-height:1.55;text-align:left}
+.iwhy .iclue{background:#fff7d6;color:#6a4b00;border-radius:10px;padding:8px 10px;margin-bottom:8px}
+.iwhy .iw{border-left:3px solid #c9b8ff;padding:4px 10px;margin:6px 0;color:#2b2150}
+.iwhy .iw.giv{border-color:#ff8a3d;background:#fff1e6;border-radius:0 8px 8px 0}
+.iwhy .iw i{display:inline-block;font-style:normal;font-size:12px;font-weight:800;color:#7a5cff;margin-right:6px}
+.iwhy .iw.giv i{color:#e0601a}
+.iwhy .dim{color:#6b6390}
