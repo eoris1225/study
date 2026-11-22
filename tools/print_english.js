@@ -20,12 +20,13 @@ const point = s => { const n = (s[3] || [])[0]; if (!n) return ''; let t = n.rep
 const ANS = []; let qn = 0;
 
 function passage(id, label, min) {
-  const ps = byId(id); let h = `<div class="ps${['ne5', 'same'].includes(id) ? ' cont' : ''}"><h2>${label} <small>· 약 ${min}분</small></h2><p class="gist">🎯 ${esc(ps.gist || '')}</p>`;
+  const ps = byId(id); let h = `<div class="ps${id === 'ne4' ? ' first' : ''}"><h2>${label} <small>· 약 ${min}분</small></h2><p class="gist">🎯 ${esc(ps.gist || '')}</p>`;
   if (ps.structure && !ps.exam) h += `<div class="flow">${ps.structure.map(([a, b]) => `<span><b>${esc(a)}</b> ${esc(b.split(/[.。]/)[0])}</span>`).join('<em>→</em>')}</div>`;
   ps.paras.forEach(p => {
+    if (p.id === 'm26_21') { h += `<h3>${esc(p.name)}</h3><p class="key">정답·지문은 <b>프린트 ① The History of Money</b>의 “이자율” 부분과 같은 글이에요 → 앞에서 읽은 걸로 대신. 정답 근거: ${esc(ko(p.q && p.q.why || ''))}</p>`; return; }
     h += `<h3>${esc(p.name)}</h3>`;
     if (p.q) { const q = p.q; const a = typeof q.ans === 'number' ? circ[q.ans] + (q.opts && q.opts[q.ans] && !/^[①-⑤]$/.test(q.opts[q.ans]) ? ' ' + esc(ko(q.opts[q.ans])) : '') : esc(String(q.ans)); h += `<p class="key">정답 <b>${a}</b> — ${esc(ko(q.why || ''))}</p>`; }
-    h += `<table class="st">${p.s.map(s => { const pt = point(s); return `<tr><td class="e">${en(s[0])}${pt ? `<div class="pt">★ ${pt}</div>` : ''}</td><td class="k">${esc(ko(s[2]))}</td></tr>`; }).join('')}</table>`;
+    h += `<table class="st">${p.s.map(s => { const pt = point(s); return `<tr><td class="e">${en(s[0])}</td><td class="k">${esc(ko(s[2]))}${pt ? `<div class="pt">★ ${pt}</div>` : ''}</td></tr>`; }).join('')}</table>`;
   });
   /* 확인 문제 3개: 교과서·프린트만 (문법 2 + 해석 함정 1) */
   if (!ps.exam) {
@@ -40,21 +41,21 @@ function passage(id, label, min) {
 
 const css = `
 ${FONT ? `@import url('${FONT}/400.css');@import url('${FONT}/700.css');@import url('${FONT}/900.css');` : ''}
-@page{size:A4;margin:9mm 9mm 10mm}
+@page{size:A4;margin:8mm 8mm 9mm}
 body{font-family:'Noto Sans KR',sans-serif;font-size:9.5pt;line-height:1.45;color:#111;margin:0}
 h1{font-size:20pt;margin:0 0 3mm;font-weight:900}
 h2{font-size:13pt;margin:0 0 2mm;padding:1.5mm 3mm;background:#111;color:#fff;border-radius:1.5mm;break-after:avoid}h2 small{font-weight:400;font-size:9pt;opacity:.8}
 h3{font-size:9.5pt;margin:1.8mm 0 .6mm;break-after:avoid;border-left:4px solid #111;padding-left:2mm}
-.ps{break-before:page}.ps.cont{break-before:auto;margin-top:4mm}.gist{margin:0 0 1.5mm;font-weight:700}
+.ps{break-before:auto;margin-top:4mm}.ps.first{break-before:page;margin-top:0}.gist{margin:0 0 1.5mm;font-weight:700}
 .flow{font-size:8.5pt;margin-bottom:1.5mm;line-height:1.6}.flow em{font-style:normal;margin:0 1mm;color:#888}.flow b{background:#eee;padding:0 1mm}
 .key{margin:0 0 1mm;font-size:8.6pt;background:#fff6d6;border:1px solid #e0c060;padding:1mm 2mm;border-radius:1mm;break-after:avoid}
 table.st{border-collapse:collapse;width:100%}
 .st td{vertical-align:top;padding:.5mm 1.2mm;border-bottom:1px solid #e2e2e2}
-.st td.e{width:63%;font-family:'Charter','Bitstream Charter','Caladea',serif;font-size:9.2pt;line-height:1.36;border-right:1.5px dashed #888}
+.st td.e{width:56%;font-family:'Charter','Bitstream Charter','Caladea',serif;font-size:9pt;line-height:1.33;border-right:1.5px dashed #888}
 .st td.e i{color:#c2410c;font-style:normal;font-family:'Noto Sans KR'}
-.st td.k{font-size:7.9pt;color:#333;line-height:1.36}
+.st td.k{font-size:7.6pt;color:#333;line-height:1.33}
 .st tr{break-inside:avoid}
-.pt{font-family:'Noto Sans KR';font-size:7.4pt;color:#1d4ed8;line-height:1.3;margin-top:.2mm}
+.pt{font-family:'Noto Sans KR';font-size:7.1pt;color:#1d4ed8;line-height:1.3;margin-top:.2mm}
 .chk{border:1.5px solid #111;border-radius:2mm;padding:2mm 3mm;margin-top:2.5mm;break-inside:avoid}
 .q{margin:1.2mm 0;font-size:9pt}.opts{display:flex;flex-wrap:wrap;gap:0 4mm;margin-left:3mm}.enq{font-family:'Charter',serif;display:block;margin:.5mm 0}.wk{color:#b91c1c}
 table.tt{border-collapse:collapse;width:100%}.tt td,.tt th{border:1px solid #333;padding:1.6mm 2mm;vertical-align:top;font-size:9.5pt}.tt th{background:#eee;width:24mm}
@@ -66,7 +67,7 @@ LIST.forEach(([id, l, m]) => { body += passage(id, l, m); });
 let html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>영어 지문 자습 프린트</title><style>${css}</style></head><body>
 <h1>영어 1시간 — 지문 다시 보기</h1>
 <table class="tt">
-<tr><th>읽는 법</th><td>오른쪽 <b>해석 칸을 접어서(점선) 가리고</b> 왼쪽 영어만 읽기 → <b>/</b> 단위로 끊어서 머릿속으로 해석 → 막히면 펼쳐서 확인. 파란 <b>★</b> = 시험에 나오는 문법 포인트.</td></tr>
+<tr><th>읽는 법</th><td>오른쪽 <b>해석 칸을 접어서(점선) 가리고</b> 왼쪽 영어만 읽기 → <b>/</b> 단위로 끊어서 머릿속으로 해석 → 막히면 펼쳐서 확인. 해석 칸 아래 파란 <b>★</b> = 시험에 나오는 문법 포인트.</td></tr>
 <tr><th>0~18분</th><td>교과서 4과 (9분) · 5과 (9분) — 지문 끝 <b>확인 3문제</b>까지</td></tr>
 <tr><th>18~34분</th><td>프린트 History of Money (6분) · The Same and Not the Same (10분)</td></tr>
 <tr><th>34~60분</th><td>모의고사 2025 (12분) · 2026 (14분) — 문항마다 노란 칸 <b>정답·근거</b>를 먼저 읽고 지문에서 근거 문장 찾기</td></tr>
