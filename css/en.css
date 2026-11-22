@@ -131,3 +131,15 @@ button.wrong{background:var(--bad)!important;color:#fff!important;box-shadow:0 3
 .esc-skip{position:absolute;right:12px;top:10px}
 .esc.paused::after{content:"⏸";position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);font-size:70px;color:#fff8;pointer-events:none}
 @media (max-width:560px){.opts{grid-template-columns:1fr}.eng{font-size:17px}.sent{padding-left:40px}}
+
+/* 낭독 */
+.rbar{position:sticky;top:58px;z-index:4;display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:var(--paper);border-radius:16px;padding:8px 10px;margin:8px 0;box-shadow:0 0 0 1.5px var(--line) inset}
+.rbar.on{box-shadow:0 0 0 2px var(--pri) inset}
+.rbar button{min-height:38px;padding:6px 12px}
+.rbar .spd{display:flex;align-items:center;gap:6px;font-size:14px}.rbar .spd input{width:110px;accent-color:var(--pri)}.rbar .spd b{min-width:44px}
+.rbar select{font:inherit;padding:7px 8px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.rbar .kot{font-size:14px;display:flex;gap:4px;align-items:center}
+.rbar .who{font-weight:800;color:var(--pri);font-size:14px}
+.sent.speaking{box-shadow:0 0 0 3px var(--pri) inset}
+.ck.speaking{background:#ffd23f;color:#231046;border-radius:6px;box-shadow:0 0 0 3px #ffd23f}
+.say1{background:#fff3e6!important;color:#a3480a!important}

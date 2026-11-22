@@ -6,7 +6,7 @@ const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) 
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const KEY = 'en_same_v1';
 let SV; try { SV = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { SV = {}; }
-SV.stars = SV.stars || {}; SV.xp = SV.xp || 0; SV.split = SV.split ?? true;
+SV.stars = SV.stars || {}; SV.xp = SV.xp || 0; SV.split = SV.split ?? true; SV.sceneVoice = SV.sceneVoice ?? true;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SV)); } catch (e) { } };
 const P = EN.paras, PI = Object.fromEntries(P.map((p, i) => [p.id, i]));
 
@@ -56,7 +56,7 @@ const TALK = {
 
 /* ── 화면 틀 ─────────────────────────────────────── */
 const app = () => $('#app');
-function screen(cls) { const a = app(); a.innerHTML = ''; a.className = cls || ''; window.scrollTo(0, 0); return a; }
+function screen(cls) { if (typeof Reader !== 'undefined') Reader.stop(); const a = app(); a.innerHTML = ''; a.className = cls || ''; window.scrollTo(0, 0); return a; }
 function topbar(title, back) { const b = h('div', 'top'); const l = h('button', 'ghost', back ? '◀ ' + back[0] : '🏠'); l.onclick = back ? back[1] : home; b.append(l, h('div', 'ttl', title), h('div', 'xp', `✦ ${SV.xp}`)); return b; }
 
 /* 대화 재생 */
@@ -111,8 +111,9 @@ function stage(st) {
 }
 function sentenceView(s, idx, opts = {}) {
   const [en, ko, tr, g] = s; const ens = en.split(' / '), kos = ko.split(' | ');
-  const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(c)}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x}</div>`).join('')}</div><div class="sbtn"><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
-  el.querySelector('.sbtn').onclick = e => { const t = e.target.dataset.t; if (!t) return; el.classList.toggle('show-' + t); e.target.classList.toggle('on'); Snd.play('click'); if (t === 'gr' || t === 'tr') { el.dataset.seen = 1; } };
+  const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(c)}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
+  el._it = { el, s, pid: opts.pid, si: idx };
+  el.querySelector('.sbtn').onclick = e => { const t = e.target.dataset.t; if (!t) return; if (t === 'say') { Reader.one(el._it); return; } el.classList.toggle('show-' + t); e.target.classList.toggle('on'); Snd.play('click'); if (t === 'gr' || t === 'tr') { el.dataset.seen = 1; } };
   if (opts.open) el.classList.add('show-kos', 'show-tr', 'show-gr');
   return el;
 }
@@ -123,7 +124,8 @@ function read(st) {
   const all = h('button', '', '모두 펼치기'); all.onclick = () => a.querySelectorAll('.sent').forEach(s => s.classList.add('show-kos', 'show-tr', 'show-gr'));
   tools.append(sp, re, all); a.appendChild(tools); a.classList.toggle('nosplit', !SV.split);
   a.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장마다 [끊어 해석] → [전체 해석] → [문법 메모] 순서로 열어 보세요.'));
-  p.s.forEach((s, i) => a.appendChild(sentenceView(s, i)));
+  Reader.attach(a, () => [...a.querySelectorAll('.sent')].map(e => e._it));
+  p.s.forEach((s, i) => a.appendChild(sentenceView(s, i, { pid: p.id })));
   const go = h('button', 'pri big', '⚔ 도전 시작'); go.onclick = () => challenge(st); a.appendChild(go);
 }
 
@@ -221,7 +223,7 @@ function notes() {
     '문법 모음': () => P.map((p, i) => `<h3>${i + 1}. ${p.name}</h3>` + p.s.filter(s => s[3] && s[3].length).map(s => `<div class="gitem"><div class="ge">${s[0].replace(/ \/ /g, ' ')}</div>${s[3].map(g => `<div>▸ ${g}</div>`).join('')}</div>`).join('')).join(''),
     '단어장': () => P.map((p, i) => `<h3>${i + 1}. ${p.name}</h3><div class="vgrid">${QUEST[p.id].voc.map(v => `<div><b>${v[0]}</b><span>${v[1]}</span></div>`).join('')}</div>`).join('')
   };
-  const open = k => { [...tabs.children].forEach(b => b.classList.toggle('on', b.textContent === k)); body.innerHTML = ''; if (k === '원문·해석') { body.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장 아래 버튼으로 끊어 해석·전체 해석·문법을 펼칠 수 있어요.')); const all = h('button', '', '모든 해석 펼치기'); all.onclick = () => body.querySelectorAll('.sent').forEach(s => s.classList.add('show-kos', 'show-tr', 'show-gr')); body.appendChild(all); P.forEach((p, i) => { body.appendChild(h('h3', '', `${i + 1}. ${p.name} <span class="dim">${EN.secs[p.sec]}</span>`)); p.s.forEach((s, j) => body.appendChild(sentenceView(s, j))); }); } else body.innerHTML = T[k](); };
+  const open = k => { Reader.stop(); [...tabs.children].forEach(b => b.classList.toggle('on', b.textContent === k)); body.innerHTML = ''; if (k === '원문·해석') { body.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장 아래 버튼으로 끊어 해석·전체 해석·문법을 펼칠 수 있어요.')); Reader.attach(body, () => [...body.querySelectorAll('.sent')].map(e => e._it)); const all = h('button', '', '모든 해석 펼치기'); all.onclick = () => body.querySelectorAll('.sent').forEach(s => s.classList.add('show-kos', 'show-tr', 'show-gr')); body.appendChild(all); P.forEach((p, i) => { body.appendChild(h('h3', '', `${i + 1}. ${p.name} <span class="dim">${EN.secs[p.sec]}</span>`)); p.s.forEach((s, j) => body.appendChild(sentenceView(s, j, { pid: p.id }))); }); } else body.innerHTML = T[k](); };
   Object.keys(T).forEach(k => { const b = h('button', '', k); b.onclick = () => { Snd.play('click'); open(k); }; tabs.appendChild(b); });
   open('출처·배경');
 }

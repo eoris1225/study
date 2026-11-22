@@ -150,21 +150,21 @@ const EScene = (() => {
   function play(id, onDone) {
     const shots = SC[id]; if (!shots) { onDone && onDone(); return; }
     const ov = document.createElement('div'); ov.className = 'esc';
-    ov.innerHTML = '<canvas></canvas><div class="esc-prog"></div><div class="esc-sub"><div class="ko"></div><div class="en"></div></div><div class="esc-ctl"><button data-a="prev">⏮</button><button data-a="pause">⏸</button><button data-a="next">⏭</button></div><button class="esc-skip">건너뛰기 ▸▸</button>';
+    ov.innerHTML = `<canvas></canvas><div class="esc-prog"></div><div class="esc-sub"><div class="ko"></div><div class="en"></div></div><div class="esc-ctl"><button data-a="prev">⏮</button><button data-a="pause">⏸</button><button data-a="next">⏭</button><button data-a="voice">${SV.sceneVoice ? '🔊' : '🔇'}</button></div><button class="esc-skip">건너뛰기 ▸▸</button>`;
     document.body.appendChild(ov); const cv = ov.querySelector('canvas'), x = cv.getContext('2d'), ko = ov.querySelector('.ko'), en = ov.querySelector('.en'), prog = ov.querySelector('.esc-prog'), bP = ov.querySelector('[data-a=pause]');
     let i = -1, t0 = 0, raf = 0, alive = true, paused = false, pAt = 0, shown = '';
     const fit = () => { const d = Math.min(2, devicePixelRatio || 1); cv.width = ov.clientWidth * d; cv.height = ov.clientHeight * d; }; fit(); addEventListener('resize', fit);
-    const end = () => { if (!alive) return; alive = false; cancelAnimationFrame(raf); removeEventListener('resize', fit); removeEventListener('keydown', key); ov.remove(); onDone && onDone(); };
-    const setP = v => { const n = performance.now(); if (v === paused) return; if (v) pAt = n; else t0 += n - pAt; paused = v; bP.textContent = v ? '▶' : '⏸'; ov.classList.toggle('paused', v); };
+    const end = () => { if (!alive) return; alive = false; if (typeof Reader !== 'undefined') Reader.stop(); cancelAnimationFrame(raf); removeEventListener('resize', fit); removeEventListener('keydown', key); ov.remove(); onDone && onDone(); };
+    const setP = v => { const n = performance.now(); if (v === paused) return; if (v) { pAt = n; try { speechSynthesis.pause(); } catch (e) { } } else { t0 += n - pAt; try { speechSynthesis.resume(); } catch (e) { } } paused = v; bP.textContent = v ? '▶' : '⏸'; ov.classList.toggle('paused', v); };
     const go = j => { if (j >= shots.length) return end(); if (i >= 0) Snd.play('whoosh'); i = Math.max(0, j); t0 = performance.now(); pAt = t0; shown = ''; prog.innerHTML = shots.map((_, k) => `<i class="${k < i ? 'd' : k === i ? 'o' : ''}"></i>`).join(''); };
     ov.querySelector('.esc-skip').onclick = e => { e.stopPropagation(); end(); };
-    ov.querySelector('.esc-ctl').onclick = e => { e.stopPropagation(); const a = e.target.dataset.a; if (a === 'pause') setP(!paused); if (a === 'next') go(i + 1); if (a === 'prev') { const tt = ((paused ? pAt : performance.now()) - t0) / 1000; go(tt > 2 ? i : i - 1); } };
+    ov.querySelector('.esc-ctl').onclick = e => { e.stopPropagation(); const a = e.target.dataset.a; if (a === 'pause') setP(!paused); if (a === 'voice') { SV.sceneVoice = !SV.sceneVoice; save(); e.target.textContent = SV.sceneVoice ? '🔊' : '🔇'; if (!SV.sceneVoice) Reader.stop(); } if (a === 'next') go(i + 1); if (a === 'prev') { const tt = ((paused ? pAt : performance.now()) - t0) / 1000; go(tt > 2 ? i : i - 1); } };
     cv.onclick = () => setP(!paused);
     const key = e => { if (e.code === 'Space') { e.preventDefault(); setP(!paused); } if (e.code === 'ArrowRight') go(i + 1); if (e.code === 'ArrowLeft') go(i - 1); }; addEventListener('keydown', key);
     const frame = now => { if (!alive) return; const s = shots[i], t = Math.max(0, ((paused ? pAt : now) - t0) / 1000);
       const sc = Math.max(cv.width / VW, cv.height / VH), ox = (cv.width - VW * sc) / 2, oy = (cv.height - VH * sc) / 2; x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = s.bg[1]; x.fillRect(0, 0, cv.width, cv.height); x.setTransform(sc, 0, 0, sc, ox, oy); x.lineCap = 'round'; x.lineJoin = 'round';
       try { s.draw(x, t); } catch (err) { }
-      let cur = null; for (const L of s.lines) if (t >= L[0]) cur = L; const k = cur ? cur[0] + cur[1] : ''; if (k !== shown) { shown = k; ko.innerHTML = cur ? cur[1] : ''; en.textContent = cur && cur[2] ? cur[2] : ''; ov.classList.remove('subin'); void ov.offsetWidth; ov.classList.add('subin'); if (cur) Snd.play('tick'); }
+      let cur = null; for (const L of s.lines) if (t >= L[0]) cur = L; const k = cur ? cur[0] + cur[1] : ''; if (k !== shown) { shown = k; ko.innerHTML = cur ? cur[1] : ''; en.textContent = cur && cur[2] ? cur[2] : ''; ov.classList.remove('subin'); void ov.offsetWidth; ov.classList.add('subin'); if (cur) Snd.play('tick'); if (cur && cur[2] && typeof Reader !== 'undefined') Reader.line(cur[2]); }
       if (!paused && t > s.dur + 1) go(i + 1); raf = requestAnimationFrame(frame); };
     go(0); raf = requestAnimationFrame(frame);
   }
