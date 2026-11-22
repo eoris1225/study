@@ -218,3 +218,5 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .tS{color:#1f5fe0;font-weight:700;border-bottom:3px solid #1f5fe0}.tV{color:#e0405f;font-weight:800;border-bottom:3px double #e0405f}.tO{color:#0e8a5a;font-weight:600;border-bottom:3px dotted #0e8a5a}
 .sxleg{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:12px}.sxleg .lg{padding:1px 8px;border-radius:999px;color:#fff}.lg.rel{background:#ff8a3d}.lg.prep{background:#7d84a3}.lg.sub{background:#8f6bff}.lg.inf{background:#18b6a0}.lg.ncl{background:#d49a00}
 .sxnote{font-size:12px;margin-top:4px}
+
+.sx-appos{box-shadow:0 0 0 2px #e05fa8 inset;background:#fff0f8}.sx-appos .sxl,.lg.appos{background:#e05fa8}

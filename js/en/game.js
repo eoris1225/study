@@ -146,14 +146,14 @@ function sentenceView(s, idx, opts = {}) {
   const [en, ko, tr, g] = s; const ens = en.split(' / '), kos = ko.split(' | ');
   const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(fmt(c, 'read'))}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="sxbox"></div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x} ${gLink(x, '개념')}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="sx">🧩 구조 보기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
   el._it = { el, s, pid: opts.pid, si: idx };
-  el.querySelector('.sbtn').onclick = e => { const t = e.target.dataset.t; if (!t) return; if (t === 'say') { Reader.one(el._it); return; } if (t === 'sx') { const bx = el.querySelector('.sxbox'); if (!bx.innerHTML) bx.innerHTML = Syntax.render(s); } el.classList.toggle('show-' + t); e.target.classList.toggle('on'); Snd.play('click'); if (t === 'gr' || t === 'tr') { el.dataset.seen = 1; } };
-  if (opts.open) { el.classList.add('show-sx', 'show-tr', 'show-gr'); el.querySelector('.sxbox').innerHTML = Syntax.render(s); }
+  el.querySelector('.sbtn').onclick = e => { const t = e.target.dataset.t; if (!t) return; if (t === 'say') { Reader.one(el._it); return; } if (t === 'sx') { const bx = el.querySelector('.sxbox'); if (!bx.innerHTML) bx.innerHTML = Syntax.render(s, `${CUR.id}|${opts.pid}|${idx}`); } el.classList.toggle('show-' + t); e.target.classList.toggle('on'); Snd.play('click'); if (t === 'gr' || t === 'tr') { el.dataset.seen = 1; } };
+  if (opts.open) { el.classList.add('show-sx', 'show-tr', 'show-gr'); el.querySelector('.sxbox').innerHTML = Syntax.render(s, `${CUR.id}|${opts.pid}|${idx}`); }
   return el;
 }
 function read() {
   Snd.music('camp'); const a = screen('read'); a.appendChild(topbar(CUR.title + ' — 읽기', ['허브', hub]));
   const tools = h('div', 'tools'); const sp = h('button', SV.split ? 'on' : '', '/ 끊어 읽기 표시'); sp.onclick = () => { SV.split = !SV.split; save(); a.classList.toggle('nosplit', !SV.split); sp.classList.toggle('on', SV.split); };
-  const all = h('button', '', '모두 펼치기'); all.onclick = () => a.querySelectorAll('.sent').forEach(s => { s.classList.add('show-sx', 'show-tr', 'show-gr'); const b = s.querySelector('.sxbox'); if (!b.innerHTML) b.innerHTML = Syntax.render(s._it.s); });
+  const all = h('button', '', '모두 펼치기'); all.onclick = () => a.querySelectorAll('.sent').forEach(s => { s.classList.add('show-sx', 'show-tr', 'show-gr'); const b = s.querySelector('.sxbox'); if (!b.innerHTML) b.innerHTML = Syntax.render(s._it.s, `${CUR.id}|${s._it.pid}|${s._it.si}`); });
   const fold = h('button', '', '모두 접기'); fold.onclick = () => a.querySelectorAll('.sent').forEach(s => s.classList.remove('show-sx', 'show-kos', 'show-tr', 'show-gr'));
   tools.append(sp, all, fold); a.appendChild(tools); a.classList.toggle('nosplit', !SV.split);
   a.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장마다 [끊어 해석] → [전체 해석] → [문법 메모]. 문단 제목 옆 버튼으로 그 문단 장면을 보거나 그 문단만 연습할 수 있어요.'));
@@ -269,7 +269,7 @@ function runRounds(st, rounds, cfg, at) {
       body.appendChild(h('div', 'qk', '기억 카드 — 해석을 머릿속으로 먼저 떠올려 보세요'));
       const card = h('div', 'paper rcard', `<div class="ptext">${wrapWords(fmt(r.s[0], 'read').replace(/ \/ /g, ' <span class="sl">/</span> '))}</div>`); body.appendChild(card);
       const rv = h('button', 'pri big', '💭 떠올렸어요 — 해석 보기'); body.appendChild(rv);
-      rv.onclick = () => { rv.remove(); card.appendChild(h('div', 'rans', `<div class="sxbox on">${Syntax.render(r.s)}</div><div class="tr2">${r.s[2]}</div>${(r.s[3] || []).length ? `<div class="gr2">${r.s[3].map(x => '▸ ' + x).join('<br>')}</div>` : ''}`)); Snd.play('paper');
+      rv.onclick = () => { rv.remove(); card.appendChild(h('div', 'rans', `<div class="sxbox on">${Syntax.render(r.s, `${CUR.id}|${r.id}|${r.si}`)}</div><div class="tr2">${r.s[2]}</div>${(r.s[3] || []).length ? `<div class="gr2">${r.s[3].map(x => '▸ ' + x).join('<br>')}</div>` : ''}`)); Snd.play('paper');
         const g = h('div', 'selfrate'); [['😎 완벽히 떠올림', 2], ['🤔 절반쯤', 1], ['😵 몰랐음', 0]].forEach(([l, v]) => { const b = h('button', '', l); b.onclick = () => { g.querySelectorAll('button').forEach(x => x.disabled = true); if (v === 2) { ok(2); } else if (v === 1) { SRS.mark(r, false, true); combo = 0; } else { SRS.mark(r, false); combo = 0; miss++; } setTimeout(next, 250); }; g.appendChild(b); }); body.appendChild(g); };
     }
     if (r.k === 'sorder' || r.k === 'insert') {

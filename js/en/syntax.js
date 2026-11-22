@@ -41,8 +41,9 @@ const Syntax = (() => {
     if (CO.has(f) && i > 0) return 'co';
     return 'main';
   }
-  const LBL = { main: '', co: '', sub: '부사절', rel: '관계절 ↩', ncl: '명사절', prep: '전치사구', inf: 'to부정사', part: '분사구 ↩' };
-  const TIP = { sub: '때·조건·이유·양보 등을 덧붙이는 절', rel: '바로 앞 명사를 꾸며요', ncl: '“~라는 것” 덩어리로 목적어/주어 역할', prep: '장소·방법·대상 등을 덧붙여요', inf: '~하기 위해 / ~할 / ~하는 것', part: '앞 명사를 꾸미거나 “~하면서”' };
+  const LBL = { main: '', co: '', sub: '부사절', rel: '관계절 ↩', ncl: '명사절', prep: '전치사구', inf: 'to부정사', part: '분사구 ↩', appos: '동격 =' };
+  const LEG = '<div class="sxleg"><span class="tS">주어 S</span><span class="tV">동사 V</span><span class="tO">목적어·보어 O/C</span><span class="lg rel">관계절·분사구 ↩ 앞 명사 꾸밈</span><span class="lg prep">전치사구</span><span class="lg sub">부사절</span><span class="lg inf">to부정사</span><span class="lg ncl">명사절</span><span class="lg appos">동격 = 앞 명사와 같은 것</span></div>';
+  const TIP = { appos: '바로 앞 명사를 다른 말로 다시 설명해요', sub: '때·조건·이유·양보 등을 덧붙이는 절', rel: '바로 앞 명사를 꾸며요', ncl: '“~라는 것” 덩어리로 목적어/주어 역할', prep: '장소·방법·대상 등을 덧붙여요', inf: '~하기 위해 / ~할 / ~하는 것', part: '앞 명사를 꾸미거나 “~하면서”' };
   /* 한 문장 분석 */
   function analyze(en) {
     const chunks = en.split(' / ').map(plain); let prevLast = ''; let gotV = false;
@@ -66,11 +67,15 @@ const Syntax = (() => {
     return out;
   }
   /* 화면 */
-  function render(s) {
-    const kos = s[1].split(' | '); const A = analyze(s[0]);
+  function fromSXD(key) { const d = window.SXD && window.SXD[key]; if (!d) return null; return d.map(([t, row]) => ({ t, html: row.map(([w, tg, sp]) => (tg ? `<span class="t${tg}">${w}</span>` : w) + (sp ? ' ' : '')).join('').trim() })); }
+  function render(s, key) {
+    const kos = s[1].split(' | '); const P = fromSXD(key);
+    if (P) { const html = P.map((ch, i) => { const lab = LBL[ch.t]; return `<div class="sx sx-${ch.t}"${TIP[ch.t] ? ` title="${TIP[ch.t]}"` : ''}>${lab ? `<span class="sxl">${lab}</span>` : ''}<div class="sxe">${ch.html}</div><div class="sxk">${kos[i] || ''}</div></div>`; }).join('<span class="sxa">›</span>');
+      return `<div class="sxwrap">${html}</div>` + LEG + `<div class="dim sxnote">구문 분석기(spaCy)로 분석했어요. 드물게 틀릴 수 있으니 문법 메모와 함께 보세요.</div>`; }
+    const A = analyze(s[0]);
     const html = A.map((ch, i) => { const toks = ch.ws.map((w, j) => { const tg = ch.tags[j]; return tg ? `<span class="t${tg}">${w}</span>` : w; }).join(' ').replace(/ ([,.;:?!”’)])/g, '$1').replace(/([“‘(]) /g, '$1');
       const lab = LBL[ch.t]; return `<div class="sx sx-${ch.t}"${TIP[ch.t] ? ` title="${TIP[ch.t]}"` : ''}>${lab ? `<span class="sxl">${lab}</span>` : ''}<div class="sxe">${toks}</div><div class="sxk">${kos[i] || ''}</div></div>`; }).join('<span class="sxa">›</span>');
-    return `<div class="sxwrap">${html}</div><div class="sxleg"><span class="tS">주어 S</span><span class="tV">동사 V</span><span class="tO">목적어·보어 O/C</span><span class="lg rel">관계절·분사구 ↩ 앞 명사 꾸밈</span><span class="lg prep">전치사구</span><span class="lg sub">부사절</span><span class="lg inf">to부정사</span><span class="lg ncl">명사절</span></div><div class="dim sxnote">자동 분석이라 가끔 틀릴 수 있어요. 문법 메모가 우선이에요.</div>`;
+    return `<div class="sxwrap">${html}</div>` + LEG + `<div class="sxleg" hidden><span class="tS">주어 S</span><span class="tV">동사 V</span><span class="tO">목적어·보어 O/C</span><span class="lg rel">관계절·분사구 ↩ 앞 명사 꾸밈</span><span class="lg prep">전치사구</span><span class="lg sub">부사절</span><span class="lg inf">to부정사</span><span class="lg ncl">명사절</span></div><div class="dim sxnote">자동 분석이라 가끔 틀릴 수 있어요. 문법 메모가 우선이에요.</div>`;
   }
   return { analyze, render };
 })();
