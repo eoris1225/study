@@ -315,3 +315,6 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .stxt .sk{display:none;font-family:system-ui;font-size:13px;opacity:.85;margin-top:4px}
 .sko .stxt .sk{display:block}
 .iwhy .iw .iclue{margin:6px 0 0;padding:5px 8px;font-size:13px}
+
+.gloss .sent .w[data-g]:not([data-g=""]){display:inline-flex;flex-direction:column;align-items:center;vertical-align:top;line-height:1.25}
+.gloss .sent .w[data-g]:not([data-g=""])::after{content:attr(data-g);font:600 11px/1.2 system-ui,sans-serif;color:#7a5cff;white-space:nowrap;margin-top:1px;letter-spacing:-.3px}

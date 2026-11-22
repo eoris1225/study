@@ -164,7 +164,8 @@ function read() {
   const tools = h('div', 'tools'); const sp = h('button', SV.split ? 'on' : '', '/ 끊어 읽기 표시'); sp.onclick = () => { SV.split = !SV.split; save(); a.classList.toggle('nosplit', !SV.split); sp.classList.toggle('on', SV.split); };
   const all = h('button', '', '모두 펼치기'); all.onclick = () => a.querySelectorAll('.sent').forEach(s => { s.classList.add('show-sx', 'show-tr', 'show-gr'); const b = s.querySelector('.sxbox'); if (!b.innerHTML) b.innerHTML = Syntax.render(s._it.s, `${CUR.id}|${s._it.pid}|${s._it.si}`); });
   const fold = h('button', '', '모두 접기'); fold.onclick = () => a.querySelectorAll('.sent').forEach(s => s.classList.remove('show-sx', 'show-kos', 'show-tr', 'show-gr'));
-  tools.append(sp, all, fold); a.appendChild(tools); a.classList.toggle('nosplit', !SV.split);
+  const gl = h('button', SV.gloss ? 'on' : '', '🔤 단어 뜻 달기'); gl.onclick = () => { SV.gloss = !SV.gloss; save(); gl.classList.toggle('on', SV.gloss); gloss(a); };
+  tools.append(sp, gl, all, fold); a.appendChild(tools); a.classList.toggle('nosplit', !SV.split);
   a.appendChild(h('p', 'hint', '단어를 누르면 뜻이 나와요. 문장마다 [끊어 해석] → [전체 해석] → [문법 메모]. 문단 제목 옆 버튼으로 그 문단 장면을 보거나 그 문단만 연습할 수 있어요.'));
   Reader.attach(a, () => [...a.querySelectorAll('.sent')].map(e => e._it));
   let sec = -1;
@@ -174,9 +175,12 @@ function read() {
     if (p.q) { const qb = h('button', 'qbtn', '📝 문제 풀기'); qb.onclick = () => practice(p, true); hd.appendChild(qb); } if (Flash.has(p.id)) { const fb = h('button', 'qbtn', '⚡ 각인'); fb.onclick = () => Flash.play(Flash.itemsOf([p]), p.name); hd.appendChild(fb); } const pr = h('button', '', p.q ? '⚔ 연습' : '⚔ 이 문단만'); pr.onclick = () => practice(p); hd.appendChild(pr); a.appendChild(hd);
     p.s.forEach((s, j) => a.appendChild(sentenceView(s, j, { pid: p.id })));
   });
-  const go = h('button', 'pri big', '⚔ 실전 도전'); go.onclick = () => challenge(); a.appendChild(go);
+  const go = h('button', 'pri big', '⚔ 실전 도전'); go.onclick = () => challenge(); a.appendChild(go); gloss(a);
 }
 
+/* 🔤 단어 뜻 달기: 쉬운 기능어는 빼고 단어 아래에 짧은 뜻을 붙인다 */
+const GSTOP = new Set('a an the and or but so of to in on at by for from with as is are was were be been being it its this that these those they them their he she his her we our you your i my me not no do does did have has had will would can could may might must should there here what which who whom whose when where how why if than then also just too very more most some any all each one two only even such into about over out up down after before because while'.split(' '));
+function gloss(root) { root.classList.toggle('gloss', !!SV.gloss); if (!SV.gloss) return; root.querySelectorAll('.sent .w').forEach(w => { if (w.dataset.g != null) return; const t = w.textContent.toLowerCase().replace(/’/g, "'"); let g = ''; if (t.length > 2 && !GSTOP.has(t)) { const m = lookup(t); if (m) g = m.replace(/<[^>]+>/g, '').replace(/\([^)]*\)/g, '').split(/[,/;]/)[0].replace(/[~·]/g, '').trim().slice(0, 9); } w.dataset.g = g; }); }
 /* ── 도전 ───────────────────────────────────────── */
 function autoVoc(p) { const seen = new Set(); const out = []; p.s.forEach(s => s[0].replace(/<[^>]+>/g, '').split(/[^A-Za-zÀ-ÿ'\-]+/).forEach(w => { const k = w.toLowerCase(); if (k.length > 6 && !seen.has(k) && DICT[k]) { seen.add(k); out.push([w, DICT[k].split(/[(/,]/)[0].trim()]); } })); return out; }
 function qOf(id) { const q = QUEST[id] || {}; return { voc: q.voc && q.voc.length ? q.voc : autoVoc(P[PI[id]]), gram: q.gram || [], wrong: q.wrong || [] }; }
