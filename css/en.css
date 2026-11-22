@@ -168,3 +168,20 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .score{font-weight:800;color:var(--vio)}
 .qbtn{background:var(--vio)!important;color:#fff!important;box-shadow:0 2px 0 #3b45b8!important}
 .talk.solo{align-items:flex-start;overflow:auto;cursor:default}.tbox.wide{width:min(900px,100%);padding:16px;margin:auto}
+
+/* 기억·연속·칭호 */
+.goal{display:inline-block;width:46px;height:8px;border-radius:4px;background:var(--line);overflow:hidden;vertical-align:middle}.goal i{display:block;height:100%;background:#ffb547}.goal.wide{display:block;width:100%;height:10px;margin-top:6px}
+.me{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--card);border-radius:18px;padding:12px;box-shadow:0 0 0 1.5px var(--line) inset;margin-bottom:12px;text-align:center}.me b{font-size:17px}.me small{display:block;color:var(--dim)}
+.mbar{display:block;height:8px;border-radius:4px;background:var(--line);overflow:hidden;width:100%}.mbar i{display:block;height:100%;background:linear-gradient(90deg,#7cc8ff,#3ddc97)}
+.pcard{position:relative}.pcard .due{position:absolute;top:10px;right:12px;background:#e0405f;color:#fff;border-radius:10px;padding:2px 8px;font-size:13px;font-weight:800}
+.mem{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim);margin:4px 0}.mem .mbar{flex:1}
+.typer{display:flex;gap:8px;flex-wrap:wrap}.typer input{flex:1;min-width:160px;font:600 20px Georgia,serif;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
+.rcard .ptext{font-size:19px}.rans{margin-top:12px;border-top:2px dashed var(--line);padding-top:10px}.kos2{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.tr2{background:#eef1ff;color:#1f2a7a;border-radius:12px;padding:8px 12px;line-height:1.6}.gr2{margin-top:8px;font-size:14px;line-height:1.6;border-left:4px solid #ffb547;padding-left:10px}
+.selfrate{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.selfrate button{font-size:15px;padding:12px 6px}
+.built.col{flex-direction:column}.bk2{background:var(--vio);color:#fff;border-radius:10px;padding:8px 12px;font:500 15px/1.5 Georgia,serif}
+.stxt{text-align:left;font:500 15px/1.55 Georgia,serif}.stxt.used{opacity:.25}
+.slot{color:var(--pri);font-family:system-ui}
+.rankup{position:fixed;left:50%;top:30%;transform:translateX(-50%);z-index:90;background:linear-gradient(135deg,#ffd23f,#ff8a3d);color:#231046;padding:18px 28px;border-radius:22px;font-size:18px;text-align:center;box-shadow:0 10px 30px #0005;animation:up .3s}.rankup b{display:block;font-size:26px}
+.why ul{padding-left:18px}.why li{margin:8px 0;line-height:1.65}.why p{line-height:1.7}
+
+.pcard b{padding-right:64px}
