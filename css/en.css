@@ -192,3 +192,13 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .top .bgm{font-size:13px;padding:6px 8px;min-height:34px;white-space:nowrap}
 
 .resume{width:100%;font-size:17px!important;padding:14px!important;margin:6px 0 12px;background:linear-gradient(180deg,#5b6cff,#3b45b8)!important;box-shadow:0 3px 0 #232a80!important}
+
+/* 문법 수업 */
+.glink{display:inline-block;font-size:13px!important;padding:3px 10px!important;min-height:0!important;margin:2px 4px;border-radius:999px!important;background:#e9ecff!important;color:#3b45b8!important;box-shadow:none!important;font-weight:700}
+.glesson .tbox{padding:16px}.gtop{display:flex;align-items:center;gap:10px}.gtop b{flex:1;font-size:18px}.gtop span{color:var(--dim);font-size:14px}
+.gdots{display:flex;gap:6px;margin:10px 0}.gdots i{flex:1;height:6px;border-radius:3px;background:var(--line);font-size:0;font-style:normal}.gdots i.d{background:#9aa6ff}.gdots i.o{background:var(--vio)}
+.gcard h3{margin:6px 0 10px;color:var(--vio)}.gb{font-size:16px;line-height:1.75}.gb .box{background:#fff3e6;color:#5a2a00;border-radius:12px;padding:10px 14px;margin:10px 0;font-weight:600;line-height:1.8}.gb .eg{background:#eef1ff;color:#1f2a7a;border-radius:12px;padding:10px 14px;margin:10px 0;font:15px/1.8 Georgia,serif}.gb table{border-collapse:collapse;margin:10px 0;font-size:14px;width:100%}.gb th,.gb td{border:1px solid var(--line);padding:6px 8px;text-align:left}.gb th{background:var(--card)}.gb ul{padding-left:18px}.gb li{margin:6px 0}
+.gnav{display:flex;justify-content:space-between;margin-top:14px}.gq2{margin-top:10px}.gdone{text-align:center}.gdone button{margin:6px}
+
+.glesson .gb b,.glesson .gq b,.glesson .after b,.why b,.tbox.wide .gb b{display:inline;font-size:inherit}
+.glesson .gtop b{display:block}

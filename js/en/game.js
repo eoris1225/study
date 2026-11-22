@@ -127,6 +127,7 @@ function hub() {
     ['🎬', '이야기로 보기', CUR.scenes ? `지문 전체를 애니메이션으로 (장면 ${P.filter(p => EScene.has(p.id)).length}개)` : '이 지문은 애니메이션 준비 중 (읽기부터 시작하세요)', () => { if (!CUR.scenes) { Snd.play('wrong'); return; } mark('scene'); playAll(); }, seen.scene],
     ['📖', '읽기', '전체 지문 · 끊어 읽기 · 단어 터치 · 낭독', () => { mark('read'); read(); }, seen.read],
     ['⚔', CUR.exam ? '실전 풀이' : '실전 도전', CUR.exam ? `시험지 그대로 ${P.filter(p => p.q).length}문항 · 끝나면 채점` : '지문 전체에서 섞어 15문제 · 별 3개 도전', () => challenge(), st],
+    ['📘', '문법 수업', '지문에 나온 문법을 처음부터: 개념 카드 → 확인 퀴즈', () => gramLib(), 0],
     ['🧠', '기억 카드', '영어만 보고 해석 떠올리기 → 확인 → 스스로 채점 (약한 문장부터)', () => cards(), 0],
     ['🔀', '변형 문제', '내신형: 빈칸 · 문장 순서 · 문장 삽입 · 조각 순서를 섞어서', () => variant(), SV.stars[CUR.id + ':var']],
     ['🔁', `오늘의 복습 (${SRS.due(CUR.id).length})`, '잊어버릴 때쯤 다시. 맞히면 다음 복습이 점점 멀어져요', () => review(), 0],
@@ -143,7 +144,7 @@ function fmt(t, mode) { return t.replace(/\{\{([^|}]*)\|([^}]*)\}\}/g, (m, a, b)
 function examText(p) { if (p.q.ref) p = P[PI[p.q.ref]]; if (p.q.text) return p.q.text; return '<p>' + p.s.filter(s => !/^→/.test(s[0])).map(s => fmt(s[0].split(' / ').join(' '), 'exam')).join(' ') + '</p>'; }
 function sentenceView(s, idx, opts = {}) {
   const [en, ko, tr, g] = s; const ens = en.split(' / '), kos = ko.split(' | ');
-  const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(fmt(c, 'read'))}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
+  const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(fmt(c, 'read'))}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x} ${gLink(x, '개념')}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
   el._it = { el, s, pid: opts.pid, si: idx };
   el.querySelector('.sbtn').onclick = e => { const t = e.target.dataset.t; if (!t) return; if (t === 'say') { Reader.one(el._it); return; } el.classList.toggle('show-' + t); e.target.classList.toggle('on'); Snd.play('click'); if (t === 'gr' || t === 'tr') { el.dataset.seen = 1; } };
   if (opts.open) el.classList.add('show-kos', 'show-tr', 'show-gr');
@@ -254,7 +255,7 @@ function runRounds(st, rounds, cfg, at) {
       const paper = h('div', 'paper', `<div class="ask">${q.ask}</div><div class="ptext">${examText(r.p)}</div>${q.summary ? `<div class="summ">${q.summary}</div>` : ''}${q.note ? `<div class="pnote">${q.note}</div>` : ''}`); body.appendChild(paper);
       paper.querySelectorAll('.ptext p, .summ').forEach(e => e.innerHTML = wrapWords(e.innerHTML));
       const g = h('div', 'opts col'); const nums = ['①', '②', '③', '④', '⑤'];
-      q.opts.forEach((o, k) => { const b = h('button', '', (o.length > 2 ? nums[k] + ' ' : '') + o); b.onclick = () => { g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[q.ans].classList.add('right'); if (k === q.ans) { ok(5); cont('✔ 정답! ' + q.why, true); } else { b.classList.add('wrong'); bad(); cont(`정답은 ${nums[q.ans]}. ${q.why}`, false); } const rv = h('button', '', '📖 이 문항 끊어 읽기·해석 보기'); rv.onclick = () => { const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide'); bx.appendChild(h('b', '', r.p.name)); r.p.s.forEach((s, j) => { const sv = sentenceView(s, j, { pid: r.p.id }); sv.classList.add('show-kos', 'show-tr', 'show-gr'); bx.appendChild(sv); }); const cl = h('button', 'pri', '닫기'); cl.onclick = () => ov.remove(); bx.appendChild(cl); ov.appendChild(bx); document.body.appendChild(ov); }; body.querySelector('.after').prepend(rv); }; g.appendChild(b); }); body.appendChild(g);
+      q.opts.forEach((o, k) => { const b = h('button', '', (o.length > 2 ? nums[k] + ' ' : '') + o); b.onclick = () => { g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[q.ans].classList.add('right'); if (k === q.ans) { ok(5); cont('✔ 정답! ' + q.why + ' ' + gLink(q.why), true); } else { b.classList.add('wrong'); bad(); cont(`정답은 ${nums[q.ans]}. ${q.why} ${gLink(q.why)}`, false); } const rv = h('button', '', '📖 이 문항 끊어 읽기·해석 보기'); rv.onclick = () => { const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide'); bx.appendChild(h('b', '', r.p.name)); r.p.s.forEach((s, j) => { const sv = sentenceView(s, j, { pid: r.p.id }); sv.classList.add('show-kos', 'show-tr', 'show-gr'); bx.appendChild(sv); }); const cl = h('button', 'pri', '닫기'); cl.onclick = () => ov.remove(); bx.appendChild(cl); ov.appendChild(bx); document.body.appendChild(ov); }; body.querySelector('.after').prepend(rv); }; g.appendChild(b); }); body.appendChild(g);
     }
     if (r.k === 'cloze') {
       const plain = fmt(r.s[0], 'plain').replace(/<[^>]+>/g, '').replace(/ \/ /g, ' '); const shown = plain.replace(r.re, '<span class="blank">　　　　</span>');
@@ -284,9 +285,9 @@ function runRounds(st, rounds, cfg, at) {
       }
     }
     if (r.k === 'gram') {
-      const [q, opts, ans, why] = r.g; body.appendChild(h('div', 'qk', '문법 체크'));
+      const [q, opts, ans, why] = r.g; const gt = topicOf(q + ' ' + why + ' ' + opts.join(' ')); body.appendChild(h('div', 'qk', '문법 체크' + (gt ? ` <button class="glink" data-g="${gt.id}">📘 막히면: ${gt.title.split(' — ')[0]} 배우기</button>` : '')));
       body.appendChild(h('div', 'gq', q)); const g = h('div', 'opts col'); const sh = shuffle(opts.map((o, k) => [o, k]));
-      sh.forEach(([o, k]) => { const b = h('button', '', o); b.onclick = () => { clearInterval(timer); g.querySelectorAll('button').forEach(x => x.disabled = true); [...g.children][sh.findIndex(z => z[1] === ans)].classList.add('right'); if (k === ans) { ok(); cont('✔ ' + why, true); } else { b.classList.add('wrong'); bad(); cont(why, false); } }; g.appendChild(b); }); body.appendChild(g);
+      sh.forEach(([o, k]) => { const b = h('button', '', o); b.onclick = () => { clearInterval(timer); g.querySelectorAll('button').forEach(x => x.disabled = true); [...g.children][sh.findIndex(z => z[1] === ans)].classList.add('right'); if (k === ans) { ok(); cont('✔ ' + why + (gt ? ' ' + gLink(gt.id) : ''), true); } else { b.classList.add('wrong'); bad(); cont(why + (gt ? `<br>${gLink(gt.id, gt.title.split(' — ')[0] + ' 개념부터 배우기')}` : ''), false); } }; g.appendChild(b); }); body.appendChild(g);
       startTimer(() => { g.querySelectorAll('button').forEach(x => x.disabled = true); [...g.children][sh.findIndex(z => z[1] === ans)].classList.add('right'); bad(); cont('시간 초과! ' + why, false); });
     }
   }
@@ -306,6 +307,28 @@ function runRounds(st, rounds, cfg, at) {
     const rt = h('button', '', '↺ 바로 다시 도전'); rt.onclick = () => st.type === 'all' ? challenge() : practice(st.p); r.append(rd, rt); body.appendChild(r);
   }
   show();
+}
+/* ── 문법 수업 ───────────────────────────────── */
+const topicOf = t => { const x = String(t || '').replace(/<[^>]+>/g, ' '); return (window.GRAM || []).find(g => g.re.test(x)); };
+function gLink(t, label) { const g = (window.GRAM || []).find(x => x.id === t) || topicOf(t); return g ? `<button class="glink" data-g="${g.id}">📘 ${label || g.title.split(' — ')[0]}</button>` : ''; }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.glink'); if (b) { e.stopPropagation(); e.preventDefault(); gramLesson(b.dataset.g); } }, true);
+function gramLesson(id) {
+  const g = GRAM.find(x => x.id === id); if (!g) return; const ov = h('div', 'talk solo glesson'); const bx = h('div', 'tbox wide'); ov.appendChild(bx); document.body.appendChild(ov); let k = 0; Snd.play('paper');
+  const close = () => ov.remove();
+  const draw = () => { bx.innerHTML = ''; const top = h('div', 'gtop', `<b>${g.icon} ${g.title}</b><span>${k < g.cards.length ? (k + 1) + ' / ' + g.cards.length : '확인 퀴즈'}</span>`); const x = h('button', 'ghost', '✕'); x.onclick = close; top.appendChild(x); bx.appendChild(top);
+    const dots = h('div', 'gdots', g.cards.map((_, i) => `<i class="${i < k ? 'd' : i === k ? 'o' : ''}"></i>`).join('') + `<i class="${k >= g.cards.length ? 'o' : ''}">?</i>`); bx.appendChild(dots);
+    if (k < g.cards.length) { const c = g.cards[k]; bx.appendChild(h('div', 'gcard', `<h3>${c.h}</h3><div class="gb">${c.b}</div>`)); const nav = h('div', 'gnav'); const pv = h('button', '', '◀ 이전'); pv.disabled = !k; pv.onclick = () => { k--; draw(); }; const nx = h('button', 'pri', k === g.cards.length - 1 ? '확인 퀴즈 ▶' : '다음 ▶'); nx.onclick = () => { k++; Snd.play('click'); draw(); }; nav.append(pv, nx); bx.appendChild(nav); bx.querySelectorAll('.gb .eg').forEach(e => e.innerHTML = wrapWords(e.innerHTML)); }
+    else { let n = 0, right = 0; const qs = g.quiz; const qa = () => { bx.querySelectorAll('.gq2').forEach(e => e.remove()); if (n >= qs.length) { const d = h('div', 'gq2 gdone', `<h3>${right === qs.length ? '🎉 완벽해요!' : `${qs.length}문제 중 ${right}개 맞힘`}</h3><p>${right === qs.length ? '이제 이 문법 문제는 풀 수 있어요.' : '틀린 건 카드를 한 번 더 보고 다시 풀어 보세요.'}</p>`); const again = h('button', '', '↺ 카드 다시 보기'); again.onclick = () => { k = 0; draw(); }; const done = h('button', 'pri', '돌아가기'); done.onclick = close; d.append(again, done); bx.appendChild(d); if (right === qs.length) { SV.gram = SV.gram || {}; SV.gram[g.id] = 1; SV.xp += 15; save(); Snd.play('win'); } return; }
+        const [q, opts, ans, why] = qs[n]; const box = h('div', 'gq2', `<div class="gq">${n + 1}. ${q}</div>`); const og = h('div', 'opts col'); const sh = shuffle(opts.map((o, i) => [o, i])); sh.forEach(([o, i]) => { const b = h('button', '', o); b.onclick = () => { og.querySelectorAll('button').forEach(z => z.disabled = true); og.children[sh.findIndex(z => z[1] === ans)].classList.add('right'); if (i === ans) { right++; Snd.play('win'); } else { b.classList.add('wrong'); Snd.play('wrong'); } const af = h('div', 'after ' + (i === ans ? 'good' : 'bad'), (i === ans ? '✔ ' : '') + why); const nb = h('button', 'pri', '다음 ▶'); nb.onclick = () => { n++; qa(); }; af.appendChild(nb); box.appendChild(af); }; og.appendChild(b); }); box.appendChild(og); bx.appendChild(box); };
+      qa(); }
+    ov.scrollTop = 0; };
+  draw();
+}
+function gramLib() {
+  Snd.music('camp'); const a = screen('notes'); a.appendChild(topbar('📘 문법 수업', ['허브', hub]));
+  const cnt = {}; LIB.forEach(ps => ps.paras.forEach(p => p.s.forEach(s => (s[3] || []).forEach(m => { const g = topicOf(m); if (g) cnt[g.id] = (cnt[g.id] || 0) + (ps.id === CUR.id ? 3 : 1); }))));
+  a.appendChild(h('p', 'hint', '시험 범위 지문에 나온 문법을 처음부터 설명해요. 카드로 개념을 보고 마지막 확인 퀴즈까지 풀면 ✔가 붙어요. 이 지문에 많이 나온 순서예요.'));
+  const g = h('div', 'steps'); GRAM.slice().sort((x, y) => (cnt[y.id] || 0) - (cnt[x.id] || 0)).forEach(t => { const b = h('button', 'step' + ((SV.gram || {})[t.id] ? ' done' : ''), `<span class="ic">${t.icon}</span><b>${t.title.split(' — ')[0]}</b><small>${t.title.split(' — ')[1] || ''}${cnt[t.id] ? ` · 시험 범위에 ${cnt[t.id]}번+` : ''}</small>`); b.onclick = () => gramLesson(t.id); g.appendChild(b); }); a.appendChild(g);
 }
 /* ── 지문 분석 노트 ─────────────────────────────── */
 function notes() {
