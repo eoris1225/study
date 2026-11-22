@@ -220,3 +220,9 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 .sxnote{font-size:12px;margin-top:4px}
 
 .sx-appos{box-shadow:0 0 0 2px #e05fa8 inset;background:#fff0f8}.sx-appos .sxl,.lg.appos{background:#e05fa8}
+
+/* 전투 */
+.bt{position:relative;border-radius:18px;overflow:hidden;margin:6px 0 10px;box-shadow:0 6px 20px #0003}.bt canvas{display:block;width:100%}
+.btmsg{position:absolute;left:12px;top:10px;max-width:58%;background:rgba(20,10,50,.65);color:#fff;border-radius:12px;padding:6px 10px;font-size:13px;line-height:1.45}.btmsg b{color:#ffd23f;margin-right:4px}.btmsg .dim{color:#c9c2e8}.btmsg.in{animation:up .25s}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.wcard{min-height:80px;border-radius:14px;background:linear-gradient(135deg,#5b6cff,#8f6bff)!important;color:#fff!important;font:700 17px Georgia,serif;box-shadow:0 3px 0 #3b45b8!important}.wcard .b{display:none;font:600 15px system-ui}.wcard.flip .f{display:none}.wcard.flip .b{display:block}.wcard.flip{background:linear-gradient(135deg,#ffb547,#ff8a3d)!important;box-shadow:0 3px 0 #c2410c!important}.wcard.locked{background:var(--line)!important;color:var(--dim)!important;box-shadow:none!important}

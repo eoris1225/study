@@ -34,7 +34,7 @@ use(LIB.find(x => x.id === SV.cur) || LIB[0]);
 
 /* ── 인물 ─────────────────────────────────────────── */
 const WHO = { s: { n: '서진', c: '#ff8a3d' }, h: { n: '하람 선배', c: '#5b6cff' }, n: { n: '', c: '#999' } };
-function face(who, size = 64) {
+function npcFace(who, size = 64) {
   const c = h('canvas', 'face'); c.width = c.height = size * 2; c.style.width = c.style.height = size + 'px'; const x = c.getContext('2d'); x.scale(size / 32, size / 32);
   x.fillStyle = who === 's' ? '#ffe0c7' : '#e8e3ff'; x.beginPath(); x.arc(32, 32, 32, 0, 7); x.fill();
   if (who === 's') { x.fillStyle = '#ff8a3d'; x.beginPath(); x.ellipse(32, 64, 28, 18, 0, Math.PI, 0); x.fill(); x.fillStyle = '#ffd9b8'; x.beginPath(); x.arc(32, 30, 16, 0, 7); x.fill(); x.fillStyle = '#3a2618'; x.beginPath(); x.arc(32, 26, 17, Math.PI * 1.02, Math.PI * 1.98); x.fill(); x.fillRect(15, 22, 6, 8); }
@@ -57,7 +57,7 @@ function topbar(title, back) { const b = h('div', 'top'); const l = h('button', 
 function talk(lines, done) {
   if (!lines || !lines.length) return done();
   const ov = h('div', 'talk'); document.body.appendChild(ov); let i = 0;
-  const show = () => { if (i >= lines.length) { ov.remove(); return done(); } const [w, t] = lines[i]; ov.innerHTML = ''; const box = h('div', 'tbox ' + (w === 'n' ? 'narr' : '')); if (w !== 'n') { box.appendChild(face(w, 56)); box.appendChild(h('b', '', WHO[w].n)).style.color = WHO[w].c; } box.appendChild(h('p', '', t)); box.appendChild(h('small', '', '탭해서 계속 ▸')); ov.appendChild(box); const sk = h('button', 'tskip', '건너뛰기'); sk.onclick = e => { e.stopPropagation(); ov.remove(); done(); }; ov.appendChild(sk); Snd.play(w === 'n' ? 'paper' : 'talk'); };
+  const show = () => { if (i >= lines.length) { ov.remove(); return done(); } const [w, t] = lines[i]; ov.innerHTML = ''; const box = h('div', 'tbox ' + (w === 'n' ? 'narr' : '')); if (w !== 'n') { box.appendChild(npcFace(w, 56)); box.appendChild(h('b', '', WHO[w].n)).style.color = WHO[w].c; } box.appendChild(h('p', '', t)); box.appendChild(h('small', '', '탭해서 계속 ▸')); ov.appendChild(box); const sk = h('button', 'tskip', '건너뛰기'); sk.onclick = e => { e.stopPropagation(); ov.remove(); done(); }; ov.appendChild(sk); Snd.play(w === 'n' ? 'paper' : 'talk'); };
   ov.onclick = () => { i++; show(); }; show();
 }
 
@@ -82,7 +82,7 @@ function home() {
   const tdn = SV.days[today()] || 0; a.appendChild(h('div', 'me', `<div><b>${rankOf(SV.xp)}</b><small>✦ ${SV.xp}</small></div><div>🔥 <b>${SRS.streak()}</b>일 연속</div><div>오늘 <b>${tdn}</b>/${GOAL}<span class="goal wide"><i style="width:${Math.min(100, tdn / GOAL * 100)}%"></i></span></div>`));
   if (SV.resume) { const R = SV.resume, ps = LIB.find(x => x.id === R.ps); if (ps) { const rb = h('button', 'pri resume', `▶ 이어서 풀기 — ${R.title} (${R.at.i + 1}/${R.rounds.length})`); rb.onclick = resume; a.appendChild(rb); } }
   const list = h('div', 'lib'); LIB.forEach(ps => { const st = SV.stars[ps.id] || 0, du = SRS.due(ps.id).length, pw = SRS.power(ps.id); const c = h('button', 'pcard', `${du ? `<span class="due">🔁 ${du}</span>` : ''}<b>${ps.title}</b><span class="mbar"><i style="width:${pw * 100}%"></i></span><small>${ps.source.split('—')[0].split(',')[0]}</small><span class="st">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</span><span class="dim">${ps.paras.length}문단 · ${ps.paras.reduce((n, p) => n + p.s.length, 0)}문장</span>`); c.onclick = () => { use(ps); Snd.play('click'); hub(); }; list.appendChild(c); }); a.appendChild(list);
-  const bs = h('div', 'btns'); const cr = h('button', 'pri cram', SV.cram ? '⏰ D-1 벼락치기 계획 (모드 켜짐)' : '⏰ D-1 벼락치기 계획'); cr.onclick = cramPage; bs.appendChild(cr); const why = h('button', 'ghost', '💡 이렇게 공부하는 이유'); why.onclick = whyPage; bs.appendChild(why); const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics'; bs.append(ph); a.appendChild(bs);
+  const bs = h('div', 'btns'); const cr = h('button', 'pri cram', SV.cram ? '⏰ D-1 벼락치기 계획 (모드 켜짐)' : '⏰ D-1 벼락치기 계획'); cr.onclick = cramPage; bs.appendChild(cr); const cd = h('button', '', `🃏 단어 카드 도감 (${Object.keys(SV.cards || {}).length}장)`); cd.onclick = cardBook; bs.appendChild(cd); const why = h('button', 'ghost', '💡 이렇게 공부하는 이유'); why.onclick = whyPage; bs.appendChild(why); const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics'; bs.append(ph); a.appendChild(bs);
 }
 /* D-1 벼락치기: 하루 계획 + 복습 간격을 분 단위로 */
 function cramPage() {
@@ -107,6 +107,13 @@ function cramPage() {
     bx.appendChild(h('p', 'dim', '💤 잠은 꼭 자세요. 자는 동안 그날 공부한 게 기억으로 굳어져요. 밤새우는 것보다 자기 전 복습 + 아침 복습이 더 남아요.'));
     const rs = h('button', 'ghost', '체크 모두 지우기'); rs.onclick = () => { SV.plan = {}; save(); draw(); }; const cl = h('button', 'pri', '닫기'); cl.onclick = () => { ov.remove(); home(); }; bx.append(rs, cl); };
   draw();
+}
+function cardBook() {
+  const a = screen('notes'); a.appendChild(topbar('🃏 단어 카드 도감'));
+  a.appendChild(h('p', 'hint', '전투에서 쓰러뜨린 몬스터의 단어가 카드로 모여요. 카드를 누르면 뒤집혀서 뜻이 보여요. 뜻을 먼저 떠올려 보고 뒤집으세요!'));
+  const C = SV.cards || {}; LIB.forEach(ps => { const all = ps.paras.flatMap(p => qOf.call ? [] : []); const mine = Object.keys(C).filter(k => k.split('|')[0] === ps.id); use(ps); const vocs = [...new Map(P.flatMap(p => qOf(p.id).voc).map(v => [v[0], v])).values()];
+    a.appendChild(h('h3', '', `${ps.title} <span class="dim">${mine.length}/${vocs.length}</span>`)); const g = h('div', 'cgrid');
+    vocs.forEach(v => { const got = C[ps.id + '|' + v[0]]; const c = h('button', 'wcard' + (got ? '' : ' locked'), got ? `<span class="f">${v[0]}</span><span class="b">${v[1]}</span>` : '<span class="f">?</span>'); if (got) c.onclick = () => { c.classList.toggle('flip'); Snd.play('paper'); }; g.appendChild(c); }); a.appendChild(g); });
 }
 function whyPage() {
   const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide why'); bx.innerHTML = `<h2>이 게임이 공부시키는 방식</h2>
@@ -216,11 +223,12 @@ function runRounds(st, rounds, cfg, at) {
   const a = screen('chal' + (cfg.boss ? ' bossmode' : '')); let i = 0, hearts = cfg.hearts, miss = 0, combo = 0, gained = 0; if (at) ({ i, hearts, miss, combo, gained } = at); hearts = hearts ?? cfg.hearts;
   const enc0 = rounds.map(enc); const keep = () => { SV.resume = { ps: CUR.id, st: { id: st.id, type: st.type, pid: st.p && st.p.id }, cfg, rounds: enc0, at: { i, hearts, miss, combo, gained }, title: cfg.title, when: Date.now() }; save(); };
   const top = topbar(cfg.title, ['나가기', () => { keep(); hub(); }]); a.appendChild(top);
+  const B = (typeof Battle !== 'undefined' && rounds.length > 1) ? Battle.mount(a, rounds.length - (at ? at.i : 0), allVoc(), { ps: CUR.id, boss: !!CUR.exam && st.type === 'all' }) : null;
   const hud = h('div', 'hud'); a.appendChild(hud); const body = h('div', 'rbody'); a.appendChild(body);
   let timer = null;
   const drawHud = () => { hud.innerHTML = (cfg.noHearts ? `<span class="score">✔ ${i - miss < 0 ? 0 : i - miss} / ✘ ${miss}</span>` : `<span class="hearts">${'♥'.repeat(Math.max(0, hearts))}<s>${'♥'.repeat(Math.max(0, cfg.hearts - hearts))}</s></span>`) + `<span class="bar"><i style="width:${i / rounds.length * 100}%"></i></span><span class="cnt">${i + 1 > rounds.length ? rounds.length : i + 1}/${rounds.length}</span><span class="combo ${combo >= 2 ? 'on' : ''}">${combo >= 2 ? combo + ' 콤보!' : ''}</span>` + (cfg.timer ? '<span class="tbar"><i></i></span>' : ''); };
-  const ok = (bonus = 0) => { SRS.mark(rounds[i], true); combo++; const g = 10 + Math.min(combo, 5) * 2 + bonus; gained += g; Snd.play(combo >= 3 ? 'orb' : 'win'); fx('+' + g + ' ✦', '#3ddc97'); };
-  const bad = () => { SRS.mark(rounds[i], false); combo = 0; miss++; if (!cfg.noHearts) hearts--; Snd.play('wrong'); a.classList.add('hit'); setTimeout(() => a.classList.remove('hit'), 350); drawHud(); };
+  const ok = (bonus = 0) => { SRS.mark(rounds[i], true); combo++; if (B) B.hit(combo >= 3, combo); const g = 10 + Math.min(combo, 5) * 2 + bonus; gained += g; Snd.play(combo >= 3 ? 'orb' : 'win'); fx('+' + g + ' ✦', '#3ddc97'); };
+  const bad = () => { SRS.mark(rounds[i], false); if (B) B.hurt(); combo = 0; miss++; if (!cfg.noHearts) hearts--; Snd.play('wrong'); a.classList.add('hit'); setTimeout(() => a.classList.remove('hit'), 350); drawHud(); };
   const fx = (s, c) => { const f = h('div', 'fx', s); f.style.color = c; a.appendChild(f); setTimeout(() => f.remove(), 900); };
   const next = () => { clearInterval(timer); i++; if (hearts <= 0) return fail(); if (i >= rounds.length) return finish(); show(); };
   const startTimer = onOut => { if (!cfg.timer) return; let left = cfg.timer; const bar = hud.querySelector('.tbar i'); timer = setInterval(() => { left -= .1; if (bar) bar.style.width = (left / cfg.timer * 100) + '%'; if (left <= 0) { clearInterval(timer); onOut(); } }, 100); };
@@ -237,7 +245,7 @@ function runRounds(st, rounds, cfg, at) {
     if (r.k === 'wrong') {
       const [si, ci, wko, line, why] = r.w; const s = P[PI[r.id]].s[si], ens = s[0].split(' / '), kos = s[1].split(' | ').slice(); kos[ci] = wko;
       body.appendChild(h('div', 'qk', '서진의 해석 노트 — 틀린 조각을 누르세요'));
-      const bub = h('div', 'say'); bub.appendChild(face('s', 44)); bub.appendChild(h('p', '', line)); body.appendChild(bub);
+      const bub = h('div', 'say'); bub.appendChild(npcFace('s', 44)); bub.appendChild(h('p', '', line)); body.appendChild(bub);
       const g = h('div', 'chunks'); ens.forEach((c, k) => { const b = h('button', 'chk', `<span class="e">${c}</span><span class="k">${kos[k]}</span>`); b.onclick = () => { clearInterval(timer); g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[ci].classList.add('right'); if (k === ci) { ok(5); cont(`✔ 정확해요! <b>${s[1].split(' | ')[ci]}</b><br><small>${why}</small>`, true); } else { b.classList.add('wrong'); bad(); cont(`틀린 곳은 ${ci + 1}번 조각. 바른 해석: <b>${s[1].split(' | ')[ci]}</b><br><small>${why}</small>`, false); } }; g.appendChild(b); }); body.appendChild(g);
       startTimer(() => { g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[ci].classList.add('right'); bad(); cont(`시간 초과! 바른 해석: <b>${s[1].split(' | ')[ci]}</b><br><small>${why}</small>`, false); });
     }
@@ -294,7 +302,7 @@ function runRounds(st, rounds, cfg, at) {
   function finish() {
     SV.resume = null;
     const stars = cfg.noHearts ? (miss === 0 ? 3 : miss / rounds.length <= .25 ? 2 : 1) : miss === 0 ? 3 : miss <= 2 ? 2 : 1; const prev = SV.stars[st.id] || 0, r0 = rankOf(SV.xp); SV.stars[st.id] = Math.max(prev, stars); SV.xp += gained + stars * 10; save(); const r1 = rankOf(SV.xp); if (r1 !== r0) setTimeout(() => { const t = h('div', 'rankup', `🎉 칭호 획득!<b>${r1}</b>`); document.body.appendChild(t); Snd.play('win'); setTimeout(() => t.remove(), 2600); }, 400); Snd.music('happy'); Snd.play('win');
-    body.innerHTML = ''; hud.innerHTML = ''; const nd = SRS.due(CUR.id).length; const r = h('div', 'result', `<div class="big">${'★'.repeat(stars)}<s>${'★'.repeat(3 - stars)}</s></div><h2>클리어!</h2><p>실수 ${miss}번 · 얻은 공명 ✦ ${gained + stars * 10}</p><p class="dim">${miss ? `틀린 ${miss}개는 🔁 오늘의 복습에 들어갔어요.` : '맞힌 것들은 며칠 뒤 복습으로 다시 나와요.'} 오늘 ${SV.days[today()] || 0}/${GOAL}</p>`);
+    body.innerHTML = ''; hud.innerHTML = ''; const nd = SRS.due(CUR.id).length; const r = h('div', 'result', `<div class="big">${'★'.repeat(stars)}<s>${'★'.repeat(3 - stars)}</s></div><h2>클리어!</h2>${B ? `<p>⚔ 몬스터 ${B.killed()}/${B.count} 처치 · 🃏 단어 카드 ${Object.keys(SV.cards || {}).length}장 보유</p>` : ''}<p>실수 ${miss}번 · 얻은 공명 ✦ ${gained + stars * 10}</p><p class="dim">${miss ? `틀린 ${miss}개는 🔁 오늘의 복습에 들어갔어요.` : '맞힌 것들은 며칠 뒤 복습으로 다시 나와요.'} 오늘 ${SV.days[today()] || 0}/${GOAL}</p>`);
     const nx = h('button', 'pri', st.type === 'all' ? '계속 ▶' : '읽기로 돌아가기'); nx.onclick = () => st.type === 'all' ? talk(TALK[CUR.id] && !prev ? TALK[CUR.id].out : null, hub) : read();
     const rt = h('button', '', '↺ 다시 도전'); rt.onclick = () => st.type === 'all' ? (st.id.endsWith(':var') ? variant() : st.id.endsWith(':cards') ? cards() : st.id.endsWith(':rev') ? review() : challenge()) : practice(st.p);
     if (st.type === 'all') nx.onclick = () => st.id === CUR.id ? talk(TALK[CUR.id] && !prev ? TALK[CUR.id].out : null, hub) : hub();
