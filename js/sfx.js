@@ -93,7 +93,7 @@ const Sfx = (() => {
   };
   function beat(t) {
     const m = M[mood]; if (!m) return; const e8 = 60 / m.bpm / 2, pos = step % 8, chd = m.p[Math.floor(step / 8) % m.p.length], R = m.r, loop = (G.S && G.S.loop) || 1, tired = mood.startsWith('ch') && loop >= 3;
-    if (pos === 0) { chd.forEach(n => O({ f: NOTE(R + 12 + n), d: e8 * 8, a: e8 * 2.5, type: m.organ ? 'square' : 'triangle', v: m.organ ? .012 : .02, lp: loop >= 2 ? 700 : 1100, rv: .4, music: 1, when: t })); if (m.drone) O({ f: NOTE(R - 12), d: e8 * 8, a: e8 * 3, type: 'sawtooth', v: .03, lp: 220, music: 1, when: t }); }
+    if (pos === 0) { chd.forEach(n => O({ f: NOTE(R + 12 + n), d: e8 * 4, a: e8 * 1.5, type: 'sine', v: .007, lp: loop >= 2 ? 700 : 1100, rv: .4, music: 1, when: t })); if (false) O({ f: NOTE(R - 12), d: e8 * 8, a: e8 * 3, type: 'sawtooth', v: .03, lp: 220, music: 1, when: t }); }
     if (m.bass && (m.bass === 3 || pos === 0 || pos === 4 || (m.bass === 2 && (pos === 3 || pos === 6)))) O({ f: NOTE(R - 12 + chd[0]), d: m.bass === 3 ? e8 * .8 : e8 * 1.8, type: m.bass === 3 ? 'sawtooth' : 'triangle', v: m.bass === 3 ? .04 : .06, lp: 500, music: 1, when: t });
     if (m.hat && pos % 2 === 1) Nz({ d: .03, v: .015, f: 7000, type: 'highpass', music: 1, when: t });
     if (m.heart && (pos === 0 || pos === 1)) O({ f: 58, f1: 40, d: .18, v: pos ? .12 : .18, music: 1, when: t + (pos ? .05 : 0) });
@@ -114,7 +114,7 @@ const Sfx = (() => {
     const R = S.root + sec.key, ch = CH[sec.prog[bar % 4]], sw = S.swing && pos % 2 ? e16 * .33 : 0, T = t + sw, sec16 = bar % 16;
     const intro = sec16 < 2, drop = sec16 >= 14;
     /* 패드 */
-    if (pos === 0) ch.forEach((n, k) => O({ f: NOTE(R + n), d: e16 * 15, a: e16 * 3, type: S.piano ? 'sine' : 'triangle', v: S.piano ? .016 : .014, lp: 1600, rv: .35, music: 1, when: T }));
+    if (pos === 0 && S.piano && bar % 2 === 0) ch.slice(0, 3).forEach(n => O({ f: NOTE(R + n), d: e16 * 10, a: e16 * 2, type: 'sine', v: .006, lp: 800, music: 1, when: T }));
     /* 베이스 */
     const bassHit = S.piano ? (pos === 0 || pos === 8) : S.drums === 2 ? (pos === 0 || pos === 7 || pos === 10) : (pos === 0 || pos === 3 || pos === 8 || pos === 11 || pos === 14);
     if (bassHit && !intro) O({ f: NOTE(R - 12 + ch[0] + (pos === 14 ? 7 : 0)), d: e16 * (S.piano ? 7 : 2.5), type: 'triangle', v: .07, lp: 420, music: 1, when: T });
@@ -124,7 +124,7 @@ const Sfx = (() => {
     if (S.drums && !intro) { const kick = S.drums === 2 ? [0, 9] : [0, 6, 8]; if (kick.includes(pos) && !(drop && pos > 0)) O({ f: 110, f1: 42, d: .16, v: S.drums === 2 ? .14 : .2, music: 1, when: T });
       if (pos === 4 || pos === 12) Nz({ d: S.drums === 2 ? .12 : .1, v: S.drums === 2 ? .035 : .06, f: 1800, type: 'bandpass', q: .7, music: 1, when: T, rv: .15 });
       if (pos % 2 === 0 || (S.drums === 1 && sec.var === 2)) Nz({ d: .025, v: pos === 14 ? .03 : .014, f: 8000, type: 'highpass', music: 1, when: T });
-      if (S.drums === 2 && pos === 0) Nz({ d: e16 * 16, v: .006, f: 3000, type: 'bandpass', music: 1, when: T }); }
+    }
     /* 멜로디: 2마디(32칸) 중 앞 마디는 모티프, 뒷마디는 변주 */
     if (pos % 2 === 0 && !intro) { const i = (pos / 2 + (bar % 2) * 8) % 16; let d = sec.motif[i]; if (bar % 2 === 1 && sec.var) d = d >= 0 ? (d + sec.var) % S.sc.length : (Math.random() < .3 ? 2 : -1); if (bar % 8 === 7 && pos >= 8) d = -1;
       if (d >= 0) { const near = ch.map(c => c % 12); let n = S.sc[d]; if (pos === 0 && !near.includes(n % 12)) n = near[1]; O({ f: NOTE(R + 12 + n + (drop ? 12 : 0)), d: e16 * (pos === 0 ? 3.5 : 1.8), a: .01, type: S.lead, v: S.lv, lp: 2400, rv: .25, vib: S.piano ? 5 : 0, music: 1, when: T }); } }
