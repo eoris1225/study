@@ -69,7 +69,7 @@ function lookup(w) {
 function wrapWords(html) { return html.split(/(<[^>]+>)/).map(p => p.startsWith('<') ? p : p.replace(/[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*/g, m => `<span class="w">${m}</span>`)).join(''); }
 let tip;
 function showTip(el) {
-  if (tip) tip.remove(); let m = lookup(el.textContent); if (!m) { const ck = el.closest('.ck'), se = el.closest('.sent'); if (ck && se && se._it) { const k = se._it.s[1].split(' | ')[+ck.dataset.i]; m = `<span class="dim">이 조각 뜻:</span> ${k}`; } } tip = h('div', 'tip', `<b>${el.textContent}</b> ${m || '<span class="dim">기본 단어</span>'}`); document.body.appendChild(tip);
+  if (tip) tip.remove(); let m = lookup(el.textContent); if (!m) { const ck = el.closest('.ck'), se = el.closest('.sent'); if (ck && se && se._it) { const k = se._it.s[1].split(' | ')[+ck.dataset.i]; m = `<span class="dim">이 조각 뜻:</span> ${k}`; } } tip = h('div', 'tip', `<b>🔊 ${el.textContent}</b> ${m || '<span class="dim">기본 단어</span>'}`); if (SV.wordVoice !== false && typeof Reader !== 'undefined') Reader.word(el.textContent); document.body.appendChild(tip);
   const r = el.getBoundingClientRect(); const tw = tip.offsetWidth; tip.style.left = Math.max(8, Math.min(innerWidth - tw - 8, r.left + r.width / 2 - tw / 2)) + 'px'; tip.style.top = (r.top > 70 ? r.top - tip.offsetHeight - 8 : r.bottom + 8) + 'px'; Snd.play('tick');
   SV.looked = (SV.looked || 0) + 1; clearTimeout(showTip.t); showTip.t = setTimeout(() => tip && tip.remove(), 3200);
 }
@@ -113,7 +113,7 @@ function cardBook() {
   a.appendChild(h('p', 'hint', '전투에서 쓰러뜨린 몬스터의 단어가 카드로 모여요. 카드를 누르면 뒤집혀서 뜻이 보여요. 뜻을 먼저 떠올려 보고 뒤집으세요!'));
   const C = SV.cards || {}; LIB.forEach(ps => { const all = ps.paras.flatMap(p => qOf.call ? [] : []); const mine = Object.keys(C).filter(k => k.split('|')[0] === ps.id); use(ps); const vocs = [...new Map(P.flatMap(p => qOf(p.id).voc).map(v => [v[0], v])).values()];
     a.appendChild(h('h3', '', `${ps.title} <span class="dim">${mine.length}/${vocs.length}</span>`)); const g = h('div', 'cgrid');
-    vocs.forEach(v => { const got = C[ps.id + '|' + v[0]]; const c = h('button', 'wcard' + (got ? '' : ' locked'), got ? `<span class="f">${v[0]}</span><span class="b">${v[1]}</span>` : '<span class="f">?</span>'); if (got) c.onclick = () => { c.classList.toggle('flip'); Snd.play('paper'); }; g.appendChild(c); }); a.appendChild(g); });
+    vocs.forEach(v => { const got = C[ps.id + '|' + v[0]]; const c = h('button', 'wcard' + (got ? '' : ' locked'), got ? `<span class="f">${v[0]}</span><span class="b">${v[1]}</span>` : '<span class="f">?</span>'); if (got) c.onclick = () => { c.classList.toggle('flip'); Snd.play('paper'); if (c.classList.contains('flip')) Reader.word(v[0]); }; g.appendChild(c); }); a.appendChild(g); });
 }
 function whyPage() {
   const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide why'); bx.innerHTML = `<h2>이 게임이 공부시키는 방식</h2>

@@ -81,5 +81,7 @@ const Reader = (() => {
   function one(item) { run([item]); }
   /* 애니메이션 자막 영어 조각 읽기 */
   function line(text) { if (!ok || !SV.sceneVoice || !text) return; SS.cancel(); const C = cast(); speak(clean(text), /\?$/.test(text) ? C.ask : C.author, cfg().rate); }
-  return { ok, run, stop, pause, attach, one, line, playOne, cast, get playing() { return playing; } };
+  /* 단어 하나 발음: 낭독 중이면 끊지 않고 건너뜀 */
+  function word(w) { if (!ok || !w || playing) return; SS.cancel(); const C = cast(); speak(w.replace(/[^A-Za-zÀ-ÿ'’\- ]/g, ''), C.author, Math.min(cfg().rate, .9)); }
+  return { word, ok, run, stop, pause, attach, one, line, playOne, cast, get playing() { return playing; } };
 })();
