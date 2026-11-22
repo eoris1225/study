@@ -80,7 +80,7 @@ function home() {
   Snd.music('title'); const a = screen('home');
   a.innerHTML = `<div class="hero"><div class="mirror"><span>Read</span><span class="flip">Read</span></div><h1>영어 지문 RPG</h1><p class="dim">지문 하나가 한 판이에요. 이야기로 보고 → 읽고 → 실전 도전.</p></div>`;
   const tdn = SV.days[today()] || 0; a.appendChild(h('div', 'me', `<div><b>${rankOf(SV.xp)}</b><small>✦ ${SV.xp}</small></div><div>🔥 <b>${SRS.streak()}</b>일 연속</div><div>오늘 <b>${tdn}</b>/${GOAL}<span class="goal wide"><i style="width:${Math.min(100, tdn / GOAL * 100)}%"></i></span></div>`));
-  if (SV.resume) { const R = SV.resume, ps = LIB.find(x => x.id === R.ps); if (ps) { const rb = h('button', 'pri resume', `▶ 이어서 풀기 — ${R.title} (${R.at.i + 1}/${R.rounds.length})`); rb.onclick = resume; a.appendChild(rb); } }
+  Object.values(resumes()).sort((x, y) => (y.when || 0) - (x.when || 0)).slice(0, 3).forEach(R => { const ps = LIB.find(x => x.id === R.ps); if (ps) { const rb = h('button', 'pri resume', `▶ 이어서 풀기 — ${R.title} (${R.at.i + 1}/${R.rounds.length})`); rb.onclick = () => resume(R); a.appendChild(rb); } });
   const list = h('div', 'lib'); LIB.forEach(ps => { const st = SV.stars[ps.id] || 0, du = SRS.due(ps.id).length, pw = SRS.power(ps.id); const c = h('button', 'pcard', `${du ? `<span class="due">🔁 ${du}</span>` : ''}<b>${ps.title}</b><span class="mbar"><i style="width:${pw * 100}%"></i></span><small>${ps.source.split('—')[0].split(',')[0]}</small><span class="st">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</span><span class="dim">${ps.paras.length}문단 · ${ps.paras.reduce((n, p) => n + p.s.length, 0)}문장</span>`); c.onclick = () => { use(ps); Snd.play('click'); hub(); }; list.appendChild(c); }); a.appendChild(list);
   const bs = h('div', 'btns'); const cr = h('button', 'pri cram', SV.cram ? '⏰ D-1 벼락치기 계획 (모드 켜짐)' : '⏰ D-1 벼락치기 계획'); cr.onclick = cramPage; bs.appendChild(cr); const cd = h('button', '', `🃏 단어 카드 도감 (${Object.keys(SV.cards || {}).length}장)`); cd.onclick = cardBook; bs.appendChild(cd); const why = h('button', 'ghost', '💡 이렇게 공부하는 이유'); why.onclick = whyPage; bs.appendChild(why); const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics'; bs.append(ph); a.appendChild(bs);
 }
@@ -140,7 +140,7 @@ function hub() {
     ['🔁', `오늘의 복습 (${SRS.due(CUR.id).length})`, '잊어버릴 때쯤 다시. 맞히면 다음 복습이 점점 멀어져요', () => review(), 0],
     ['📄', '분석 노트', '출처 · 구조 · 전문 해석 · 문법 · 단어장', () => notes(), 0]
   ];
-  const RI = resumeInfo(CUR.id); if (RI) { const rb = h('button', 'pri resume', `▶ 이어서 풀기 — ${RI.title.split(' — ').pop()} (${RI.at.i + 1}/${RI.rounds.length})`); rb.onclick = resume; a.appendChild(rb); }
+  Object.values(resumes()).filter(R => R.ps === CUR.id).sort((x, y) => (y.when || 0) - (x.when || 0)).forEach(RI => { const rb = h('button', 'pri resume', `▶ 이어서 풀기 — ${RI.title.split(' — ').pop()} (${RI.at.i + 1}/${RI.rounds.length})`); rb.onclick = () => resume(RI); a.appendChild(rb); });
   const g = h('div', 'steps'); steps.forEach(([ic, t, d, f, done], k) => { const b = h('button', 'step' + (done ? ' done' : ''), `<span class="ic">${ic}</span><b>${k + 1}. ${t}</b><small>${d}</small>`); b.onclick = () => { Snd.play('click'); f(); }; g.appendChild(b); }); a.appendChild(g);
   if (!seen.intro && TALK[CUR.id]) { mark('intro'); talk(TALK[CUR.id].in, () => { }); }
 }
@@ -218,11 +218,23 @@ function dec(d) { const p = P[PI[d.id]]; if (!p) return null; const q = qOf(d.id
     case 'cloze': return { k: 'cloze', s: p.s[d.si], si: d.si, id: d.id, w: d.w, m: d.m, type: d.type, re: new RegExp('\\b' + d.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i') };
     case 'recall': return { k: 'recall', s: p.s[d.si], si: d.si, id: d.id }; case 'sorder': return { k: 'sorder', id: d.id, part: d.sis.map(i => [p.s[i], i]), si: d.sis[0] }; case 'insert': return { k: 'insert', id: d.id, all: real, at: d.at, si: real[d.at] && real[d.at][1] }; }
   return null; }
-function resumeInfo(psid) { const R = SV.resume; return R && R.ps === psid ? R : null; }
-function resume() { const R = SV.resume; if (!R) return; const ps = LIB.find(x => x.id === R.ps); if (!ps) { SV.resume = null; save(); return; } use(ps); const rounds = R.rounds.map(dec).filter(Boolean); if (!rounds.length) { SV.resume = null; save(); return hub(); } const st = { id: R.st.id, type: R.st.type, p: R.st.pid ? P[PI[R.st.pid]] : undefined }; Snd.music('tense'); runRounds(st, rounds, R.cfg, R.at); }
+/* 진행 저장은 도전 종류별로 따로(SV.resumes[st.id]) — 다른 문제를 시작해도 기존 저장이 지워지지 않게 */
+function resumes() { SV.resumes = SV.resumes || {}; if (SV.resume && !SV.resumes[SV.resume.st.id]) SV.resumes[SV.resume.st.id] = SV.resume; return SV.resumes; }
+function latestResume() { const L = Object.values(resumes()).sort((a, b) => (b.when || 0) - (a.when || 0)); return L[0] || null; }
+function dropResume(id) { delete resumes()[id]; SV.resume = latestResume(); save(); }
+function resumeInfo(psid) { return Object.values(resumes()).filter(R => R.ps === psid).sort((a, b) => (b.when || 0) - (a.when || 0))[0] || null; }
+function resume(R) { R = R && R.rounds ? R : latestResume(); if (!R) return; const ps = LIB.find(x => x.id === R.ps); if (!ps) { dropResume(R.st.id); return; } use(ps); const rounds = R.rounds.map(dec).filter(Boolean); if (!rounds.length) { dropResume(R.st.id); return hub(); } const st = { id: R.st.id, type: R.st.type, p: R.st.pid ? P[PI[R.st.pid]] : undefined }; Snd.music('tense'); runRounds(st, rounds, R.cfg, R.at); }
 function runRounds(st, rounds, cfg, at) {
+  const sv = !at && resumes()[st.id];
+  if (sv && sv.at && sv.at.i > 0) { /* 같은 도전에 저장된 진행이 있으면 덮어쓰기 전에 묻기 */
+    const a = screen('read'); a.appendChild(topbar(cfg.title, ['허브', hub]));
+    const box = h('div', 'result', `<h2>💾 저장된 진행이 있어요</h2><p><b>${sv.title}</b><br>${sv.at.i + 1}/${sv.rounds.length}번 문제까지 풀었어요.</p>`);
+    const go = h('button', 'pri', `▶ 이어서 풀기 (${sv.at.i + 1}/${sv.rounds.length})`); go.onclick = () => resume(sv);
+    const nw = h('button', '', '↺ 처음부터 새로'); nw.onclick = () => { dropResume(st.id); runRounds(st, rounds, cfg); };
+    box.append(go, nw); a.appendChild(box); return;
+  }
   const a = screen('chal' + (cfg.boss ? ' bossmode' : '')); let i = 0, hearts = cfg.hearts, miss = 0, combo = 0, gained = 0; if (at) ({ i, hearts, miss, combo, gained } = at); hearts = hearts ?? cfg.hearts;
-  const enc0 = rounds.map(enc); const keep = () => { SV.resume = { ps: CUR.id, st: { id: st.id, type: st.type, pid: st.p && st.p.id }, cfg, rounds: enc0, at: { i, hearts, miss, combo, gained }, title: cfg.title, when: Date.now() }; save(); };
+  const enc0 = rounds.map(enc); const keep = () => { resumes()[st.id] = SV.resume = { ps: CUR.id, st: { id: st.id, type: st.type, pid: st.p && st.p.id }, cfg, rounds: enc0, at: { i, hearts, miss, combo, gained }, title: cfg.title, when: Date.now() }; save(); };
   const top = topbar(cfg.title, ['나가기', () => { keep(); hub(); }]); a.appendChild(top);
   const B = (typeof Battle !== 'undefined' && rounds.length > 1) ? Battle.mount(a, rounds.length - (at ? at.i : 0), allVoc(), { ps: CUR.id, boss: !!CUR.exam && st.type === 'all' }) : null;
   const hud = h('div', 'hud'); a.appendChild(hud); const body = h('div', 'rbody'); a.appendChild(body);
@@ -301,7 +313,7 @@ function runRounds(st, rounds, cfg, at) {
     }
   }
   function finish() {
-    SV.resume = null;
+    dropResume(st.id);
     const stars = cfg.noHearts ? (miss === 0 ? 3 : miss / rounds.length <= .25 ? 2 : 1) : miss === 0 ? 3 : miss <= 2 ? 2 : 1; const prev = SV.stars[st.id] || 0, r0 = rankOf(SV.xp); SV.stars[st.id] = Math.max(prev, stars); SV.xp += gained + stars * 10; save(); const r1 = rankOf(SV.xp); if (r1 !== r0) setTimeout(() => { const t = h('div', 'rankup', `🎉 칭호 획득!<b>${r1}</b>`); document.body.appendChild(t); Snd.play('win'); setTimeout(() => t.remove(), 2600); }, 400); Snd.music('happy'); Snd.play('win');
     body.innerHTML = ''; hud.innerHTML = ''; const nd = SRS.due(CUR.id).length; const r = h('div', 'result', `<div class="big">${'★'.repeat(stars)}<s>${'★'.repeat(3 - stars)}</s></div><h2>클리어!</h2>${B ? `<p>⚔ 몬스터 ${B.killed()}/${B.count} 처치 · 🃏 단어 카드 ${Object.keys(SV.cards || {}).length}장 보유</p>` : ''}<p>실수 ${miss}번 · 얻은 공명 ✦ ${gained + stars * 10}</p><p class="dim">${miss ? `틀린 ${miss}개는 🔁 오늘의 복습에 들어갔어요.` : '맞힌 것들은 며칠 뒤 복습으로 다시 나와요.'} 오늘 ${SV.days[today()] || 0}/${GOAL}</p>`);
     const nx = h('button', 'pri', st.type === 'all' ? '계속 ▶' : '읽기로 돌아가기'); nx.onclick = () => st.type === 'all' ? talk(TALK[CUR.id] && !prev ? TALK[CUR.id].out : null, hub) : read();
@@ -310,7 +322,7 @@ function runRounds(st, rounds, cfg, at) {
     r.append(nx, rt); body.appendChild(r);
   }
   function fail() {
-    SV.resume = null; save();
+    dropResume(st.id);
     Snd.music('sad'); body.innerHTML = ''; const r = h('div', 'result fail', `<h2>하트가 다 떨어졌어요</h2><p>괜찮아요. 틀린 문장을 다시 읽고 오면 돼요.</p>`);
     const rd = h('button', 'pri', '📖 다시 읽기'); rd.onclick = () => read();
     const rt = h('button', '', '↺ 바로 다시 도전'); rt.onclick = () => st.type === 'all' ? challenge() : practice(st.p); r.append(rd, rt); body.appendChild(r);
