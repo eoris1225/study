@@ -202,3 +202,19 @@ mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
 
 .glesson .gb b,.glesson .gq b,.glesson .after b,.why b,.tbox.wide .gb b{display:inline;font-size:inherit}
 .glesson .gtop b{display:block}
+
+/* 구조도 */
+.sxbox{display:none;margin-top:10px}.show-sx .sxbox,.sxbox.on{display:block}
+.sxwrap{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
+.sx{position:relative;border-radius:12px;padding:16px 10px 8px;background:var(--card);box-shadow:0 0 0 2px var(--line) inset;display:flex;flex-direction:column;gap:4px;max-width:100%}
+.sxe{font:500 16px/1.6 Georgia,serif}.sxk{font-size:13px;color:#a3480a;line-height:1.4}
+.sxl{position:absolute;top:-9px;left:8px;font-size:11px;font-weight:800;padding:1px 8px;border-radius:999px;color:#fff}
+.sxa{align-self:center;color:var(--dim);font-size:18px}
+.sx-rel,.sx-part{box-shadow:0 0 0 2px #ff8a3d inset;background:#fff6ee}.sx-rel .sxl,.sx-part .sxl{background:#ff8a3d}
+.sx-prep{box-shadow:0 0 0 2px #9aa0b8 inset;background:#f4f5fa}.sx-prep .sxl{background:#7d84a3}
+.sx-sub{box-shadow:0 0 0 2px #8f6bff inset;background:#f5f1ff}.sx-sub .sxl{background:#8f6bff}
+.sx-inf{box-shadow:0 0 0 2px #18b6a0 inset;background:#ecfbf8}.sx-inf .sxl{background:#18b6a0}
+.sx-ncl{box-shadow:0 0 0 2px #e0a800 inset;background:#fffae6}.sx-ncl .sxl{background:#d49a00}
+.tS{color:#1f5fe0;font-weight:700;border-bottom:3px solid #1f5fe0}.tV{color:#e0405f;font-weight:800;border-bottom:3px double #e0405f}.tO{color:#0e8a5a;font-weight:600;border-bottom:3px dotted #0e8a5a}
+.sxleg{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:12px}.sxleg .lg{padding:1px 8px;border-radius:999px;color:#fff}.lg.rel{background:#ff8a3d}.lg.prep{background:#7d84a3}.lg.sub{background:#8f6bff}.lg.inf{background:#18b6a0}.lg.ncl{background:#d49a00}
+.sxnote{font-size:12px;margin-top:4px}
