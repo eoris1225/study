@@ -11,12 +11,13 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SV)); } catc
 /* ── 기억 관리: 간격 반복(라이트너 상자) + 매일 기록 ─────────
    상자 0~5. 맞히면 한 칸 올라가고 다음 복습일이 멀어진다(0·1·3·7·14·30일). 틀리면 상자 0, 오늘 다시. */
 const IV = [0, 1, 3, 7, 14, 30];
+const CIV = [0, 10, 30, 120, 360, 720].map(m => m * 6e4); /* 벼락치기: 0분·10분·30분·2시간·6시간·12시간 */
 const today = () => { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); };
 SV.srs = SV.srs || {}; SV.days = SV.days || {};
 const SRS = {
   key(r, ps) { const id = ps || CUR.id; if (r.k === 'voc') return `v|${id}|${r.v[0]}`; if (r.k === 'exam') return `q|${id}|${r.id}`; if (r.k === 'gram') return `g|${id}|${r.id}|${r.gi}`; const si = r.si ?? r.i ?? (r.w ? r.w[0] : null); return si == null ? null : `s|${id}|${r.id}|${si}`; },
-  mark(r, good, soft) { const k = SRS.key(r); if (!k) return; const it = SV.srs[k] || { b: 0, d: today(), n: 0 }; it.n++; if (good) it.b = Math.min(5, it.b + 1); else if (!soft) it.b = 0; it.d = today() + (good ? IV[it.b] : 0); it.x = { k: r.k === 'voc' ? 'voc' : r.k === 'exam' ? 'exam' : r.k === 'gram' ? 'gram' : 'sent', v: r.v, gi: r.gi, si: r.si ?? r.i ?? (r.w ? r.w[0] : null) }; SV.srs[k] = it; const t = today(); SV.days[t] = (SV.days[t] || 0) + 1; save(); },
-  due(id) { const t = today(); return Object.entries(SV.srs).filter(([k, v]) => k.split('|')[1] === id && v.d <= t); },
+  mark(r, good, soft) { const k = SRS.key(r); if (!k) return; const it = SV.srs[k] || { b: 0, d: today(), n: 0 }; it.n++; if (good) it.b = Math.min(5, it.b + 1); else if (!soft) it.b = 0; it.d = today() + (good ? IV[it.b] : 0); it.t = Date.now() + (good ? (SV.cram ? CIV[it.b] : IV[it.b] * 864e5) : (SV.cram ? 3e4 : 0)); it.x = { k: r.k === 'voc' ? 'voc' : r.k === 'exam' ? 'exam' : r.k === 'gram' ? 'gram' : 'sent', v: r.v, gi: r.gi, si: r.si ?? r.i ?? (r.w ? r.w[0] : null) }; SV.srs[k] = it; const t = today(); SV.days[t] = (SV.days[t] || 0) + 1; save(); },
+  due(id) { const t = today(), n = Date.now(); return Object.entries(SV.srs).filter(([k, v]) => k.split('|')[1] === id && (v.t ? v.t <= n : v.d <= t)); },
   power(id) { const its = Object.entries(SV.srs).filter(([k]) => k.split('|')[1] === id); if (!its.length) return 0; return its.reduce((a, [, v]) => a + v.b, 0) / (its.length * 5); },
   streak() { let n = 0, t = today(); if (!SV.days[t]) t--; while (SV.days[t]) { n++; t--; } return n; }
 };
@@ -78,7 +79,31 @@ function home() {
   a.innerHTML = `<div class="hero"><div class="mirror"><span>Read</span><span class="flip">Read</span></div><h1>영어 지문 RPG</h1><p class="dim">지문 하나가 한 판이에요. 이야기로 보고 → 읽고 → 실전 도전.</p></div>`;
   const tdn = SV.days[today()] || 0; a.appendChild(h('div', 'me', `<div><b>${rankOf(SV.xp)}</b><small>✦ ${SV.xp}</small></div><div>🔥 <b>${SRS.streak()}</b>일 연속</div><div>오늘 <b>${tdn}</b>/${GOAL}<span class="goal wide"><i style="width:${Math.min(100, tdn / GOAL * 100)}%"></i></span></div>`));
   const list = h('div', 'lib'); LIB.forEach(ps => { const st = SV.stars[ps.id] || 0, du = SRS.due(ps.id).length, pw = SRS.power(ps.id); const c = h('button', 'pcard', `${du ? `<span class="due">🔁 ${du}</span>` : ''}<b>${ps.title}</b><span class="mbar"><i style="width:${pw * 100}%"></i></span><small>${ps.source.split('—')[0].split(',')[0]}</small><span class="st">${'★'.repeat(st)}${'☆'.repeat(3 - st)}</span><span class="dim">${ps.paras.length}문단 · ${ps.paras.reduce((n, p) => n + p.s.length, 0)}문장</span>`); c.onclick = () => { use(ps); Snd.play('click'); hub(); }; list.appendChild(c); }); a.appendChild(list);
-  const bs = h('div', 'btns'); const why = h('button', 'ghost', '💡 이렇게 공부하는 이유'); why.onclick = whyPage; bs.appendChild(why); const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics'; bs.append(ph); a.appendChild(bs);
+  const bs = h('div', 'btns'); const cr = h('button', 'pri cram', SV.cram ? '⏰ D-1 벼락치기 계획 (모드 켜짐)' : '⏰ D-1 벼락치기 계획'); cr.onclick = cramPage; bs.appendChild(cr); const why = h('button', 'ghost', '💡 이렇게 공부하는 이유'); why.onclick = whyPage; bs.appendChild(why); const ph = h('button', 'ghost', '⚛ 물리로 가기'); ph.onclick = () => location.href = 'index.html?physics'; bs.append(ph); a.appendChild(bs);
+}
+/* D-1 벼락치기: 하루 계획 + 복습 간격을 분 단위로 */
+function cramPage() {
+  SV.plan = SV.plan || {}; const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide why'); ov.appendChild(bx); document.body.appendChild(ov);
+  const P_ = id => LIB.find(x => x.id === id); const go = id => { ov.remove(); use(P_(id)); hub(); };
+  const steps = [
+    ['① 교과서 4과 (1시간 30분)', 'ne4', '읽기(끊어 해석 + 문법 메모까지) → 🧠 기억 카드 → 🔀 변형 문제'],
+    ['② 교과서 5과 (1시간 30분)', 'ne5', '읽기 → 기억 카드 → 변형 문제'],
+    ['☕ 쉬는 시간 + 🔁 복습 (20분)', null, '4·5과 오늘의 복습 배지가 0이 될 때까지'],
+    ['③ 2025 모의고사 29~40 (1시간 20분)', 'm25', '⚔ 실전 풀이 먼저 → 틀린 문항만 📖 끊어 읽기·해석 → 🔀 변형 문제'],
+    ['④ 2026 모의고사 21, 29~42 (1시간 30분)', 'm26', '실전 풀이 → 틀린 문항 끊어 읽기 → 변형 문제'],
+    ['☕ 쉬는 시간 + 🔁 복습 (20분)', null, '모의고사 오늘의 복습'],
+    ['⑤ 프린트 The History of Money (40분)', 'money', '읽기 → 기억 카드 → 변형 문제 (2026 21번과 같은 글)'],
+    ['⑥ 프린트 The Same and Not the Same (1시간)', 'same', '읽기 → 기억 카드 → 변형 문제'],
+    ['⑦ word master Day 36~50 (2시간)', null, '앱에 아직 없음 — 단어장으로. 뜻 가리고 떠올리기 → 틀린 것만 표시해서 다시'],
+    ['🌙 자기 전 (30분)', null, '모든 지문 🔁 오늘의 복습 + 지문별 📄 분석 노트 → 문법 모음 훑기'],
+    ['🌅 시험 날 아침 (30분)', null, '🔁 오늘의 복습만. 새로운 건 보지 않기']
+  ];
+  const draw = () => { bx.innerHTML = `<h2>⏰ D-1 벼락치기 계획</h2><p>하루라도 원리는 같아요. <b>읽기만 반복하지 말고 꺼내 보기</b>, 그리고 <b>몇 시간 간격으로 다시</b>. 벼락치기 모드를 켜면 복습 간격이 <b>10분 → 30분 → 2시간 → 6시간 → 12시간</b>으로 바뀌어요.</p>`;
+    const tg = h('button', SV.cram ? 'pri' : '', SV.cram ? '✔ 벼락치기 모드 켜짐 (끄기)' : '벼락치기 모드 켜기'); tg.onclick = () => { SV.cram = !SV.cram; if (SV.cram) Object.values(SV.srs).forEach(v => { v.t = Math.min(v.t || Infinity, Date.now() + 6e5 * v.b); }); save(); draw(); }; bx.appendChild(tg);
+    const list = h('div', 'plan'); steps.forEach(([t, id, d], k) => { const ps = id && P_(id); const du = ps ? SRS.due(id).length : 0, pw = ps ? Math.round(SRS.power(id) * 100) : 0; const row = h('div', 'prow' + (SV.plan[k] ? ' done' : ''), `<label><input type="checkbox" ${SV.plan[k] ? 'checked' : ''}><b>${t}</b></label><small>${d}</small>${ps ? `<span class="pinfo">기억 ${pw}% · 복습 ${du}개</span>` : ''}`); row.querySelector('input').onchange = e => { SV.plan[k] = e.target.checked; save(); row.classList.toggle('done', e.target.checked); }; if (ps) { const b = h('button', '', '가기 ▶'); b.onclick = () => go(id); row.appendChild(b); } list.appendChild(row); }); bx.appendChild(list);
+    bx.appendChild(h('p', 'dim', '💤 잠은 꼭 자세요. 자는 동안 그날 공부한 게 기억으로 굳어져요. 밤새우는 것보다 자기 전 복습 + 아침 복습이 더 남아요.'));
+    const rs = h('button', 'ghost', '체크 모두 지우기'); rs.onclick = () => { SV.plan = {}; save(); draw(); }; const cl = h('button', 'pri', '닫기'); cl.onclick = () => { ov.remove(); home(); }; bx.append(rs, cl); };
+  draw();
 }
 function whyPage() {
   const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide why'); bx.innerHTML = `<h2>이 게임이 공부시키는 방식</h2>
