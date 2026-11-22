@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>물리 자습 프린트</title>
+<style>
+@import url('FONTDIR/400.css');@import url('FONTDIR/700.css');@import url('FONTDIR/900.css');
+@page{size:A4;margin:12mm 12mm 13mm}
+body{font-family:'Noto Sans KR',sans-serif;font-size:10pt;line-height:1.5;color:#111;margin:0}
+h1{font-size:21pt;margin:0 0 3mm;font-weight:900}
+h2{font-size:14pt;margin:0 0 2.5mm;padding:1.8mm 3mm;background:#111;color:#fff;border-radius:2mm;break-after:avoid}
+h3{font-size:11.5pt;margin:3.5mm 0 1.5mm;border-bottom:2px solid #111;break-after:avoid}
+.part{break-before:page}
+table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #555;padding:1.2mm 2mm;vertical-align:top;font-size:9.4pt}
+th{background:#eee}
+.f{display:inline-block;border:1.5px solid #111;padding:.3mm 2mm;margin:.4mm 0;font-weight:700;background:#fafafa}
+.box{border:1.5px solid #111;border-radius:2mm;padding:2mm 3mm;margin:2mm 0;break-inside:avoid}
+.warn{border:1.5px dashed #b91c1c;border-radius:2mm;padding:2mm 3mm;margin:2mm 0;break-inside:avoid}
+.warn b.t{color:#b91c1c}
+.two{columns:2;column-gap:6mm}
+.two>*{break-inside:avoid}
+.q{margin:0 0 3mm;break-inside:avoid}
+.q .n{font-weight:900}
+.blank{display:inline-block;min-width:22mm;border-bottom:1px solid #111}
+.ans p{margin:0 0 1.6mm;font-size:9.2pt;break-inside:avoid}
+.dim{color:#555}
+svg{display:block}
+.fig{display:flex;gap:4mm;align-items:flex-start;flex-wrap:wrap}
+.cap{font-size:8.5pt;text-align:center;color:#333}
+.tt th{width:22mm}
+.ox{letter-spacing:1px}
+small{font-size:8.5pt}
+</style></head><body>
+
+<h1>물리 1시간 자습 프린트</h1>
+<p>범위: 열역학 제1법칙 · 열역학 과정 · 열기관 · 제2법칙/엔트로피 · 단진동 · 파동 · 소리의 간섭 · 정상파</p>
+<table class="tt">
+<tr><th>0~15분</th><td><b>① 핵심 정리</b> 읽기. 특히 <b style="color:#b91c1c">빨간 점선 박스 = 지금까지 헷갈렸던 것</b>. 읽으면서 공식은 손으로 한 번씩 따라 쓰기.</td></tr>
+<tr><th>15~22분</th><td><b>② 공식 빈칸 테스트</b>: 앞 장을 덮고 빈칸 채우기 → 앞 장 보고 채점.</td></tr>
+<tr><th>22~50분</th><td><b>③ 연습 문제 33문항</b>: 계산은 식부터 쓰고 숫자 넣기. 막히면 ☆ 표시하고 넘어가기.</td></tr>
+<tr><th>50~60분</th><td><b>④ 채점 + 풀이 읽기</b> (맨 뒤 정답). 틀린 문제는 해당 핵심 정리 박스를 다시 읽고, 빈칸 테스트를 한 번 더.</td></tr>
+</table>
+<div class="box">✍ <b>계산 문제 3단계</b>: ① 공식 쓰기 → ② 단위 맞추기(°C → K는 +273, kcal → J는 ×4200, cm → m) → ③ 10의 지수끼리 따로 계산. 이 프린트에 필요한 공식은 전부 들어 있어요(검색 필요 없음).</div>
+
+<h3>단위·10의 지수 빠른 정리</h3>
+<table>
+<tr><th style="width:32%">곱하기</th><td>(a×10<sup>m</sup>)×(b×10<sup>n</sup>) = (a×b)×10<sup>m+n</sup> &nbsp; 예) (3×10⁵)×(2×10⁻²) = 6×10³</td></tr>
+<tr><th>나누기</th><td>(a×10<sup>m</sup>)÷(b×10<sup>n</sup>) = (a÷b)×10<sup>m−n</sup> &nbsp; 예) (6×10⁴)÷(3×10⁻²) = 2×10⁶ (4 − (−2) = 6)</td></tr>
+<tr><th>더하기·빼기</th><td><b>지수를 먼저 맞춘 뒤</b> 앞 숫자끼리 더하기. 예) 4×10⁻³ + 2×10⁻⁴ = 4×10⁻³ + 0.2×10⁻³ = 4.2×10⁻³</td></tr>
+<tr><th>a×10ⁿ 꼴로 정리</th><td>앞 숫자가 1~10 사이가 되게. 12×10³ = 1.2×10⁴ (앞을 ÷10 하면 지수 +1) / 0.5×10⁻² = 5×10⁻³</td></tr>
+<tr><th>제곱근</th><td>√(10⁻⁴) = 10⁻² (지수를 반으로) / √(4×10⁻²) = 2×10⁻¹ = 0.2</td></tr>
+<tr><th>자주 쓰는 변환</th><td>1 kcal = 4200 J · T(K) = t(°C) + 273 · 1 L = 10⁻³ m³ · 1 cm = 10⁻² m · 1 ms = 10⁻³ s · 1 atm ≈ 1×10⁵ Pa</td></tr>
+</table>
+
+<!-- ───────── 핵심 정리 ───────── -->
+<div class="part"><h2>① 핵심 정리 — 열역학</h2>
+<h3>1. 열역학 제1법칙 (= 에너지 보존)</h3>
+<p><span class="f">Q = ΔU + W</span> &nbsp; 받은 열 = 내부 에너지 증가 + 기체가 외부에 한 일 &nbsp; <span class="f">W = PΔV</span> (압력 일정) &nbsp; <b>P–V 그래프 아래 넓이 = 일</b></p>
+<table>
+<tr><th>기호</th><th>+ 일 때</th><th>− 일 때</th><th>판단하는 법</th></tr>
+<tr><td><b>Q</b></td><td>열을 <b>흡수</b></td><td>열을 <b>방출</b></td><td>ΔU와 W의 부호를 먼저 정하고 Q = ΔU + W로 결정</td></tr>
+<tr><td><b>ΔU</b></td><td>온도 상승</td><td>온도 하강</td><td>이상 기체: U ∝ T ∝ <b>PV</b> → 그래프에서 <b>P×V 값이 커지면 ΔU &gt; 0</b></td></tr>
+<tr><td><b>W</b></td><td>부피 증가(팽창): 기체가 일을 함</td><td>부피 감소(압축): 기체가 일을 받음</td><td>그래프에서 <b>오른쪽으로 가면 +, 왼쪽이면 −</b></td></tr>
+</table>
+
+<h3>2. 네 가지 과정</h3>
+<div class="fig">
+<svg width="300" height="150" viewBox="0 0 300 150" font-family="Noto Sans KR" font-size="10">
+ <line x1="25" y1="135" x2="290" y2="135" stroke="#111"/><line x1="25" y1="135" x2="25" y2="8" stroke="#111"/>
+ <text x="280" y="148">V</text><text x="10" y="14">P</text>
+ <line x1="60" y1="110" x2="60" y2="35" stroke="#111" stroke-width="2.5"/><text x="64" y="30">등적 (수직선)</text>
+ <line x1="95" y1="45" x2="190" y2="45" stroke="#111" stroke-width="2.5"/><text x="196" y="49">등압 (수평선)</text>
+ <path d="M100 72 Q 150 108 228 112" fill="none" stroke="#111" stroke-width="2.5"/><text x="232" y="112">등온</text>
+ <path d="M100 70 Q 135 118 228 130" fill="none" stroke="#111" stroke-width="2" stroke-dasharray="5 3"/><text x="232" y="132">단열(더 가파름)</text>
+</svg>
+<div style="flex:1;min-width:80mm">
+<table>
+<tr><th>과정</th><th>조건</th><th>Q = ΔU + W</th></tr>
+<tr><td>등적</td><td>W = 0</td><td><b>Q = ΔU</b> (열이 전부 온도로)</td></tr>
+<tr><td>등압</td><td>W = PΔV</td><td>Q = ΔU + PΔV (열이 둘로 나뉨)</td></tr>
+<tr><td>등온</td><td>ΔU = 0</td><td><b>Q = W</b> (받은 열 = 한 일)</td></tr>
+<tr><td>단열</td><td>Q = 0</td><td><b>ΔU = −W</b> (팽창하면 식고, 압축하면 뜨거워짐)</td></tr>
+</table></div></div>
+
+<div class="warn"><b class="t">헷갈렸던 것 ① — 그래프 구간별로 열을 흡수하나, 방출하나?</b><br>
+순서대로 정하면 돼요: <b>① W 부호</b>(오른쪽 +, 왼쪽 −, 수직 0) → <b>② ΔU 부호</b>(P×V가 커지나 작아지나) → <b>③ Q = ΔU + W</b>.<br>
+• 등압 팽창: W +, PV↑ → ΔU + → <b>Q + 흡수</b> &nbsp; • 등적 압력 감소: W 0, PV↓ → <b>Q − 방출</b><br>
+• 등온 압축: W −, ΔU 0 → <b>Q = W − 방출</b> → “일을 받은 만큼 열을 내보낸다” (일 받음 = 열 방출 크기 같음)<br>
+• 단열 압축: Q 0, W − → ΔU + (온도 상승). <b>단열 구간은 흡수도 방출도 아님!</b></div>
+
+<div class="warn"><b class="t">헷갈렸던 것 ② — 같은 열 Q를 줄 때 등적 vs 등압 (188번 유형)</b><br>
+같은 Q를 주면 <b>등적은 Q 전부가 ΔU</b>, 등압은 일부가 일(W)로 빠져나가서 <b>ΔU가 더 작음</b> → 온도는 등적이 더 많이 오른다.<br>
+“피스톤이 멈출 때까지 가열”처럼 <b>준 열이 같다는 조건이 없으면</b> 이 비교는 성립하지 않아요. 문제에서 무엇이 같은지(같은 Q? 같은 ΔT?)를 먼저 확인!</div>
+
+<h3>3. 순환 과정</h3>
+<p>처음 상태로 돌아오므로 <span class="f">ΔU(한 바퀴) = 0</span> → <span class="f">Q(순) = W(순) = 그래프로 둘러싸인 넓이</span>. 시계 방향으로 돌면 기체가 외부에 일을 함(열기관).</p>
+<div class="warn"><b class="t">헷갈렸던 것 ③ — “순환 과정에서 내부 에너지 변화는 0” (194번)</b><br>
+<b>처음과 끝(한 바퀴 돈 뒤)을 비교</b>하면 0이라는 뜻이에요. 도는 <b>도중에는</b> 구간마다 ΔU가 +도 되고 −도 돼요. “한 번도 변하지 않는다”는 틀린 말.</div>
+
+<h3>4. 열기관과 열효율</h3>
+<p><span class="f">Q₁ = W + Q₂</span> (고열원에서 받은 열 = 한 일 + 저열원에 버린 열) &nbsp; <span class="f">e = W/Q₁ = 1 − Q₂/Q₁</span> &nbsp; <span class="f">카르노: e = 1 − T₂/T₁</span> (T는 켈빈!)</p>
+<div class="warn"><b class="t">헷갈렸던 것 ④ — 카르노 기관 vs “이상적인 열기관”</b><br>
+• <b>카르노 기관</b> = 가역 과정으로만 도는 가장 이상적인 열기관. 효율 = 1 − T₂/T₁ (같은 두 온도 사이에서 최대).<br>
+• 문제의 “이상적인 열기관”도 보통 카르노 기관을 뜻해요. 효율이 1이라는 뜻이 <b>아님</b>. 카르노도 Q₂ &gt; 0 (저열원에 반드시 버림).<br>
+• Q₁과 W를 주면 <b>Q₂ = Q₁ − W</b> (그냥 빼면 됨). 이건 에너지 보존이라 어떤 열기관이든 성립.<br>
+• 효율 100% (Q₂ = 0) 열기관은 <b>불가능</b> — 이걸 말해 주는 게 <b>제2법칙</b>.</div>
+
+<h3>5. 제1법칙 vs 제2법칙 / 엔트로피</h3>
+<table>
+<tr><th style="width:20%"></th><th>제1법칙</th><th>제2법칙</th></tr>
+<tr><td>한마디로</td><td><b>에너지의 양</b>은 보존 (Q = ΔU + W)</td><td>자연 현상의 <b>방향</b> (저절로는 한쪽으로만)</td></tr>
+<tr><td>말해 주는 것</td><td>에너지가 새로 생기거나 사라지지 않음 → 제1종 영구 기관 불가능</td><td>열은 저절로 고온 → 저온으로만 / 열효율 1인 열기관 불가능 / 엔트로피는 증가 → 제2종 영구 기관 불가능</td></tr>
+<tr><td>구별 질문</td><td>“에너지 계산이 맞는가?”</td><td>“그 방향으로 저절로 일어나는가?”</td></tr>
+</table>
+<p style="margin-top:1.5mm"><span class="f">ΔS = Q/T</span> (열을 받으면 +, 잃으면 −, T는 켈빈). 고온 T₁ → 저온 T₂로 열 Q가 이동: ΔS(전체) = Q/T₂ − Q/T₁ &gt; 0.<br>
+<b>“전체 엔트로피는 감소하지 않는다”</b> = 고립계 전체를 합하면 ΔS ≥ 0 (가역이면 0, 비가역이면 +). 한 물체의 엔트로피는 줄 수도 있지만(열을 잃은 쪽), <b>합치면</b> 줄지 않음. 비가역 예: 열전도, 확산, 마찰, 자유 팽창.</p>
+</div>
+
+<div class="part"><h2>① 핵심 정리 — 단진동 · 파동</h2>
+<h3>6. 단진동 (용수철 진자)</h3>
+<p><span class="f">F = −kx</span> (복원력: 변위에 비례, 방향은 반대) &nbsp; <span class="f">T = 2π√(m/k)</span> (<b>진폭과 무관</b>) &nbsp; 단진자 <span class="f">T = 2π√(l/g)</span> &nbsp; <span class="f">T = 1/f</span></p>
+<table>
+<tr><th>위치</th><th>변위</th><th>속력</th><th>가속도·복원력</th><th>운동 E</th><th>탄성 퍼텐셜 E</th></tr>
+<tr><td>평형점 (x = 0)</td><td>0</td><td><b>최대</b></td><td>0</td><td>최대 = E</td><td>0</td></tr>
+<tr><td>양 끝 (x = ±A)</td><td>최대 A</td><td>0</td><td><b>최대</b> (평형점 쪽)</td><td>0</td><td>최대 = E</td></tr>
+</table>
+<div class="fig" style="margin-top:2mm">
+<svg width="210" height="130" viewBox="0 0 210 130" font-family="Noto Sans KR" font-size="10">
+ <line x1="25" y1="110" x2="200" y2="110" stroke="#111"/><line x1="25" y1="110" x2="25" y2="8" stroke="#111"/>
+ <text x="190" y="124">x</text><text x="5" y="14">F</text>
+ <polygon points="25,110 165,110 165,25" fill="#ddd" stroke="#111"/><line x1="25" y1="110" x2="175" y2="18" stroke="#111" stroke-width="2"/>
+ <text x="160" y="124">A</text><text x="168" y="30">kA</text><text x="80" y="98">넓이 = ½ × A × kA</text><text x="30" y="20">F = kx (당기는 힘)</text>
+</svg>
+<div style="flex:1;min-width:80mm">
+<div class="warn" style="margin:0"><b class="t">헷갈렸던 것 ⑤ — 왜 E = ½kA²?</b><br>
+용수철을 A만큼 늘리는 데 드는 힘은 0에서 kA까지 <b>일정하게 커짐</b>. 일 = F–x 그래프 아래 넓이 = 삼각형 = ½ × A × kA = <b>½kA²</b>. 이 일이 탄성 퍼텐셜 에너지로 저장돼요.<br>
+역학적 에너지 보존: <b>½mv² + ½kx² = ½kA² = ½mv<sub>max</sub>²</b> (어느 위치에서나 합이 같다)</div></div></div>
+
+<h3>7. 파동의 기본</h3>
+<p><span class="f">v = fλ = λ/T</span> &nbsp; 파동이 전달하는 것은 <b>에너지</b> (매질은 제자리에서 진동만). 다른 매질로 들어가도 <b>진동수 f는 그대로</b>, 속력과 파장이 바뀜.</p>
+<div class="fig">
+<svg width="330" height="125" viewBox="0 0 330 125" font-family="Noto Sans KR" font-size="10">
+ <text x="0" y="12" font-weight="700">횡파: 진동 ⊥ 진행</text>
+ <line x1="10" y1="50" x2="320" y2="50" stroke="#999" stroke-dasharray="3 3"/>
+ <path d="M10 50 C 30 22, 50 22, 70 50 S 110 78, 130 50 S 170 22, 190 50 S 230 78, 250 50 S 290 22, 310 50" fill="none" stroke="#111" stroke-width="2"/>
+ <line x1="40" y1="26" x2="160" y2="26" stroke="#111" marker-end="url(#a)" marker-start="url(#a)"/><text x="180" y="12">마루 ↔ 마루 = λ</text>
+ <text x="0" y="82" font-weight="700">종파: 진동 ∥ 진행 (소리)</text>
+ <g stroke="#111">
+  <line x1="12" y1="92" x2="12" y2="118"/><line x1="16" y1="92" x2="16" y2="118"/><line x1="20" y1="92" x2="20" y2="118"/><line x1="24" y1="92" x2="24" y2="118"/>
+  <line x1="40" y1="92" x2="40" y2="118"/><line x1="58" y1="92" x2="58" y2="118"/><line x1="76" y1="92" x2="76" y2="118"/>
+  <line x1="92" y1="92" x2="92" y2="118"/><line x1="96" y1="92" x2="96" y2="118"/><line x1="100" y1="92" x2="100" y2="118"/><line x1="104" y1="92" x2="104" y2="118"/>
+  <line x1="120" y1="92" x2="120" y2="118"/><line x1="138" y1="92" x2="138" y2="118"/><line x1="156" y1="92" x2="156" y2="118"/>
+  <line x1="172" y1="92" x2="172" y2="118"/><line x1="176" y1="92" x2="176" y2="118"/><line x1="180" y1="92" x2="180" y2="118"/><line x1="184" y1="92" x2="184" y2="118"/>
+ </g>
+ <text x="200" y="102">밀 ↔ 밀 = λ</text><text x="200" y="116">밀 ↔ 바로 옆 소 = λ/2</text>
+ <defs><marker id="a" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L6 3 L0 6z"/></marker></defs>
+</svg>
+<div style="flex:1;min-width:60mm">
+<div class="warn" style="margin:0"><b class="t">헷갈렸던 것 ⑥ — 파장 세기</b><br>
+횡파: 마루–마루, 골–골, 또는 <b>같은 상태</b>인 이웃 두 점 사이. 마루–골은 λ/2.<br>
+종파: 밀–밀, 소–소. 밀–소는 λ/2.<br>
+그래프 가로축이 <b>위치(x)</b>면 반복 간격 = λ, <b>시간(t)</b>이면 반복 간격 = <b>주기 T</b>.</div></div></div>
+
+<table style="margin-top:2mm">
+<tr><th style="width:18%"></th><th>탄성파 (역학적 파동)</th><th>전자기파</th></tr>
+<tr><td>매질</td><td><b>매질이 꼭 필요</b> → 진공에서 전달 ✗</td><td>매질 필요 없음 → <b>진공에서도 전달</b></td></tr>
+<tr><td>예</td><td>소리, 초음파, 지진파(P·S), 물결파, 줄의 파동</td><td>빛(가시광선), 전파, 마이크로파, 적외선, 자외선, X선, 감마선</td></tr>
+<tr><td>구별법</td><td colspan="2">“우주(진공)에서 전달되나?” → 되면 전자기파. 소리·초음파·지진파는 탄성파. 지진파 <b>P파 = 종파</b>(고체·액체·기체 통과), <b>S파 = 횡파</b>(고체만).</td></tr>
+</table>
+<p style="margin-top:1mm">소리 속력: 고체 &gt; 액체 &gt; 기체, 공기는 온도가 높을수록 빠름(약 340 m/s). 반사: <b>고정단</b>은 위상 반전(마루 → 골), <b>자유단</b>은 그대로.</p>
+
+<h3>8. 소리의 간섭 (같은 위상의 두 음원)</h3>
+<p><span class="f">경로차 = |S₁P − S₂P|</span> → <b>반 파장(λ/2)이 몇 개?</b> &nbsp; 짝수 개(0, λ, 2λ…) → <b>보강</b> &nbsp; 홀수 개(λ/2, 3λ/2…) → <b>상쇄</b><br>
+<small>주의: “λ의 1배니까 홀수”라고 세면 틀림. 반드시 λ/2 단위로 세기. 두 음원이 <b>반대 위상</b>이면 보강·상쇄가 서로 바뀜.</small></p>
+
+<h3>9. 정상파</h3>
+<div class="fig">
+<svg width="270" height="150" viewBox="0 0 270 150" font-family="Noto Sans KR" font-size="10">
+ <text x="0" y="12" font-weight="700">줄 (양끝 고정) / 양쪽 열린 관</text>
+ <line x1="10" y1="40" x2="130" y2="40" stroke="#999"/>
+ <path d="M10 40 Q 70 10 130 40" fill="none" stroke="#111" stroke-width="2"/><path d="M10 40 Q 70 70 130 40" fill="none" stroke="#111" stroke-dasharray="4 3"/>
+ <text x="140" y="36">기본: L = λ/2</text><text x="140" y="50">λₙ = 2L/n, fₙ = nv/2L</text>
+ <text x="140" y="64">n = 1, 2, 3 … 모두</text>
+ <text x="0" y="92" font-weight="700">한쪽 닫힌 관 (닫힌 쪽 마디, 열린 쪽 배)</text>
+ <rect x="10" y="102" width="120" height="36" fill="none" stroke="#111"/><line x1="10" y1="100" x2="10" y2="140" stroke="#111" stroke-width="4"/>
+ <path d="M10 120 Q 80 105 130 104" fill="none" stroke="#111" stroke-width="2"/><path d="M10 120 Q 80 135 130 136" fill="none" stroke="#111" stroke-dasharray="4 3"/>
+ <text x="140" y="112">기본: L = λ/4</text><text x="140" y="126">λₙ = 4L/n, fₙ = nv/4L</text><text x="140" y="140"><tspan font-weight="700">n = 1, 3, 5 … 홀수만</tspan></text>
+</svg>
+<div style="flex:1;min-width:70mm">
+<p style="margin:0">마디–마디 = 배–배 = <b>λ/2</b>, 마디–옆 배 = λ/4. 마디는 전혀 안 움직임.<br>
+<b>공명 실험</b>(한쪽 닫힌 관, 수면을 내림): 공명 위치 L₁ = λ/4, L₂ = 3λ/4 → <span class="f">λ = 2(L₂ − L₁)</span>, v = fλ.</p>
+<div class="warn"><b class="t">헷갈렸던 것 ⑦ — 정상파의 시간 (주기 T)</b><br>
+정상파를 만든 진행파의 주기 = T. 배가 가장 크게 휜 모양(t = 0) → <b>T/4 뒤 줄 전체가 평평</b>(변위 0, 속력 최대) → <b>T/2 뒤 반대쪽으로 최대</b> → 3T/4 다시 평평 → T 처음 모양.<br>
+평평한 순간은 T/2마다, 최대로 휜 순간도 T/2마다 와요.</div></div></div>
+</div>
+
+<!-- ───────── 공식 빈칸 ───────── -->
+<div class="part"><h2>② 공식 빈칸 테스트 (앞 장을 덮고)</h2>
+<table>
+<tr><th style="width:5%">#</th><th>빈칸 채우기</th><th style="width:5%">#</th><th>빈칸 채우기</th></tr>
+<tr><td>1</td><td>제1법칙: Q = <span class="blank"></span> + <span class="blank"></span></td><td>13</td><td>용수철 진자 주기 T = <span class="blank"></span></td></tr>
+<tr><td>2</td><td>압력 일정할 때 일 W = <span class="blank"></span></td><td>14</td><td>단진자 주기 T = <span class="blank"></span></td></tr>
+<tr><td>3</td><td>P–V 그래프 아래 넓이 = <span class="blank"></span></td><td>15</td><td>단진동 역학적 에너지 E = <span class="blank"></span></td></tr>
+<tr><td>4</td><td>등적: W = <span class="blank"></span>, 그래서 Q = <span class="blank"></span></td><td>16</td><td>평형점에서 최대인 것: <span class="blank"></span>, 양 끝에서 최대인 것: <span class="blank"></span></td></tr>
+<tr><td>5</td><td>등온: ΔU = <span class="blank"></span>, 그래서 Q = <span class="blank"></span></td><td>17</td><td>파동 속력 v = <span class="blank"></span> = <span class="blank"></span></td></tr>
+<tr><td>6</td><td>단열: Q = <span class="blank"></span>, 그래서 ΔU = <span class="blank"></span></td><td>18</td><td>매질이 바뀌어도 변하지 않는 것: <span class="blank"></span></td></tr>
+<tr><td>7</td><td>순환 과정 한 바퀴: ΔU = <span class="blank"></span></td><td>19</td><td>진공에서 전달되는 파동: <span class="blank"></span></td></tr>
+<tr><td>8</td><td>열기관: Q₁ = <span class="blank"></span> + <span class="blank"></span></td><td>20</td><td>보강 간섭: 경로차 = (λ/2) × <span class="blank"></span></td></tr>
+<tr><td>9</td><td>열효율 e = <span class="blank"></span> = 1 − <span class="blank"></span></td><td>21</td><td>줄(양끝 고정) λₙ = <span class="blank"></span>, n = <span class="blank"></span></td></tr>
+<tr><td>10</td><td>카르노 효율 e = <span class="blank"></span> (온도 단위 <span class="blank"></span>)</td><td>22</td><td>한쪽 닫힌 관 λₙ = <span class="blank"></span>, n = <span class="blank"></span></td></tr>
+<tr><td>11</td><td>엔트로피 변화 ΔS = <span class="blank"></span></td><td>23</td><td>공명 실험 λ = <span class="blank"></span></td></tr>
+<tr><td>12</td><td>제2법칙이 말하는 것 2가지: <span class="blank"></span>, <span class="blank"></span></td><td>24</td><td>정상파: 처음으로 평평해지는 시각 = <span class="blank"></span></td></tr>
+</table>
+
+
+<!-- ───────── 연습 문제 ───────── -->
+<h2 style="margin-top:4mm">③ 연습 문제</h2>
+<h3>A. 열역학 제1법칙 · 과정</h3>
+<div class="two">
+<div class="q"><span class="n">1.</span> 기체가 열 600 J을 흡수하고 외부에 200 J의 일을 했다. 내부 에너지 변화량은?</div>
+<div class="q"><span class="n">2.</span> 압력 2×10⁵ Pa로 일정하게 부피가 0.02 m³ → 0.05 m³로 늘었다. (1) 기체가 한 일은? (2) 이때 흡수한 열이 1.5×10⁴ J이면 ΔU는?</div>
+<div class="q"><span class="n">3.</span> 온도를 일정하게 유지하며 기체를 압축했더니 외부에서 300 J의 일을 받았다. 기체는 열을 흡수했나 방출했나? 그 양은?</div>
+<div class="q"><span class="n">4.</span> 단열 상태에서 기체가 팽창하며 외부에 500 J의 일을 했다. ΔU와 온도 변화는?</div>
+<div class="q"><span class="n">5.</span> 부피가 고정된 용기의 기체에 열 800 J을 주었다. W와 ΔU는?</div>
+<div class="q"><span class="n">6.</span> 같은 기체에 <b>같은 양의 열 Q</b>를 (가) 부피 일정, (나) 압력 일정 조건에서 주었다. 온도가 더 많이 오르는 것은? 이유는?</div>
+<div class="q"><span class="n">7.</span> ○/×: (1) 순환 과정을 한 바퀴 돌면 ΔU = 0이다. (2) 순환 과정 동안 내부 에너지는 한 번도 변하지 않는다. (3) 단열 압축하면 기체의 온도가 올라간다. (4) 등온 팽창에서 기체가 받은 열은 모두 일로 쓰인다.</div>
+<div class="q"><span class="n">8.</span> 자전거 바퀴에 펌프로 빠르게 공기를 넣으면 펌프가 뜨거워진다. 어떤 과정이고 왜 온도가 오르나?</div>
+</div>
+<div class="q" style="display:flex;gap:5mm;align-items:flex-start"><svg width="210" height="150" viewBox="0 0 210 150" font-family="Noto Sans KR" font-size="10" style="flex:none">
+ <line x1="30" y1="125" x2="200" y2="125" stroke="#111"/><line x1="30" y1="125" x2="30" y2="10" stroke="#111"/>
+ <text x="150" y="142">V (×10⁻³ m³)</text><text x="0" y="12">P (×10⁵ Pa)</text>
+ <text x="60" y="138">1</text><text x="160" y="138">3</text><text x="18" y="38">2</text><text x="18" y="88">1</text>
+ <polygon points="63,35 163,35 163,85 63,85" fill="none" stroke="#111" stroke-width="2"/>
+ <text x="52" y="30">A</text><text x="166" y="30">B</text><text x="166" y="98">C</text><text x="52" y="98">D</text>
+ <text x="108" y="30">→</text><text x="168" y="62">↓</text><text x="108" y="98">←</text><text x="52" y="62">↑</text>
+</svg><div><span class="n">9.</span> 기체가 그림처럼 A→B→C→D→A로 순환한다.<br>(1) 각 구간에서 열을 흡수하는지 방출하는지 쓰시오. A→B ____ B→C ____ C→D ____ D→A ____<br>(2) 한 바퀴 동안 기체가 한 일(순)은?<br>(3) 한 바퀴 동안 내부 에너지 변화는?<br>(4) 온도가 가장 높은 점과 가장 낮은 점은?</div></div>
+
+<h3>B. 열기관 · 제2법칙 · 엔트로피</h3>
+<div class="two">
+<div class="q"><span class="n">10.</span> 열기관이 고열원에서 1000 J을 받아 저열원으로 700 J을 버렸다. 한 일과 열효율은?</div>
+<div class="q"><span class="n">11.</span> 고열원 500 K, 저열원 300 K인 카르노 기관의 열효율은? 고열원에서 2000 J을 받으면 한 일과 버린 열은?</div>
+<div class="q"><span class="n">12.</span> 고열원 127 °C, 저열원 27 °C 사이에서 작동하는 카르노 기관의 열효율은?</div>
+<div class="q"><span class="n">13.</span> 이상적인 열기관이 한 번 순환할 때 고열원에서 800 J을 흡수하고 200 J의 일을 했다. 저열원으로 방출한 열은? 열효율은?</div>
+<div class="q"><span class="n">14.</span> ○/×: (1) 열효율이 1인 열기관은 제1법칙에 어긋나서 불가능하다. (2) 열은 저절로 저온에서 고온으로 이동할 수 없다. (3) 카르노 기관도 저열원으로 열을 방출한다. (4) 고립계 전체의 엔트로피는 감소하지 않는다.</div>
+<div class="q"><span class="n">15.</span> 400 K 물체에서 300 K 물체로 열 1200 J이 이동했다. 각 물체의 엔트로피 변화와 전체 엔트로피 변화는?</div>
+<div class="q"><span class="n">16.</span> 27 °C의 물이 온도 변화 없이 열 600 J을 흡수했다. 엔트로피 변화는?</div>
+<div class="q"><span class="n">17.</span> 다음 중 비가역 현상을 모두 고르면? ㄱ. 잉크가 물에 퍼짐 ㄴ. 뜨거운 커피가 식음 ㄷ. 마찰로 바닥이 뜨거워짐 ㄹ. 진공으로 기체가 자유 팽창</div>
+</div>
+
+<h3>C. 단진동</h3>
+<div class="two">
+<div class="q"><span class="n">18.</span> 질량 2 kg, 용수철 상수 50 N/m인 용수철 진자의 주기는? 진폭을 2배로 하면 주기는?</div>
+<div class="q"><span class="n">19.</span> 용수철 상수 100 N/m, 진폭 0.2 m로 단진동한다. (1) 역학적 에너지는? (2) 물체 질량이 1 kg이면 최대 속력은?</div>
+<div class="q"><span class="n">20.</span> 진폭 A로 단진동하는 물체가 x = A/2인 곳을 지날 때 운동 에너지 : 탄성 퍼텐셜 에너지는?</div>
+<div class="q"><span class="n">21.</span> ○/×: (1) 평형점에서 가속도가 최대다. (2) 양 끝에서 속력은 0이다. (3) 복원력은 변위에 비례하고 방향은 반대다. (4) 질량을 4배로 하면 주기는 2배가 된다.</div>
+<div class="q"><span class="n">22.</span> 단진자의 길이를 4배로 하면 주기는 몇 배? 질량을 2배로 하면?</div>
+</div>
+
+<h3>D. 파동 · 간섭</h3>
+<div class="two">
+<div class="q"><span class="n">23.</span> 진동수 500 Hz, 파장 0.68 m인 소리의 속력과 주기는?</div>
+<div class="q"><span class="n">24.</span> 물결파에서 이웃한 마루 사이 거리가 0.4 m이고, 한 점이 1초에 5번 진동한다. 파장, 진동수, 속력은?</div>
+<div class="q"><span class="n">25.</span> 종파에서 밀한 곳과 바로 옆 소한 곳 사이 거리가 0.5 m이다. 파장은?</div>
+<div class="q"><span class="n">26.</span> 다음을 탄성파/전자기파로 나누고, 진공에서 전달되는 것을 고르시오: 초음파, X선, 지진파, 전파, 소리, 가시광선</div>
+<div class="q"><span class="n">27.</span> 지진파 P파와 S파는 각각 횡파인가 종파인가? 액체로 된 외핵을 통과하지 못하는 것은?</div>
+<div class="q"><span class="n">28.</span> 소리가 공기에서 물로 들어갈 때 변하지 않는 것은? 속력은 빨라지나 느려지나?</div>
+<div class="q"><span class="n">29.</span> 같은 위상의 두 스피커에서 파장 2 m인 소리가 난다. 경로차가 (1) 3 m (2) 4 m (3) 1 m인 지점은 각각 보강인가 상쇄인가?</div>
+</div>
+
+<h3>E. 정상파 · 공명</h3>
+<div class="two">
+<div class="q"><span class="n">30.</span> 길이 0.6 m의 양끝이 고정된 줄에서 파동 속력이 240 m/s이다. (1) 기본 진동의 파장과 진동수는? (2) 3배 진동의 진동수, 배와 마디의 개수(양끝 포함)는?</div>
+<div class="q"><span class="n">31.</span> 길이 0.85 m인 한쪽 닫힌 관(음속 340 m/s)의 기본 진동수는? 그다음으로 높은 공명 진동수는?</div>
+<div class="q"><span class="n">32.</span> 500 Hz 소리굽쇠로 공명 실험을 했더니 수면을 내릴 때 17 cm, 51 cm에서 공명했다. 파장과 음속은?</div>
+<div class="q"><span class="n">33.</span> t = 0일 때 정상파가 가장 크게 휘어 있다. 주기가 T일 때 (1) 처음으로 줄 전체가 평평해지는 시각 (2) 처음 모양과 반대로 가장 크게 휘는 시각은?</div>
+</div>
+</div>
+
+<!-- ───────── 정답 ───────── -->
+<div class="part ans"><h2>④ 정답 및 풀이</h2>
+<h3>② 공식 빈칸 정답</h3><p>1 ΔU, W · 2 PΔV · 3 기체가 한 일 · 4 0, ΔU · 5 0, W · 6 0, −W · 7 0 · 8 W, Q₂ · 9 W/Q₁, Q₂/Q₁ · 10 1 − T₂/T₁, K · 11 Q/T · 12 열은 저절로 고온→저온, 효율 1 불가능(엔트로피 증가) · 13 2π√(m/k) · 14 2π√(l/g) · 15 ½kA² · 16 속력, 가속도(복원력) · 17 fλ, λ/T · 18 진동수 · 19 전자기파 · 20 짝수 · 21 2L/n, 1,2,3… · 22 4L/n, 1,3,5… · 23 2(L₂−L₁) · 24 T/4</p>
+<h3>A. 열역학 제1법칙 · 과정</h3>
+<p><b>1.</b> ΔU = Q − W = 600 − 200 = <b>400 J</b> (증가)</p>
+<p><b>2.</b> (1) W = PΔV = 2×10⁵ × 0.03 = <b>6×10³ J</b> (2) ΔU = Q − W = 1.5×10⁴ − 0.6×10⁴ = <b>9×10³ J</b> (지수 맞추고 빼기)</p>
+<p><b>3.</b> 등온 → ΔU = 0 → Q = W = −300 J → <b>300 J 방출</b>. 받은 일만큼 열로 내보냄.</p>
+<p><b>4.</b> 단열 Q = 0 → ΔU = −W = <b>−500 J</b> → 온도 <b>하강</b>.</p>
+<p><b>5.</b> 등적 → <b>W = 0</b>, ΔU = Q = <b>800 J</b>.</p>
+<p><b>6.</b> <b>(가) 부피 일정</b>. 등적은 Q가 전부 ΔU, 등압은 일부가 일 W로 빠져나가 ΔU가 작다. ΔU ∝ ΔT.</p>
+<p><b>7.</b> (1) ○ (2) × — 도중에는 변하고 처음과 끝이 같을 뿐 (3) ○ — Q = 0, W &lt; 0 → ΔU &gt; 0 (4) ○ — ΔU = 0이라 Q = W</p>
+<p><b>8.</b> <b>단열 압축</b>. 빨라서 열이 드나들 시간이 없음(Q = 0). 압축이라 W &lt; 0 → ΔU = −W &gt; 0 → 온도 상승.</p>
+<p><b>9.</b> (1) A→B: 오른쪽(W +), PV 2→6 증가(ΔU +) → <b>흡수</b> / B→C: W 0, PV 6→3 감소 → <b>방출</b> / C→D: 왼쪽(W −), PV 3→1 감소 → <b>방출</b> / D→A: W 0, PV 1→2 증가 → <b>흡수</b><br>
+(2) 넓이 = (2−1)×10⁵ × (3−1)×10⁻³ = <b>200 J</b> (시계 방향이라 +) (3) <b>0</b> (4) PV가 가장 큰 <b>B</b>가 최고 온도, 가장 작은 <b>D</b>가 최저 온도</p>
+<h3>B. 열기관 · 제2법칙 · 엔트로피</h3>
+<p><b>10.</b> W = Q₁ − Q₂ = <b>300 J</b>, e = 300/1000 = <b>0.3</b></p>
+<p><b>11.</b> e = 1 − 300/500 = <b>0.4</b>, W = 0.4 × 2000 = <b>800 J</b>, Q₂ = 2000 − 800 = <b>1200 J</b></p>
+<p><b>12.</b> 켈빈으로: 400 K, 300 K → e = 1 − 300/400 = <b>0.25</b> (°C 그대로 넣어 1 − 27/127로 계산하면 틀림!)</p>
+<p><b>13.</b> Q₂ = Q₁ − W = 800 − 200 = <b>600 J</b>, e = 200/800 = <b>0.25</b></p>
+<p><b>14.</b> (1) × — 에너지 보존(1법칙)에는 안 어긋남. 불가능한 이유는 <b>2법칙</b> (2) ○ (3) ○ (4) ○</p>
+<p><b>15.</b> 400 K 물체: −1200/400 = <b>−3 J/K</b>, 300 K 물체: +1200/300 = <b>+4 J/K</b>, 전체 <b>+1 J/K</b> (증가 → 저절로 일어나는 방향)</p>
+<p><b>16.</b> T = 300 K, ΔS = 600/300 = <b>+2 J/K</b></p>
+<p><b>17.</b> <b>ㄱ, ㄴ, ㄷ, ㄹ 모두</b> (확산, 열전도, 마찰, 자유 팽창 — 저절로 되돌아가지 않음)</p>
+<h3>C. 단진동</h3>
+<p><b>18.</b> T = 2π√(2/50) = 2π × (1/5) = <b>0.4π s</b>. 진폭과 무관 → <b>그대로</b></p>
+<p><b>19.</b> (1) E = ½ × 100 × 0.2² = ½ × 100 × 0.04 = <b>2 J</b> (2) ½ × 1 × v² = 2 → v² = 4 → <b>2 m/s</b></p>
+<p><b>20.</b> 퍼텐셜 = ½k(A/2)² = ¼ × ½kA² = E/4 → 운동 = 3E/4 → <b>3 : 1</b></p>
+<p><b>21.</b> (1) × — 평형점은 가속도 0, 속력 최대 (2) ○ (3) ○ (4) ○ — √4 = 2</p>
+<p><b>22.</b> T ∝ √l → √4 = <b>2배</b>. 단진자 주기에는 질량이 없음 → <b>그대로</b></p>
+<h3>D. 파동 · 간섭</h3>
+<p><b>23.</b> v = fλ = 500 × 0.68 = <b>340 m/s</b>, T = 1/500 = <b>2×10⁻³ s</b></p>
+<p><b>24.</b> λ = <b>0.4 m</b>, f = <b>5 Hz</b>, v = 5 × 0.4 = <b>2 m/s</b></p>
+<p><b>25.</b> 밀–소 = λ/2 → λ = <b>1 m</b></p>
+<p><b>26.</b> 탄성파: 초음파, 지진파, 소리 / 전자기파: X선, 전파, 가시광선 → 진공에서 전달: <b>X선, 전파, 가시광선</b></p>
+<p><b>27.</b> <b>P파 = 종파, S파 = 횡파</b>. 액체를 통과 못 하는 것은 <b>S파</b>.</p>
+<p><b>28.</b> <b>진동수</b>는 그대로. 소리는 기체보다 액체에서 빠르므로 <b>빨라짐</b>(파장도 길어짐).</p>
+<p><b>29.</b> λ/2 = 1 m 단위로 세기. (1) 3개 홀수 → <b>상쇄</b> (2) 4개 짝수 → <b>보강</b> (3) 1개 홀수 → <b>상쇄</b></p>
+<h3>E. 정상파 · 공명</h3>
+<p><b>30.</b> (1) λ₁ = 2L = <b>1.2 m</b>, f₁ = 240/1.2 = <b>200 Hz</b> (2) f₃ = 3 × 200 = <b>600 Hz</b>, 배 <b>3개</b>, 마디 <b>4개</b>(양끝 포함)</p>
+<p><b>31.</b> λ₁ = 4L = 3.4 m, f₁ = 340/3.4 = <b>100 Hz</b>. 홀수 배만 → 다음은 <b>300 Hz</b> (200 Hz는 없음!)</p>
+<p><b>32.</b> λ = 2(L₂ − L₁) = 2 × 0.34 = <b>0.68 m</b>, v = 500 × 0.68 = <b>340 m/s</b></p>
+<p><b>33.</b> (1) <b>T/4</b> (2) <b>T/2</b></p>
+<div class="box" style="margin-top:3mm"><b>채점 후 할 일</b>: 틀린 번호 옆에 어느 박스 때문인지 적기 (예: 9번 → 헷갈렸던 것 ①). 그 박스만 다시 읽고, ② 공식 빈칸 테스트를 한 번 더 채워 보기.</div>
+</div>
+</body></html>
