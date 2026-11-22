@@ -9,7 +9,7 @@ let SV; try { SV = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { SV
 SV.stars = SV.stars || {}; SV.xp = SV.xp || 0; SV.split = SV.split ?? true; SV.sceneVoice = SV.sceneVoice ?? true;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SV)); } catch (e) { } };
 /* 지문 서랍: 지문 하나 = 한 판. 새 지문은 window.PASSAGES에 같은 모양으로 넣으면 된다 (quest·장면은 없어도 됨) */
-const LIB = [Object.assign(window.EN, { id: 'same', quest: window.QUEST, scenes: true, mark: ['The Same', 'The Same'] })].concat(window.PASSAGES || []);
+const LIB = (window.PASSAGES || []).concat([Object.assign(window.EN, { id: 'same', quest: window.QUEST, scenes: true, mark: ['The Same', 'The Same'] })]);
 let CUR = LIB[0], P = CUR.paras, PI = {};
 function use(ps) { CUR = ps; window.EN = ps; window.QUEST = ps.quest || {}; P = ps.paras; PI = Object.fromEntries(P.map((p, i) => [p.id, i])); SV.cur = ps.id; save(); }
 use(LIB.find(x => x.id === SV.cur) || LIB[0]);
@@ -51,7 +51,7 @@ function lookup(w) {
 function wrapWords(html) { return html.split(/(<[^>]+>)/).map(p => p.startsWith('<') ? p : p.replace(/[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*/g, m => `<span class="w">${m}</span>`)).join(''); }
 let tip;
 function showTip(el) {
-  if (tip) tip.remove(); const m = lookup(el.textContent); tip = h('div', 'tip', `<b>${el.textContent}</b> ${m || '<span class="dim">기본 단어</span>'}`); document.body.appendChild(tip);
+  if (tip) tip.remove(); let m = lookup(el.textContent); if (!m) { const ck = el.closest('.ck'), se = el.closest('.sent'); if (ck && se && se._it) { const k = se._it.s[1].split(' | ')[+ck.dataset.i]; m = `<span class="dim">이 조각 뜻:</span> ${k}`; } } tip = h('div', 'tip', `<b>${el.textContent}</b> ${m || '<span class="dim">기본 단어</span>'}`); document.body.appendChild(tip);
   const r = el.getBoundingClientRect(); const tw = tip.offsetWidth; tip.style.left = Math.max(8, Math.min(innerWidth - tw - 8, r.left + r.width / 2 - tw / 2)) + 'px'; tip.style.top = (r.top > 70 ? r.top - tip.offsetHeight - 8 : r.bottom + 8) + 'px'; Snd.play('tick');
   SV.looked = (SV.looked || 0) + 1; clearTimeout(showTip.t); showTip.t = setTimeout(() => tip && tip.remove(), 3200);
 }
