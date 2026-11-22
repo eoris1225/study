@@ -162,7 +162,7 @@ const EScene = (() => {
     cv.onclick = () => setP(!paused);
     const key = e => { if (e.code === 'Space') { e.preventDefault(); setP(!paused); } if (e.code === 'ArrowRight') go(i + 1); if (e.code === 'ArrowLeft') go(i - 1); }; addEventListener('keydown', key);
     const frame = now => { if (!alive) return; const s = shots[i], t = Math.max(0, ((paused ? pAt : now) - t0) / 1000);
-      const sc = Math.max(cv.width / VW, cv.height / VH), ox = (cv.width - VW * sc) / 2, oy = (cv.height - VH * sc) / 2; x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = s.bg[1]; x.fillRect(0, 0, cv.width, cv.height); x.setTransform(sc, 0, 0, sc, ox, oy); x.lineCap = 'round'; x.lineJoin = 'round';
+      const band = Math.min(cv.height * .2, cv.width * .12), ah = cv.height - band, sc = Math.max(cv.width / VW, ah / VH), ox = (cv.width - VW * sc) / 2, oy = Math.min(0, ah - 660 * sc); x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = s.bg[1]; x.fillRect(0, 0, cv.width, cv.height); x.setTransform(sc, 0, 0, sc, ox, oy); x.lineCap = 'round'; x.lineJoin = 'round';
       try { s.draw(x, t); } catch (err) { }
       let cur = null; for (const L of s.lines) if (t >= L[0]) cur = L; const k = cur ? cur[0] + cur[1] : ''; if (k !== shown) { shown = k; ko.innerHTML = cur ? cur[1] : ''; en.textContent = cur && cur[2] ? cur[2] : ''; ov.classList.remove('subin'); void ov.offsetWidth; ov.classList.add('subin'); if (cur) Snd.play('tick'); if (cur && cur[2] && typeof Reader !== 'undefined') Reader.line(cur[2]); }
       if (!paused && t > s.dur + 1) go(i + 1); raf = requestAnimationFrame(frame); };
