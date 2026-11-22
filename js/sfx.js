@@ -99,14 +99,46 @@ const Sfx = (() => {
     if (m.heart && (pos === 0 || pos === 1)) O({ f: 58, f1: 40, d: .18, v: pos ? .12 : .18, music: 1, when: t + (pos ? .05 : 0) });
     if (Math.random() < m.arp * (tired ? .45 : 1)) { const n = R + 24 + m.sc[Math.floor(Math.random() * m.sc.length)] + (Math.random() < .25 ? 12 : 0); O({ f: NOTE(n + (m.box ? 12 : 0)), d: m.piano ? 1.4 : m.box ? .3 : m.bell ? .9 : .4, type: m.bell || m.box ? 'sine' : 'triangle', v: m.box ? .03 : .028, rv: .45, music: 1, when: t }); }
   }
+  /* ── 스타일 음악: 팝 / 발라드 / 로파이. 16마디마다 코드 진행·조성이 바뀌고, 멜로디는 2마디 모티프를 변주한다 ── */
+  let sty = null, sStep = 0, sNext = 0, sec = { prog: null, key: 0, motif: [] };
+  const CH = { I: [0, 4, 7, 11], ii: [2, 5, 9, 12], iii: [4, 7, 11, 14], IV: [5, 9, 12, 16], V: [7, 11, 14, 17], vi: [9, 12, 16, 19], V7vi: [4, 8, 11, 14], I3: [4, 7, 12, 16], I5: [7, 12, 16, 19], IVm: [5, 8, 12, 15], bVII: [10, 14, 17, 21] };
+  const ST = {
+    pop: { bpm: 112, root: 60, progs: [['I', 'V', 'vi', 'IV'], ['IV', 'V', 'iii', 'vi'], ['vi', 'IV', 'I', 'V'], ['I', 'iii', 'IV', 'V'], ['IV', 'V', 'I', 'vi']], drums: 1, lead: 'square', lv: .028, sc: [0, 2, 4, 7, 9] },
+    ballad: { bpm: 74, root: 58, progs: [['I', 'V7vi', 'vi', 'I5'], ['IV', 'I3', 'ii', 'V'], ['I', 'V', 'vi', 'iii'], ['IV', 'I', 'IV', 'V'], ['vi', 'IV', 'I', 'V'], ['IV', 'IVm', 'I', 'V']], piano: 1, lead: 'triangle', lv: .045, sc: [0, 2, 4, 7, 9, 11] },
+    lofi: { bpm: 82, root: 57, progs: [['ii', 'V', 'I', 'vi'], ['IV', 'iii', 'ii', 'I'], ['I', 'vi', 'ii', 'V'], ['IV', 'bVII', 'I', 'I']], drums: 2, lead: 'sine', lv: .05, sc: [0, 2, 4, 7, 9, 11], swing: 1 }
+  };
+  function newSection(S) { sec.prog = S.progs[Math.floor(Math.random() * S.progs.length)]; sec.key = [0, 0, 2, -3, 5, -2][Math.floor(Math.random() * 6)]; const m = []; for (let i = 0; i < 16; i++) m.push(Math.random() < (i % 4 === 0 ? .85 : .45) ? Math.floor(Math.random() * S.sc.length) : -1); sec.motif = m; sec.var = 0; }
+  function styleBeat(t) {
+    const S = ST[sty]; if (!S) return; const e16 = 60 / S.bpm / 4, pos = sStep % 16, bar = Math.floor(sStep / 16);
+    if (sStep % (16 * 16) === 0) newSection(S); if (pos === 0 && bar % 4 === 2) { sec.var = (sec.var + 1) % 3; }
+    const R = S.root + sec.key, ch = CH[sec.prog[bar % 4]], sw = S.swing && pos % 2 ? e16 * .33 : 0, T = t + sw, sec16 = bar % 16;
+    const intro = sec16 < 2, drop = sec16 >= 14;
+    /* 패드 */
+    if (pos === 0) ch.forEach((n, k) => O({ f: NOTE(R + n), d: e16 * 15, a: e16 * 3, type: S.piano ? 'sine' : 'triangle', v: S.piano ? .016 : .014, lp: 1600, rv: .35, music: 1, when: T }));
+    /* 베이스 */
+    const bassHit = S.piano ? (pos === 0 || pos === 8) : S.drums === 2 ? (pos === 0 || pos === 7 || pos === 10) : (pos === 0 || pos === 3 || pos === 8 || pos === 11 || pos === 14);
+    if (bassHit && !intro) O({ f: NOTE(R - 12 + ch[0] + (pos === 14 ? 7 : 0)), d: e16 * (S.piano ? 7 : 2.5), type: 'triangle', v: .07, lp: 420, music: 1, when: T });
+    /* 피아노 분산화음 */
+    if (S.piano) { const order = [0, 1, 2, 3, 2, 1, 2, 3, 0, 1, 2, 3, 2, 3, 1, 2]; const n = ch[order[pos]] + (pos >= 8 && sec.var ? 12 : 0); O({ f: NOTE(R + 12 + n), d: .9, type: 'triangle', v: .022, lp: 2600, rv: .3, music: 1, when: T }); }
+    /* 드럼 */
+    if (S.drums && !intro) { const kick = S.drums === 2 ? [0, 9] : [0, 6, 8]; if (kick.includes(pos) && !(drop && pos > 0)) O({ f: 110, f1: 42, d: .16, v: S.drums === 2 ? .14 : .2, music: 1, when: T });
+      if (pos === 4 || pos === 12) Nz({ d: S.drums === 2 ? .12 : .1, v: S.drums === 2 ? .035 : .06, f: 1800, type: 'bandpass', q: .7, music: 1, when: T, rv: .15 });
+      if (pos % 2 === 0 || (S.drums === 1 && sec.var === 2)) Nz({ d: .025, v: pos === 14 ? .03 : .014, f: 8000, type: 'highpass', music: 1, when: T });
+      if (S.drums === 2 && pos === 0) Nz({ d: e16 * 16, v: .006, f: 3000, type: 'bandpass', music: 1, when: T }); }
+    /* 멜로디: 2마디(32칸) 중 앞 마디는 모티프, 뒷마디는 변주 */
+    if (pos % 2 === 0 && !intro) { const i = (pos / 2 + (bar % 2) * 8) % 16; let d = sec.motif[i]; if (bar % 2 === 1 && sec.var) d = d >= 0 ? (d + sec.var) % S.sc.length : (Math.random() < .3 ? 2 : -1); if (bar % 8 === 7 && pos >= 8) d = -1;
+      if (d >= 0) { const near = ch.map(c => c % 12); let n = S.sc[d]; if (pos === 0 && !near.includes(n % 12)) n = near[1]; O({ f: NOTE(R + 12 + n + (drop ? 12 : 0)), d: e16 * (pos === 0 ? 3.5 : 1.8), a: .01, type: S.lead, v: S.lv, lp: 2400, rv: .25, vib: S.piano ? 5 : 0, music: 1, when: T }); } }
+  }
   function tick() {
+    if (sty) { if (!ac || ac.state !== 'running') return; const now = ac.currentTime; if (fadeUntil && now >= fadeUntil) { fadeUntil = 0; musBus.gain.cancelScheduledValues(now); musBus.gain.setValueAtTime(.0001, now); musBus.gain.linearRampToValueAtTime(1, now + 1.2); } if (sty === 'off') return; const e16 = 60 / ST[sty].bpm / 4; if (sNext < now) sNext = now + .05; while (sNext < now + .5) { styleBeat(sNext); sNext += e16; sStep++; } return; }
     if (!ac || ac.state !== 'running') return; const now = ac.currentTime, g = musBus.gain;
     if (fadeUntil && now >= fadeUntil) { fadeUntil = 0; g.cancelScheduledValues(now); g.setValueAtTime(.0001, now); g.linearRampToValueAtTime(musOn() ? 1 : 0, now + 1.2); }
     if (!mood || !M[mood] || !musOn()) return; const e8 = 60 / M[mood].bpm / 2; if (next < now) next = now + .05; while (next < now + .5) { beat(next); next += e8; step++; }
   }
-  function music(m) { if (m === mood) return; mood = m; step = 0; if (!ac) return; const now = ac.currentTime, g = musBus.gain; g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now + .5); next = now + .55; fadeUntil = now + .55; }
+  function music(m) { if (sty) { mood = m; return; } if (m === mood) return; mood = m; step = 0; if (!ac) return; const now = ac.currentTime, g = musBus.gain; g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now + .5); next = now + .55; fadeUntil = now + .55; }
   function refresh() { if (!ac) return; musBus.gain.cancelScheduledValues(ac.currentTime); musBus.gain.setTargetAtTime(musOn() ? 1 : 0, ac.currentTime, .2); }
   const unlock = () => { const first = !ac; ctx(); if (first && ac) fadeUntil = ac.currentTime + .05; };
   ['pointerdown', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, unlock, { passive: true, capture: true }));
-  return { play: k => { try { P[k] && P[k](); } catch (e) { } }, voice: (w, s) => { try { voice(w, s); } catch (e) { } }, music, refresh };
+  function style(n) { sty = n; sStep = 0; if (!ac) return; const now = ac.currentTime; musBus.gain.cancelScheduledValues(now); musBus.gain.setValueAtTime(musBus.gain.value, now); musBus.gain.linearRampToValueAtTime(0, now + .4); sNext = now + .45; fadeUntil = now + .45; }
+  return { play: k => { try { P[k] && P[k](); } catch (e) { } }, voice: (w, s) => { try { voice(w, s); } catch (e) { } }, music, refresh, style, styles: ['off', 'pop', 'ballad', 'lofi'] };
 })();

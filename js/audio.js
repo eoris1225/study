@@ -11,3 +11,6 @@
   const _beat = STAGES.beat; STAGES.beat = st => { const sc = _beat(st); if (sc[0]) sc[0].mood = st.beat === 'camp' ? 'camp' : st.beat === 'boss' ? 'boss' : null; return sc; };
   Sfx.music('title');
 })();
+
+/* 배경 음악 스타일 적용 (팝·발라드·로파이) */
+(() => { const _run = run; run = function () { try { Sfx.style((G.S && G.S.bgmStyle) || null); } catch (e) { } return _run.apply(this, arguments); }; })();

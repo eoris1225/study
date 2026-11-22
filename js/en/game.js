@@ -1,11 +1,13 @@
 'use strict';
 /* 영어 지문 게임: 지도 → (대화) → 애니메이션 → 독해 → 도전 → 결과 */
 const Snd = { play(k) { try { Sfx.play(k); } catch (e) { } }, music(m) { try { Sfx.music(m); } catch (e) { } } };
+const BGM = { off: '🔇 음악 끔', pop: '🎵 팝', ballad: '🎹 발라드', lofi: '☕ 로파이' };
 const $ = s => document.querySelector(s);
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const KEY = 'en_same_v1';
 let SV; try { SV = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { SV = {}; }
+SV.bgm = SV.bgm || 'off'; try { Sfx.style(SV.bgm); } catch (e) { }
 SV.stars = SV.stars || {}; SV.xp = SV.xp || 0; SV.split = SV.split ?? true; SV.sceneVoice = SV.sceneVoice ?? true;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(SV)); } catch (e) { } };
 /* ── 기억 관리: 간격 반복(라이트너 상자) + 매일 기록 ─────────
@@ -49,7 +51,7 @@ const TALK = {
 /* ── 화면 틀 ─────────────────────────────────────── */
 const app = () => $('#app');
 function screen(cls) { if (typeof Reader !== 'undefined') Reader.stop(); const a = app(); a.innerHTML = ''; a.className = cls || ''; window.scrollTo(0, 0); return a; }
-function topbar(title, back) { const b = h('div', 'top'); const l = h('button', 'ghost', back ? '◀ ' + back[0] : '🏠'); l.onclick = back ? back[1] : home; const td = SV.days[today()] || 0; b.append(l, h('div', 'ttl', title), h('div', 'xp', `<span title="연속 공부일">🔥${SRS.streak()}</span> <span class="goal" title="오늘 목표"><i style="width:${Math.min(100, td / GOAL * 100)}%"></i></span> ✦ ${SV.xp}`)); return b; }
+function topbar(title, back) { const b = h('div', 'top'); const l = h('button', 'ghost', back ? '◀ ' + back[0] : '🏠'); l.onclick = back ? back[1] : home; const td = SV.days[today()] || 0; const mb = h('button', 'ghost bgm', BGM[SV.bgm]); mb.title = '배경 음악 바꾸기'; mb.onclick = () => { const L = Object.keys(BGM); SV.bgm = L[(L.indexOf(SV.bgm) + 1) % L.length]; save(); Sfx.style(SV.bgm); mb.textContent = BGM[SV.bgm]; }; b.append(l, h('div', 'ttl', title), mb, h('div', 'xp', `<span title="연속 공부일">🔥${SRS.streak()}</span> <span class="goal" title="오늘 목표"><i style="width:${Math.min(100, td / GOAL * 100)}%"></i></span> ✦ ${SV.xp}`)); return b; }
 
 /* 대화 재생 */
 function talk(lines, done) {
