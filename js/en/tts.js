@@ -42,7 +42,7 @@ const Reader = (() => {
     });
   }
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  const clean = c => c.replace(/<[^>]+>/g, '').replace(/—/g, ',').replace(/\s+/g, ' ').trim();
+  const clean = c => c.replace(/\{\{[^|}]*\|([^}]*)\}\}/g, '$1').replace(/\[\[([^\]]*)\]\]/g, '$1').replace(/[①-⑤]/g, '').replace(/<[^>]+>/g, '').replace(/—/g, ',').replace(/\s+/g, ' ').trim();
   function mark(el, i) { document.querySelectorAll('.speaking').forEach(e => e.classList.remove('speaking')); if (!el) return; el.classList.add('speaking'); if (i != null) { const c = el.querySelectorAll('.ck')[i]; if (c) c.classList.add('speaking'); } const r = el.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight - 90) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
   /* items: [{el, s, pid, si}] */
   async function run(items, from = 0) {

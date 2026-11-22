@@ -71,7 +71,7 @@ function hub() {
   const steps = [
     ['🎬', '이야기로 보기', CUR.scenes ? '지문 전체를 애니메이션으로 (약 4분)' : '이 지문은 애니메이션 준비 중 (읽기부터 시작하세요)', () => { if (!CUR.scenes) { Snd.play('wrong'); return; } mark('scene'); playAll(); }, seen.scene],
     ['📖', '읽기', '전체 지문 · 끊어 읽기 · 단어 터치 · 낭독', () => { mark('read'); read(); }, seen.read],
-    ['⚔', '실전 도전', '지문 전체에서 섞어 15문제 · 별 3개 도전', () => challenge(), st],
+    ['⚔', CUR.exam ? '실전 풀이' : '실전 도전', CUR.exam ? `시험지 그대로 ${P.filter(p => p.q).length}문항 · 끝나면 채점` : '지문 전체에서 섞어 15문제 · 별 3개 도전', () => challenge(), st],
     ['📄', '분석 노트', '출처 · 구조 · 전문 해석 · 문법 · 단어장', () => notes(), 0]
   ];
   const g = h('div', 'steps'); steps.forEach(([ic, t, d, f, done], k) => { const b = h('button', 'step' + (done ? ' done' : ''), `<span class="ic">${ic}</span><b>${k + 1}. ${t}</b><small>${d}</small>`); b.onclick = () => { Snd.play('click'); f(); }; g.appendChild(b); }); a.appendChild(g);
@@ -79,9 +79,12 @@ function hub() {
 }
 function mark(k) { SV.seen = SV.seen || {}; (SV.seen[CUR.id] = SV.seen[CUR.id] || {})[k] = 1; save(); }
 function playAll(from = 0, back = hub) { const ids = P.map(p => p.id).filter(id => EScene.has(id)); if (!ids.length) return back(); const go = k => { if (k >= ids.length) return back(); EScene.play(ids[k], skipped => skipped ? back() : go(k + 1)); }; go(from); }
+/* 표기: {{틀린것|고친것}} / [[빈칸 정답]] */
+function fmt(t, mode) { return t.replace(/\{\{([^|}]*)\|([^}]*)\}\}/g, (m, a, b) => mode === 'exam' ? `<u>${a}</u>` : mode === 'plain' ? b : `<del>${a}</del> <ins>${b}</ins>`).replace(/\[\[([^\]]*)\]\]/g, (m, a) => mode === 'exam' ? '<span class="blank">　　　　　　</span>' : mode === 'plain' ? a : `<mark>${a}</mark>`); }
+function examText(p) { if (p.q.text) return p.q.text; return '<p>' + p.s.filter(s => !/^→/.test(s[0])).map(s => fmt(s[0].split(' / ').join(' '), 'exam')).join(' ') + '</p>'; }
 function sentenceView(s, idx, opts = {}) {
   const [en, ko, tr, g] = s; const ens = en.split(' / '), kos = ko.split(' | ');
-  const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(c)}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
+  const el = h('div', 'sent'); el.innerHTML = `<div class="sn">${idx + 1}</div><div class="eng">${ens.map((c, i) => `<span class="ck" data-i="${i}">${wrapWords(fmt(c, 'read'))}</span>`).join('<span class="sl"> / </span>')}</div><div class="kos">${ens.map((c, i) => `<span class="kc"><i>${i + 1}</i>${kos[i]}</span>`).join('')}</div><div class="tr">${tr}</div><div class="gr">${(g || []).map(x => `<div>▸ ${x}</div>`).join('')}</div><div class="sbtn"><button data-t="say" class="say1">🔊 듣기</button><button data-t="kos">끊어 해석</button><button data-t="tr">전체 해석</button>${g && g.length ? '<button data-t="gr">문법 메모</button>' : ''}</div>`;
   el._it = { el, s, pid: opts.pid, si: idx };
   el.querySelector('.sbtn').onclick = e => { const t = e.target.dataset.t; if (!t) return; if (t === 'say') { Reader.one(el._it); return; } el.classList.toggle('show-' + t); e.target.classList.toggle('on'); Snd.play('click'); if (t === 'gr' || t === 'tr') { el.dataset.seen = 1; } };
   if (opts.open) el.classList.add('show-kos', 'show-tr', 'show-gr');
@@ -99,7 +102,7 @@ function read() {
   P.forEach((p, i) => {
     if (p.sec !== sec) { sec = p.sec; a.appendChild(h('div', 'sech', CUR.secs[sec])); }
     const hd = h('div', 'phead', `<b>${i + 1}. ${p.name}</b>`); if (EScene.has(p.id)) { const sc = h('button', '', '🎬'); sc.title = '이 문단 장면'; sc.onclick = () => EScene.play(p.id, () => { }); hd.appendChild(sc); }
-    const pr = h('button', '', '⚔ 이 문단만'); pr.onclick = () => practice(p); hd.appendChild(pr); a.appendChild(hd);
+    if (p.q) { const qb = h('button', 'qbtn', '📝 문제 풀기'); qb.onclick = () => practice(p, true); hd.appendChild(qb); } const pr = h('button', '', p.q ? '⚔ 연습' : '⚔ 이 문단만'); pr.onclick = () => practice(p); hd.appendChild(pr); a.appendChild(hd);
     p.s.forEach((s, j) => a.appendChild(sentenceView(s, j, { pid: p.id })));
   });
   const go = h('button', 'pri big', '⚔ 실전 도전'); go.onclick = () => challenge(); a.appendChild(go);
@@ -110,23 +113,23 @@ function autoVoc(p) { const seen = new Set(); const out = []; p.s.forEach(s => s
 function qOf(id) { const q = QUEST[id] || {}; return { voc: q.voc && q.voc.length ? q.voc : autoVoc(P[PI[id]]), gram: q.gram || [], wrong: q.wrong || [] }; }
 function allVoc() { return P.flatMap(p => qOf(p.id).voc); }
 function pool(ids) {
-  const R = { voc: [], wrong: [], order: [], gram: [] };
+  const R = { voc: [], wrong: [], order: [], gram: [], exam: [] };
   ids.forEach(id => { const q = qOf(id), p = P[PI[id]];
     q.voc.forEach(v => R.voc.push({ k: 'voc', v, id })); q.wrong.forEach(w => R.wrong.push({ k: 'wrong', w, id }));
-    p.s.forEach((s, i) => { if (s[0].split(' / ').length >= 3) R.order.push({ k: 'order', s, i, id }); }); q.gram.forEach(g => R.gram.push({ k: 'gram', g, id })); });
+    p.s.forEach((s, i) => { if (s[0].split(' / ').length >= 3) R.order.push({ k: 'order', s, i, id }); }); q.gram.forEach(g => R.gram.push({ k: 'gram', g, id })); if (p.q) R.exam.push({ k: 'exam', p, id }); });
   return R;
 }
-function makeRounds(ids, n) { const R = pool(ids), take = (a, k) => shuffle(a).slice(0, k); const out = [...take(R.voc, n.voc), ...take(R.wrong, n.wrong), ...take(R.order, n.order), ...take(R.gram, n.gram)]; const o = { voc: 0, wrong: 1, order: 2, gram: 3 }; return out.sort((a, b) => o[a.k] - o[b.k]); }
-function challenge() { Snd.music('tense'); runRounds({ id: CUR.id, type: 'all' }, makeRounds(P.map(p => p.id), { voc: 5, wrong: 3, order: 3, gram: 4 }), { hearts: 4, title: CUR.title + ' — 실전 도전' }); }
-function practice(p) { Snd.music('tense'); runRounds({ id: CUR.id + ':' + p.id, type: 'para', p }, makeRounds([p.id], { voc: 4, wrong: 2, order: 2, gram: 3 }), { hearts: 3, title: p.name + ' — 문단 연습' }); }
+function makeRounds(ids, n) { const R = pool(ids), take = (a, k) => shuffle(a).slice(0, k); const out = [...take(R.voc, n.voc), ...take(R.wrong, n.wrong), ...take(R.order, n.order), ...take(R.gram, n.gram), ...(n.exam ? R.exam : [])]; const o = { voc: 0, wrong: 1, order: 2, gram: 3, exam: 4 }; return out.sort((a, b) => o[a.k] - o[b.k]); }
+function challenge() { if (CUR.exam) { Snd.music('tense'); return runRounds({ id: CUR.id, type: 'all' }, pool(P.map(p => p.id)).exam, { noHearts: 1, title: CUR.title + ' — 실전 풀이' }); } Snd.music('tense'); runRounds({ id: CUR.id, type: 'all' }, makeRounds(P.map(p => p.id), { voc: 5, wrong: 3, order: 3, gram: 4 }), { hearts: 4, title: CUR.title + ' — 실전 도전' }); }
+function practice(p, only) { if (only && p.q) { Snd.music('tense'); return runRounds({ id: CUR.id + ':' + p.id + ':q', type: 'para', p }, [{ k: 'exam', p, id: p.id }], { noHearts: 1, title: p.name }); } Snd.music('tense'); runRounds({ id: CUR.id + ':' + p.id, type: 'para', p }, makeRounds([p.id], { voc: 4, wrong: 2, order: 2, gram: 3, exam: 1 }), { hearts: 3, title: p.name + ' — 문단 연습' }); }
 function runRounds(st, rounds, cfg) {
   const a = screen('chal' + (cfg.boss ? ' bossmode' : '')); let i = 0, hearts = cfg.hearts, miss = 0, combo = 0, gained = 0;
   const top = topbar(cfg.title, ['나가기', () => confirm('도전을 그만두고 나갈까요?') && hub()]); a.appendChild(top);
   const hud = h('div', 'hud'); a.appendChild(hud); const body = h('div', 'rbody'); a.appendChild(body);
   let timer = null;
-  const drawHud = () => { hud.innerHTML = `<span class="hearts">${'♥'.repeat(Math.max(0, hearts))}<s>${'♥'.repeat(Math.max(0, cfg.hearts - hearts))}</s></span><span class="bar"><i style="width:${i / rounds.length * 100}%"></i></span><span class="cnt">${i + 1 > rounds.length ? rounds.length : i + 1}/${rounds.length}</span><span class="combo ${combo >= 2 ? 'on' : ''}">${combo >= 2 ? combo + ' 콤보!' : ''}</span>` + (cfg.timer ? '<span class="tbar"><i></i></span>' : ''); };
+  const drawHud = () => { hud.innerHTML = (cfg.noHearts ? `<span class="score">✔ ${i - miss < 0 ? 0 : i - miss} / ✘ ${miss}</span>` : `<span class="hearts">${'♥'.repeat(Math.max(0, hearts))}<s>${'♥'.repeat(Math.max(0, cfg.hearts - hearts))}</s></span>`) + `<span class="bar"><i style="width:${i / rounds.length * 100}%"></i></span><span class="cnt">${i + 1 > rounds.length ? rounds.length : i + 1}/${rounds.length}</span><span class="combo ${combo >= 2 ? 'on' : ''}">${combo >= 2 ? combo + ' 콤보!' : ''}</span>` + (cfg.timer ? '<span class="tbar"><i></i></span>' : ''); };
   const ok = (bonus = 0) => { combo++; const g = 10 + Math.min(combo, 5) * 2 + bonus; gained += g; Snd.play(combo >= 3 ? 'orb' : 'win'); fx('+' + g + ' ✦', '#3ddc97'); };
-  const bad = () => { combo = 0; miss++; hearts--; Snd.play('wrong'); a.classList.add('hit'); setTimeout(() => a.classList.remove('hit'), 350); drawHud(); };
+  const bad = () => { combo = 0; miss++; if (!cfg.noHearts) hearts--; Snd.play('wrong'); a.classList.add('hit'); setTimeout(() => a.classList.remove('hit'), 350); drawHud(); };
   const fx = (s, c) => { const f = h('div', 'fx', s); f.style.color = c; a.appendChild(f); setTimeout(() => f.remove(), 900); };
   const next = () => { clearInterval(timer); i++; if (hearts <= 0) return fail(); if (i >= rounds.length) return finish(); show(); };
   const startTimer = onOut => { if (!cfg.timer) return; let left = cfg.timer; const bar = hud.querySelector('.tbar i'); timer = setInterval(() => { left -= .1; if (bar) bar.style.width = (left / cfg.timer * 100) + '%'; if (left <= 0) { clearInterval(timer); onOut(); } }, 100); };
@@ -156,6 +159,13 @@ function runRounds(st, rounds, cfg) {
       body.appendChild(g);
       startTimer(() => { g.querySelectorAll('button').forEach(x => x.disabled = true); bad(); cont('시간 초과! 순서: ' + ens.join(' / '), false); });
     }
+    if (r.k === 'exam') {
+      const q = r.p.q; body.appendChild(h('div', 'qk', '실전 문제 — 시험지 그대로'));
+      const paper = h('div', 'paper', `<div class="ask">${q.ask}</div><div class="ptext">${examText(r.p)}</div>${q.summary ? `<div class="summ">${q.summary}</div>` : ''}${q.note ? `<div class="pnote">${q.note}</div>` : ''}`); body.appendChild(paper);
+      paper.querySelectorAll('.ptext p, .summ').forEach(e => e.innerHTML = wrapWords(e.innerHTML));
+      const g = h('div', 'opts col'); const nums = ['①', '②', '③', '④', '⑤'];
+      q.opts.forEach((o, k) => { const b = h('button', '', (o.length > 2 ? nums[k] + ' ' : '') + o); b.onclick = () => { g.querySelectorAll('button').forEach(x => x.disabled = true); g.children[q.ans].classList.add('right'); if (k === q.ans) { ok(5); cont('✔ 정답! ' + q.why, true); } else { b.classList.add('wrong'); bad(); cont(`정답은 ${nums[q.ans]}. ${q.why}`, false); } const rv = h('button', '', '📖 이 문항 끊어 읽기·해석 보기'); rv.onclick = () => { const ov = h('div', 'talk solo'); const bx = h('div', 'tbox wide'); bx.appendChild(h('b', '', r.p.name)); r.p.s.forEach((s, j) => { const sv = sentenceView(s, j, { pid: r.p.id }); sv.classList.add('show-kos', 'show-tr', 'show-gr'); bx.appendChild(sv); }); const cl = h('button', 'pri', '닫기'); cl.onclick = () => ov.remove(); bx.appendChild(cl); ov.appendChild(bx); document.body.appendChild(ov); }; body.querySelector('.after').prepend(rv); }; g.appendChild(b); }); body.appendChild(g);
+    }
     if (r.k === 'gram') {
       const [q, opts, ans, why] = r.g; body.appendChild(h('div', 'qk', '문법 체크'));
       body.appendChild(h('div', 'gq', q)); const g = h('div', 'opts col'); const sh = shuffle(opts.map((o, k) => [o, k]));
@@ -164,7 +174,7 @@ function runRounds(st, rounds, cfg) {
     }
   }
   function finish() {
-    const stars = miss === 0 ? 3 : miss <= 2 ? 2 : 1; const prev = SV.stars[st.id] || 0; SV.stars[st.id] = Math.max(prev, stars); SV.xp += gained + stars * 10; save(); Snd.music('happy'); Snd.play('win');
+    const stars = cfg.noHearts ? (miss === 0 ? 3 : miss / rounds.length <= .25 ? 2 : 1) : miss === 0 ? 3 : miss <= 2 ? 2 : 1; const prev = SV.stars[st.id] || 0; SV.stars[st.id] = Math.max(prev, stars); SV.xp += gained + stars * 10; save(); Snd.music('happy'); Snd.play('win');
     body.innerHTML = ''; hud.innerHTML = ''; const r = h('div', 'result', `<div class="big">${'★'.repeat(stars)}<s>${'★'.repeat(3 - stars)}</s></div><h2>클리어!</h2><p>실수 ${miss}번 · 얻은 공명 ✦ ${gained + stars * 10}</p>`);
     const nx = h('button', 'pri', st.type === 'all' ? '계속 ▶' : '읽기로 돌아가기'); nx.onclick = () => st.type === 'all' ? talk(TALK[CUR.id] && !prev ? TALK[CUR.id].out : null, hub) : read();
     const rt = h('button', '', '↺ 다시 도전'); rt.onclick = () => st.type === 'all' ? challenge() : practice(st.p);

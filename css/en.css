@@ -155,3 +155,16 @@ button.wrong{background:var(--bad)!important;color:#fff!important;box-shadow:0 3
 .step.done{box-shadow:0 2px 0 var(--ok),0 0 0 2px var(--ok) inset}
 .phead{display:flex;align-items:center;gap:8px;margin:18px 0 4px}.phead b{flex:1;font-size:17px}.phead button{min-height:34px;padding:5px 10px;font-size:13px}
 .sech{font-weight:800;margin:22px 0 0;color:var(--vio);font-size:15px;border-bottom:2px solid var(--line);padding-bottom:4px}
+
+/* 실전 문제 */
+.paper{background:var(--paper);border-radius:16px;padding:14px 16px;box-shadow:0 0 0 1.5px var(--line) inset;margin-bottom:12px;max-height:60vh;overflow:auto}
+.paper .ask{font-weight:800;margin-bottom:8px}
+.paper .ptext{font:500 16px/1.75 Georgia,"Times New Roman",serif}.paper .ptext p{margin:0 0 8px}.paper .ptext .given{border:1.5px solid var(--ink);padding:6px 10px;border-radius:6px}
+.paper .summ{margin-top:8px;border:1.5px dashed var(--dim);border-radius:8px;padding:8px 10px;font:500 15px/1.7 Georgia,serif}
+.paper .pnote{margin-top:6px;font-size:13px;color:var(--dim);text-align:right}
+.blank{display:inline-block;border-bottom:2px solid var(--ink);min-width:110px}
+del{color:var(--bad);text-decoration-thickness:2px}ins{color:var(--ok);text-decoration:none;font-weight:700}
+mark{background:#ffe27a;color:#231046;border-radius:4px;padding:0 3px}
+.score{font-weight:800;color:var(--vio)}
+.qbtn{background:var(--vio)!important;color:#fff!important;box-shadow:0 2px 0 #3b45b8!important}
+.talk.solo{align-items:flex-start;overflow:auto;cursor:default}.tbox.wide{width:min(900px,100%);padding:16px;margin:auto}
