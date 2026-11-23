@@ -228,3 +228,8 @@ body.lesson-on #inv{opacity:.5}
 .wsheet.done .wpad{height:max(240px,30vh);cursor:default}.wsheet.done .wtool button{opacity:.35}
 .wpts{display:grid;gap:6px;margin:6px 0}.wpts label{display:flex;gap:8px;align-items:flex-start;background:#06161f;border-radius:8px;padding:6px 8px;line-height:1.55;cursor:pointer}.wpts input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:#5aff9a}
 .qb .wcnt{margin-right:auto;align-self:center;font-weight:900;color:#9fe}.qb{flex-wrap:wrap}
+
+/* 펜 필기: 문제 화면 어디든(카드 밖 포함) 쓰되, 버튼·보기·답안지는 필기 위에 */
+#quiz.inkon{position:fixed}#quiz .inkcv{z-index:5}
+#quiz .qc{position:relative;z-index:auto}
+#quiz .qc button,#quiz .qc .opt,#quiz .qc .oxr,#quiz .qc .wsheet,#quiz .qc input,#quiz .qc textarea,#quiz .qc .qx,#quiz #inkbar,#quiz .qc .seg{position:relative;z-index:6}

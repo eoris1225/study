@@ -1,5 +1,5 @@
 /* 미토: 화면 UI — HUD, 대사창, 퀴즈 관문(문제은행), 알림, 목표 표시 */
-import { IN, sfx } from './engine.js?v=202611231053';
+import { IN, sfx } from './engine.js?v=202611231058';
 const $ = s =>document.querySelector(s);
 const esc = s =>String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function chem(s) { return String(s).replace(/NAD\+/g, 'NAD<sup>+</sup>').replace(/H\+/g, 'H<sup>+</sup>').replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>'); }
@@ -86,7 +86,7 @@ export function quiz(qs, title = '지식 관문') {
         qb.innerHTML = ''; const n = document.createElement('button'); n.className = 'pri'; n.textContent = i + 1 < qs.length ? '다음 ▶' : '관문 통과 ▶'; n.onclick = () => { i++; one(); }; qb.appendChild(n); n.focus(); };
       if (q.type === 'choice' || q.type === 'multi') {
         qq.innerHTML = chemHTML(q.q); const multi = q.type === 'multi'; const sel = new Set();
-        const ord = multi ? q.o.map((_, k) => k) : shuffle(q.o.map((_, k) => k)); const btn = []; ord.forEach((k, pos) => { const o = q.o[k]; const b = document.createElement('button'); b.className = 'opt'; b.innerHTML = `<i>${'①②③④⑤⑥⑦⑧'[pos]}</i> ${chemHTML(o)}`; b.onclick = () => { if (multi) { sel.has(k) ? sel.delete(k) : sel.add(k); b.classList.toggle('sel'); return; } [...qa.children].forEach((x, j) => { x.disabled = true; if (ord[j] === q.a) x.classList.add('right'); }); if (k !== q.a) b.classList.add('wrong'); finish(k === q.a); }; qa.appendChild(b); });
+        const ord = multi || q.img ? q.o.map((_, k) => k) : shuffle(q.o.map((_, k) => k)); const btn = []; ord.forEach((k, pos) => { const o = q.o[k]; const b = document.createElement('button'); b.className = 'opt'; b.innerHTML = `<i>${'①②③④⑤⑥⑦⑧'[pos]}</i> ${chemHTML(o)}`; b.onclick = () => { if (multi) { sel.has(k) ? sel.delete(k) : sel.add(k); b.classList.toggle('sel'); return; } [...qa.children].forEach((x, j) => { x.disabled = true; if (ord[j] === q.a) x.classList.add('right'); }); if (k !== q.a) b.classList.add('wrong'); finish(k === q.a); }; qa.appendChild(b); });
         if (multi) { const s = document.createElement('button'); s.className = 'pri'; s.textContent = '제출'; s.onclick = () => { const A = new Set(q.a); const ok = A.size === sel.size && [...A].every(x =>sel.has(x)); [...qa.children].forEach((x, j) => { x.disabled = true; if (A.has(j)) x.classList.add('right'); else if (sel.has(j)) x.classList.add('wrong'); }); finish(ok, '정답: ' + q.a.map(k =>q.o[k]).join(', ')); }; qb.appendChild(s); }
       } else if (q.type === 'order') {
         qq.innerHTML = chemHTML(q.q); const got = []; const out = document.createElement('div'); out.className = 'ord'; qa.before(out);
@@ -172,7 +172,11 @@ new MutationObserver(() => { const b = $('#lesson'); if (!b || b.hidden || b.que
 /* 카드 보여주기: cards = [[fact, why], ...] */
 export function teach(cards, head, from, total) {
   return new Promise(res => { const b = lessonBox(); let i = 0;
-    const one = () => { if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito;
+    /* 몇 번째 카드까지 봤는지 저장 → 새로고침해도 그 카드부터 */
+    const TK = 'bio_teachpos', tkey = head + '|' + from + '|' + cards.length; let TP = {}; try { TP = JSON.parse(localStorage.getItem(TK)) || {}; } catch (e) { }
+    if (TP[tkey] && TP[tkey] < cards.length) i = TP[tkey];
+    const tsave = () => { try { if (i >= cards.length) delete TP[tkey]; else TP[tkey] = i; localStorage.setItem(TK, JSON.stringify(TP)); } catch (e) { } };
+    const one = () => { tsave(); if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito;
       b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div><div class="sp1">${face(sp || SPEAK)}<div class="bub" style="--c:${C.c}"><i>${C.n}</i><p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}</div></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
       b.querySelector('.pri').onclick = () => { sfx('pick'); i++; one(); }; };
     one(); });

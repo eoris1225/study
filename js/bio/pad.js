@@ -11,16 +11,16 @@
   try { all = localStorage.getItem('bio_inkall') === '1'; } catch (e) { }
   bar.querySelector('[data-a]').classList.toggle('on', all);
   const d = () => Math.min(2, devicePixelRatio || 1);
-  function attach() { const qc = quiz.querySelector('.qc'); if (!qc) return; if (bar.parentNode !== qc) { const h = qc.querySelector('.qh'); h ? h.after(bar) : qc.prepend(bar); } if (cv && cv.parentNode === qc) { size(); return; }
-    cv = document.createElement('canvas'); cv.className = 'inkcv'; qc.appendChild(cv); g = cv.getContext('2d'); size(true); }
-  function size(fresh) { const qc = cv.parentNode, w = qc.scrollWidth, h = qc.scrollHeight, r = d();
+  function attach() { const qc = quiz.querySelector('.qc'); if (!qc) return; if (bar.parentNode !== qc) { const h = qc.querySelector('.qh'); h ? h.after(bar) : qc.prepend(bar); } if (cv && cv.parentNode === quiz) { size(); return; }
+    cv = document.createElement('canvas'); cv.className = 'inkcv'; quiz.appendChild(cv); g = cv.getContext('2d'); size(true); }
+  function size(fresh) { const qc = quiz, w = Math.max(quiz.clientWidth, quiz.scrollWidth), h = Math.max(quiz.clientHeight, quiz.scrollHeight), r = d();
     if (!fresh && cv.width === Math.round(w * r) && cv.height === Math.round(h * r)) return;
     const keep = !fresh && cv.width ? cv.toDataURL() : null; cv.width = Math.round(w * r); cv.height = Math.round(h * r); cv.style.width = w + 'px'; cv.style.height = h + 'px';
     if (keep) draw(keep); else if (key && ink[key]) draw(ink[key]); }
   function draw(src) { const im = new Image(), c0 = cv; im.onload = () => { if (cv === c0) c0.getContext('2d').drawImage(im, 0, 0); }; im.src = src; }
   function store() { if (!key || !cv) return; ink[key] = cv.toDataURL('image/png'); const ks = Object.keys(ink); if (ks.length > 60) delete ink[ks[0]]; try { localStorage.setItem(KEY, JSON.stringify(ink)); } catch (e) { delete ink[ks[0]]; } }
   const pos = e => { const r = cv.getBoundingClientRect(), s = d(); return [(e.clientX - r.left) * s, (e.clientY - r.top) * s]; };
-  const wants = e => cv && !bar.hidden && (e.pointerType === 'pen' || all) && !(e.target.closest && e.target.closest('#inkbar, .wsheet'));
+  const wants = e => cv && !bar.hidden && (e.pointerType === 'pen' || all) && !(e.target.closest && e.target.closest('#inkbar, .wsheet, button, input, textarea, label, select, .opt, .oxr, .qimg.big'));
   quiz.addEventListener('pointerdown', e => { if (!wants(e)) return; e.preventDefault(); e.stopPropagation(); try { quiz.setPointerCapture(e.pointerId); } catch (_) { } cur = { p: pos(e), id: e.pointerId, x0: e.clientY === undefined ? 0 : e.clientX, y0: e.clientY, drew: false }; }, true);
   quiz.addEventListener('pointermove', e => { if (!cur || e.pointerId !== cur.id) return; e.preventDefault(); e.stopPropagation(); if (!cur.drew && Math.hypot(e.clientX - cur.x0, e.clientY - cur.y0) < 6) return; cur.drew = true; const p = pos(e), s = d();
     g.globalCompositeOperation = erase ? 'destination-out' : 'source-over'; g.strokeStyle = col; g.lineCap = g.lineJoin = 'round'; g.lineWidth = (erase ? 24 : (e.pointerType === 'pen' && e.pressure > 0 ? 1.2 + e.pressure * 2.4 : 2.6)) * s;
