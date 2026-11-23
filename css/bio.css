@@ -204,7 +204,7 @@ body.lesson-on #inv{opacity:.5}
 /* 문제 위 필기 */
 #quiz.inkon{place-items:start center}#quiz.inkon .qc{position:relative;touch-action:pan-y}
 .inkcv{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
-#inkbar{position:fixed;right:10px;bottom:10px;z-index:40;display:flex;gap:5px;background:rgba(30,22,14,.92);border:1.5px solid #e8a33d88;border-radius:12px;padding:6px}
-#inkbar button{background:#2e2419;border:1.5px solid #ffffff22;border-radius:8px;padding:5px 9px;font-size:13px;color:#f6ead6}
-#inkbar [data-c]{font-size:18px;line-height:1;padding:4px 8px}#inkbar [data-c="#ffe27a"]{color:#ffe27a}#inkbar [data-c="#ff6a5a"]{color:#ff6a5a}#inkbar [data-c="#7ab8ff"]{color:#7ab8ff}
+#inkbar{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px;padding:4px 0;border-bottom:1px dashed #e8a33d55;position:relative;z-index:6}
+#inkbar button{background:#2e2419;border:1.5px solid #ffffff22;border-radius:7px;padding:3px 8px;font-size:12px;color:#f6ead6}
+#inkbar [data-c]{font-size:15px;line-height:1;padding:3px 7px}#inkbar [data-c="#ffe27a"]{color:#ffe27a}#inkbar [data-c="#ff6a5a"]{color:#ff6a5a}#inkbar [data-c="#7ab8ff"]{color:#7ab8ff}
 #inkbar button.on{border-color:#e8a33d;background:#6a3a1c}
