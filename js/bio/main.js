@@ -3,9 +3,12 @@ import * as THREE from 'three';
 import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js';
 import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js';
 import { mol, NAME } from './mols.js';
-import { HUD, toast, banner, flash, say, choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST } from './ui.js';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST } from './ui.js';
 
 const $ = s =>document.querySelector(s);
+/* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
+const choose = async (t, opts, ans) => ans;
+const LABS_OF = { enz: ['ea', 'lock', 'cof', 'env', 'sat', 'cat'], intro: ['atp', 'redox', 'mito'], gly: ['gly'], pyr: ['pyr'], tca: ['tca'], etc: ['etc'], poison: ['poison'], ferm: ['ferm'], light: ['spec', 'chrom', 'zs'], calvin: ['calvin', 'cmp'], boss: ['subs'] };
 const V = (x, y, z) =>new THREE.Vector3(x, y, z);
 initEngine($('#game')); initInput({ joy: $('#joy'), knob: $('#joy i'), bUp: $('#bUp'), bDn: $('#bDn'), bAct: $('#bAct'), bDash: $('#bDash') });
 buildWorld();
@@ -71,6 +74,7 @@ async function showcase(pos, look, sec = 2.6) { camOverride = { pos, look }; awa
 /* ── 루프 ── */
 let last = performance.now(), T = 0; const tmp = V();
 function loop(now) {
+  if (window.LAB_OPEN) { last = now; requestAnimationFrame(loop); return; }
   const dt = Math.min(.05, (now - last) / 1000); last = now; T += dt;
   const mv = IN.locked ? { x: 0, y: 0, u: 0, act: false } : readMove();
   /* 이동 (카메라 기준) */
@@ -487,23 +491,17 @@ async function studyFlow(k, run) {
     ['nadi', '나는 <b>나디</b>, NAD⁺! 전자 택배 기사야. 포도당에서 떼어 낸 전자를 싣고 전자전달계까지 배달해.'],
     ['oxy', '나는 <b>옥시</b>, 산소. 전자의 마지막 도착지야. 내가 없으면 배달이 막혀서 발전소가 멈춰!'],
     ['chloe', '나는 <b>클로이</b>, 엽록체. 햇빛으로 포도당을 요리하는 식물 세포의 주방장이야. 뒤 챕터에서 만나자!'],
-    ['mito', '챕터마다 <b>떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리</b> 순서로 가. 모르는 말이 나오면 우리가 먼저 그림으로 설명해 줄게.']]); SAVE.met = 1; save(); }
-  const M = MISSIONS[k], L = (window.BLESSON || {})[M.id] || { facts: [], check: {} }, pool = poolFacts(), title = M.t.replace(/^\d+\.\s*/, '');
-  banner(M.t, '떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리', '#7fffe0'); await wait(1.4);
-  /* 1. 지난 챕터 떠올리기 (틀렸던 문장 먼저) */
-  const prev = MISSIONS.slice(0, k).flatMap(m => ((window.BLESSON || {})[m.id] || { facts: [] }).facts);
-  if (prev.length) { const fw = SAVE.fw || {}; const pick = prev.slice().sort((a, b) => ((fw[b[0].slice(0, 40)] || 0) - (fw[a[0].slice(0, 40)] || 0)) || Math.random() - .5).slice(0, 3); await recall(pick, '지난 내용 떠올리기', pool, factStat); }
-  /* 2. 배우기: 카메라가 해당 장소를 비추고, 2개씩 배우고 바로 확인 */
-  if (L.facts.length) { const cam = LCAM[M.id] && LCAM[M.id](); if (cam) camOverride = { pos: cam[0], look: cam[1] };
-    for (let i = 0; i < L.facts.length; i += 2) { const chunk = L.facts.slice(i, i + 2); await teach(chunk, '배우기 — ' + title, i, L.facts.length); await recall(chunk, '방금 배운 것 확인', pool, factStat); }
-    camOverride = null;
-    await notice('해보기', '이제 직접 해 보면서 방금 배운 과정을 눈으로 확인해요. 왼쪽 위 <b>개념 패널</b>에 지금 하는 일이 실제로 무엇인지 나와요.', '해보기 시작'); }
-  /* 3. 해보기 */
+    ['mito', '챕터마다 먼저 <b>개념 실험실</b>에서 직접 끌고 돌리고 조절하면서 원리를 발견해. 그다음 3D 세포 속 현장으로! 문제 풀이는 챕터 끝 <b>테스트</b>에서 원할 때만.']]); SAVE.met = 1; save(); }
+  const M = MISSIONS[k], L = (window.BLESSON || {})[M.id] || { facts: [], check: {} }, title = M.t.replace(/^\d+\.\s*/, '');
+  banner(M.t, '실험실에서 직접 조작 → 3D 현장 → 테스트(선택)', '#7fffe0'); await wait(1.2);
+  /* 1. 개념 실험실: 개념마다 직접 만지며 발견 */
+  for (const id of (LABS_OF[M.id] || [])) await window.LAB.open(id);
+  /* 2. 3D 현장 체험 */
   await run(); HUD.obj(''); target(null); stepMission = () => { };
-  /* 4. 중간 점검 (교과서 문제) */
-  if (L.check && (L.check.ids || L.check.ch)) await checkpoint(L, title);
-  /* 5. 정리 + 섞어서 전체 확인 */
-  if (L.facts.length) { await recall(shuffleA(L.facts).slice(0, 4), '정리 전 마지막 확인 (순서 섞음)', pool, factStat); await summary(L.facts, title); }
+  /* 3. 테스트 (원할 때만) */
+  if (L.check && (L.check.ids || L.check.ch)) { const n = (L.check.ids || []).length + (L.check.ch ? (L.check.n || 3) : 0);
+    const a = await window.LAB.ask('테스트 — ' + title, `방금 실험한 내용으로 교과서 문제 <b>약 ${n}개</b>를 풀어 볼까요?<br><small>건너뛰어도 메뉴의 「테스트」에서 언제든 풀 수 있어요.</small>`, ['테스트 풀기', '다음 챕터로']);
+    if (a === 0) await checkpoint(L, title); }
   SAVE.reached = Math.max(SAVE.reached, k + 1); save();
 }
 const shuffleA = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -528,10 +526,11 @@ function menu() {
   const m = $('#menu'); m.hidden = false; $('#hud').hidden = true; IN.locked = false;
   const last = Math.min(SAVE.reached, MISSIONS.length - 1);
   const tb = (window.TBSEC || []).map(([c, t]) => { const L = (window.BQ || []).filter(q =>q.ch === c); const done = L.filter(q =>SAVE.right[q.id]).length; return `<button data-tb="${c}"><b>${t}</b><small>${L.length}문제 · 맞힘 ${done}</small></button>`; }).join('');
-  m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><h3>공부하기</h3><div class="mb"><button class="pri" data-a="notes">개념 정리 노트</button><button class="pri" data-a="tball">교과서 문제 전체 풀기</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="cards">암기 카드</button></div><h3>교과서 문제 (단원별)</h3><div class="chs">${tb}</div><h3>3D로 과정 체험하기</h3><div class="mb"><button data-a="go">${SAVE.reached ? `이어하기 — ${MISSIONS[last].t}` : '처음부터 시작'}</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
+  m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><h3>개념 실험실 — 직접 만지며 배우기</h3>${labMenu()}<h3>3D로 과정 체험하기</h3><div class="mb"><button class="pri" data-a="go">${SAVE.reached ? `이어하기 — ${MISSIONS[last].t}` : '처음부터 시작'}</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><h3>테스트 (교과서 문제)</h3><div class="mb"><button class="pri" data-a="tball">교과서 문제 전체</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="notes">개념 정리 노트</button><button data-a="cards">암기 카드</button></div><h3>단원별 테스트</h3><div class="chs">${tb}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
   const runQ = async (qs, title) => { if (!qs.length) { toast('문제가 없어요'); return; } m.hidden = true; const r = await quiz(qs, title); toast(`${title}: ${r.right} / ${r.total}`, '#ffd23f'); menu(); };
   m.onclick = async e => { const b = e.target.closest('button'); if (!b) return; sfx('pick');
     if (b.dataset.tb) { const t = (window.TBSEC.find(x =>x[0] === b.dataset.tb) || [])[1]; return runQ((window.BQ || []).filter(q =>q.ch === b.dataset.tb), t); }
+    if (b.dataset.lab) { m.hidden = true; await window.LAB.open(b.dataset.lab); return menu(); }
     if (b.dataset.c) return play(+b.dataset.c); const a = b.dataset.a;
     if (a === 'go') return play(last); if (a === 'new') return play(0);
     if (a === 'q') return setQuality(({ low: 'mid', mid: 'high', high: 'low' })[E.quality]); if (a === 'home') location.href = 'index.html';
@@ -540,6 +539,8 @@ function menu() {
     if (a === 'wrong') { const qs = (window.BQ || []).filter(q =>SAVE.wrong.includes(q.id)); return runQ(qs, '오답 다시 풀기'); }
     if (a === 'cards') cards(); };
 }
+function labMenu() { const L = window.LAB; if (!L) return '';
+  return `<div class="chs labs">${L.ORDER.map(id => { const x = L.REG[id]; return `<button data-lab="${id}" class="${L.done(id) ? 'cl' : ''}"><b>${L.done(id) ? '✓ ' : ''}${x.t}</b><small>${x.ch} · ${x.sub || ''}</small></button>`; }).join('')}</div>`; }
 function notes(k) { const N = window.BNOTES || []; const c = $('#notes'); c.hidden = false; $('#menu').hidden = true;
   c.innerHTML = `<div class="nh"><button data-x>닫기</button>${N.map(([t], i) => `<button data-n="${i}" class="${i === k ? 'on' : ''}">${t}</button>`).join('')}</div><div class="nb"><h3>${N[k][0]}</h3>${N[k][1]}<div class="nq"><button class="pri" data-q>이 단원 교과서 문제 풀기</button>${k + 1 < N.length ? `<button data-n="${k + 1}">다음 단원 →</button>` : ''}</div></div>`;
   c.scrollTop = 0; const map = { 1: 't01', 2: 't02', 3: 't03', 4: 't04', 5: 't05' };
