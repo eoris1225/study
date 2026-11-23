@@ -256,3 +256,21 @@ body.lesson-on #inv{opacity:.5}
 #quiz .qc>.inkcv{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
 #quiz .qimg img{cursor:default}
 .qimg .zbtn{margin-left:8px;font:700 12px inherit;padding:4px 10px;border-radius:8px;border:1px solid #e8a33d;background:#2a2118;color:#ffe9c4;opacity:1}
+
+/* 🎬 영화 모드 */
+.movieb{display:block;width:100%;margin:8px 0 14px;padding:14px 16px;border-radius:14px;border:2px solid #ffd23f;background:linear-gradient(90deg,#3a2408,#5a3a0a);color:#ffe9a0;font:900 20px 'Noto Sans KR',sans-serif;text-align:left;cursor:pointer;box-shadow:0 0 22px #ffd23f44}
+.movieb small{display:block;font-size:13px;font-weight:600;opacity:.8;margin-top:3px}
+#movie{position:fixed;inset:0;z-index:40;pointer-events:none;font-family:'Noto Sans KR',sans-serif}
+#movie .mv-title{position:absolute;left:50%;top:14%;transform:translateX(-50%);font-size:clamp(24px,4vw,44px);font-weight:900;color:#ffd23f;text-shadow:0 3px 0 #120c06,0 0 24px #000;opacity:0;white-space:nowrap}
+#movie .mv-title.on{animation:mvt 3.2s ease forwards}
+@keyframes mvt{0%{opacity:0;transform:translate(-50%,20px) scale(.9)}15%{opacity:1;transform:translate(-50%,0) scale(1)}75%{opacity:1}100%{opacity:0}}
+#movie .mv-sub{position:absolute;left:50%;bottom:86px;transform:translateX(-50%);width:min(900px,92vw);text-align:center}
+#movie .mv-sub span{display:inline-block;background:#120c06e6;border:2px solid #ffd23f88;border-radius:14px;padding:12px 18px;font-size:clamp(17px,2.3vw,24px);line-height:1.55;color:#fff8e8;font-weight:700;box-shadow:0 6px 20px #000a}
+#movie .mv-sub span b{color:#ffd23f}
+#movie .mv-sub.in span{animation:mvs .35s ease}
+@keyframes mvs{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+#movie .mv-bar{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto;flex-wrap:wrap;justify-content:center;max-width:96vw}
+#movie .mv-bar button,#movie .mv-bar select{font:800 15px 'Noto Sans KR',sans-serif;padding:8px 12px;border-radius:10px;border:2px solid #ffd23f66;background:#2a1d0ce8;color:#ffe9c4}
+#movie .mv-prog{position:absolute;left:0;right:0;bottom:0;height:5px;background:#ffffff18}#movie .mv-prog i{display:block;height:100%;width:0;background:#ffd23f;transition:width .4s}
+
+a.movieb{text-decoration:none;box-sizing:border-box}.noteb{border-color:#7fd6ff;background:linear-gradient(90deg,#0c2a3a,#0e3a4a);color:#d8f4ff;box-shadow:0 0 22px #7fd6ff33}
