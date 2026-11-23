@@ -44,6 +44,11 @@ v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::
 #menu .ch button.done b{text-decoration:line-through;text-decoration-color:var(--red)}#menu .ch small{display:block;color:var(--pencil);font-size:12px}
 #menu .row{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}#menu .row button{background:var(--ink);color:var(--paper);border:2px solid var(--ink);border-radius:3px;padding:10px 14px;font-weight:700;box-shadow:3px 3px 0 #22201c55}
 #menu .row button.s{background:#fff;color:var(--ink)}
+#pad{position:absolute;inset:0;z-index:5;background:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+#pad canvas{position:absolute;inset:0;touch-action:none}#pad.peek{background:transparent;pointer-events:none}#pad.peek canvas{opacity:.15}#pad.peek .pt{pointer-events:auto}
+#pad .pt{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
+#pad .pt button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:5px 10px;font-size:14px;box-shadow:2px 2px 0 var(--ink)}
+#pad .pt button.on{background:var(--ink);color:var(--paper)}#pad .pt [data-c="#c8392b"]{color:var(--red)}#pad .pt [data-c="#1f4fb8"]{color:var(--blue)}#pad .pt [data-c].on{color:var(--paper)}
 @media (max-aspect-ratio:1/1){#app{flex-direction:column}#side{width:auto;height:58vh;border-left:0;border-top:2px solid var(--ink)}}
 </style>
 <script type="importmap">{ "imports": { "three": "./js/vendor/three.module.min.js" } }</script>
@@ -52,6 +57,6 @@ v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::
 <div id="app"><div id="view"></div><div id="side"><div id="hd"></div><div id="body"></div><div id="ft"></div></div></div>
 <div id="menu" hidden></div>
 <script src="js/geo/data.js?v=2"></script>
-<script type="module" src="js/geo/main.js?v=2"></script>
+<script type="module" src="js/geo/main.js?v=3"></script>
 </body>
 </html>

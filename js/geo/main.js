@@ -17,7 +17,7 @@ function place() { cam.position.set(Math.sin(yaw) * Math.cos(pitch) * dist, Math
 function fit() { const w = view.clientWidth, h = view.clientHeight; R.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
 new ResizeObserver(fit).observe(view); fit();
 let drag = null; const pts = new Map();
-view.addEventListener('pointerdown', e => { auto = false; pts.set(e.pointerId, [e.clientX, e.clientY]); drag = [e.clientX, e.clientY, yaw, pitch]; view.setPointerCapture(e.pointerId); });
+view.addEventListener('pointerdown', e => { const pd = document.getElementById('pad'); if (pd && !pd.hidden && !pd.classList.contains('peek')) return; if (e.target.closest && e.target.closest('.pt')) return; auto = false; pts.set(e.pointerId, [e.clientX, e.clientY]); drag = [e.clientX, e.clientY, yaw, pitch]; view.setPointerCapture(e.pointerId); });
 view.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; const prev = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
   if (pts.size === 2) { const [p, q] = [...pts.values()]; const d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (drag.d) dist = Math.max(8, Math.min(40, dist * drag.d / d)); drag.d = d; return; }
   yaw -= (e.clientX - prev[0]) * .008; pitch = Math.max(-1.2, Math.min(1.4, pitch + (e.clientY - prev[1]) * .008)); });
@@ -102,6 +102,32 @@ const SC = {
       return { r: `<v>p</v> = <v>a</v> + t<v>u</v>, <v>u</v> = (1, 2, 1), t = <b>${t}</b><br>P = (<b>${p.join(', ')}</b>)<br>직선: <b>x − 1 = (y + 2)/2 = z − 1</b>`, done: t === 2, msg: 't = 2에서 B. 방향벡터 성분이 분모, 지나는 점이 분자에!' }; } }
 };
 
+
+/* ── 펜 연습장: 문제 풀 때 왼쪽이 모눈 종이로 바뀜. 문제마다 필기 저장 (geo_ink_v1) ── */
+const INK = 'geo_ink_v1'; let ink = {}; try { ink = JSON.parse(localStorage.getItem(INK)) || {}; } catch (e) { }
+const pad = document.createElement('div'); pad.id = 'pad'; pad.hidden = true;
+pad.innerHTML = `<canvas></canvas><div class="pt"><button data-c="#22201c" class="on">검정</button><button data-c="#c8392b">빨강</button><button data-c="#1f4fb8">파랑</button><button data-e>지우개</button><button data-x>전체 지우기</button><button data-p>펜만 인식</button><button data-v>3D 보기</button></div>`;
+view.appendChild(pad);
+const pc = pad.querySelector('canvas'), px = pc.getContext('2d'); let penCol = '#22201c', erase = false, penOnly = false, padKey = null, cur = null;
+try { penOnly = localStorage.getItem('geo_penonly') === '1'; } catch (e) { }
+pad.querySelector('[data-p]').classList.toggle('on', penOnly);
+function padFit() { const r = pad.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); const old = pc.width ? pc.toDataURL() : null; pc.width = r.width * d; pc.height = r.height * d; pc.style.width = r.width + 'px'; pc.style.height = r.height + 'px'; px.setTransform(d, 0, 0, d, 0, 0); if (old && padKey) load(padKey); }
+new ResizeObserver(() => { if (!pad.hidden) padFit(); }).observe(view);
+function load(k) { px.clearRect(0, 0, pc.width, pc.height); const src = ink[k]; if (!src) return; const im = new Image(); im.onload = () => { px.save(); px.setTransform(1, 0, 0, 1, 0, 0); px.drawImage(im, 0, 0, pc.width, pc.height); px.restore(); }; im.src = src; }
+function store() { if (!padKey) return; ink[padKey] = pc.toDataURL('image/png'); const keys = Object.keys(ink); if (keys.length > 40) delete ink[keys[0]]; try { localStorage.setItem(INK, JSON.stringify(ink)); } catch (e) { delete ink[keys[0]]; } }
+function padOn(k) { padKey = k; pad.hidden = false; padFit(); load(k); }
+function padOff() { if (!pad.hidden) store(); pad.hidden = true; padKey = null; }
+pc.addEventListener('pointerdown', e => { if (penOnly && e.pointerType !== 'pen') return; e.stopPropagation(); pc.setPointerCapture(e.pointerId); const r = pc.getBoundingClientRect(); cur = { x: e.clientX - r.left, y: e.clientY - r.top, id: e.pointerId }; });
+pc.addEventListener('pointermove', e => { if (!cur || e.pointerId !== cur.id) return; e.stopPropagation(); const r = pc.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  px.globalCompositeOperation = erase ? 'destination-out' : 'source-over'; px.strokeStyle = penCol; px.lineCap = px.lineJoin = 'round'; px.lineWidth = erase ? 26 : (e.pressure > 0 && e.pointerType === 'pen' ? 1.2 + e.pressure * 2.6 : 2.4);
+  px.beginPath(); px.moveTo(cur.x, cur.y); px.lineTo(x, y); px.stroke(); cur.x = x; cur.y = y; });
+const padUp = e => { if (cur && e.pointerId === cur.id) { cur = null; store(); } }; pc.addEventListener('pointerup', padUp); pc.addEventListener('pointercancel', padUp);
+pad.querySelector('.pt').onclick = e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.c) { penCol = b.dataset.c; erase = false; pad.querySelectorAll('[data-c],[data-e]').forEach(x => x.classList.toggle('on', x === b)); }
+  if (b.dataset.e !== undefined) { erase = true; pad.querySelectorAll('[data-c],[data-e]').forEach(x => x.classList.toggle('on', x === b)); }
+  if (b.dataset.x !== undefined && confirm('이 문제의 필기를 모두 지울까요?')) { px.clearRect(0, 0, pc.width, pc.height); store(); }
+  if (b.dataset.p !== undefined) { penOnly = !penOnly; b.classList.toggle('on', penOnly); try { localStorage.setItem('geo_penonly', penOnly ? '1' : '0'); } catch (e) { } }
+  if (b.dataset.v !== undefined) { pad.classList.toggle('peek'); b.textContent = pad.classList.contains('peek') ? '연습장으로' : '3D 보기'; } };
 /* ── 흐름 ── */
 const face = `<svg class="pf" viewBox="0 0 64 64" fill="none" stroke="#22201c" stroke-width="2.6" stroke-linejoin="round"><path d="M10 22 L24 10 L56 12 L54 46 L40 58 L8 56Z" fill="#fff"/><path d="M10 22 L42 24 L40 58 M42 24 L56 12"/><circle cx="20" cy="36" r="2.6" fill="#22201c"/><circle cx="32" cy="37" r="2.6" fill="#22201c"/><path d="M20 46 q6 4 12 0"/><path d="M44 30 l6 -4" stroke="#c8392b"/></svg>`;
 const hd = $('#hd'), body = $('#body'), ft = $('#ft');
@@ -117,7 +143,7 @@ function setScene(name, interactive) { const sc = SC[name]; ctlVals = sc.c.map(c
   const check = () => { if (out.done && !hit) { hit = true; okEl.hidden = false; okEl.innerHTML = '✓ 성공! ' + out.msg; interactive(); } };
   return [box, read, okEl]; }
 
-function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save();
+function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); padOff(); pad.classList.remove('peek');
   const L = c.learn.length, n = c.probs.length;
   if (S.step < L) { const [t, x] = c.learn[S.step]; setScene(c.scene, null); auto = true;
     body.innerHTML = `<span class="tag">개념 ${S.step + 1} / ${L}</span><div class="prog">${c.learn.map((_, i) => `<i class="${i <= S.step ? 'on' : ''}"></i>`).join('')}</div><div class="bub">${face}<div class="card"><h2>${t}</h2>${x}</div></div><p class="paper">왼쪽 3D 그림은 끌어서 돌릴 수 있어요 (두 손가락으로 확대).</p>`;
@@ -125,19 +151,19 @@ function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save();
   if (S.step === L) { body.innerHTML = `<span class="tag">직접 해 보기</span><div class="card">${c.mission}</div>`; const next = () => { nb.disabled = false; };
     const els = setScene(c.scene, next); body.append(...els); foot([['건너뛰기', () => { S.step++; show(); }], ['문제 풀기 ▶', () => { S.step++; show(); }, 'pri']]); const nb = ft.lastChild; nb.disabled = true; return; }
   const k = S.step - L - 1; if (k >= n) { S.right[c.id] = 1; S.ch++; S.step = 0; save(); return show(); }
-  const q = c.probs[k];
-  body.innerHTML = `<span class="tag">교과서 문제 ${k + 1} / ${n}</span><div class="prog">${c.probs.map((_, i) => `<i class="${i <= k ? 'on' : ''}"></i>`).join('')}</div><div class="card"><div class="src">${q.s}</div><div class="q">${q.q}</div></div><p class="paper">연습장에 풀고 답을 확인하세요.</p><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h">풀이: ${q.h}</div>` : ''}</div>`;
+  const q = c.probs[k]; padOn(c.id + ':' + k);
+  body.innerHTML = `<span class="tag">교과서 문제 ${k + 1} / ${n}</span><div class="prog">${c.probs.map((_, i) => `<i class="${i <= k ? 'on' : ''}"></i>`).join('')}</div><div class="card"><div class="src">${q.s}</div><div class="q">${q.q}</div></div><p class="paper">왼쪽 연습장에 펜으로 풀고 답을 확인하세요. (필기는 문제마다 저장돼요)</p><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h">풀이: ${q.h}</div>` : ''}</div>`;
   const key = c.id + ':' + k;
   foot([['답 확인', () => { body.querySelector('.ans').hidden = false; body.scrollTop = 1e5;
     foot([['✗ 틀림', () => { if (!S.wrong.includes(key)) S.wrong.push(key); S.step++; show(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== key); S.step++; show(); }, 'pri']]); }, 'pri']]); }
 
 let wq = null;
 function wrongMode() { $('#menu').hidden = true; wq = S.wrong.slice(); nextWrong(); }
-function nextWrong() { if (!wq.length) { wq = null; return menu(); } const [id, k] = wq[0].split(':'); const c = CH.find(x => x.id === id), q = c.probs[+k]; header(c); setScene(c.scene, null);
+function nextWrong() { if (!wq.length) { wq = null; return menu(); } const [id, k] = wq[0].split(':'); const c = CH.find(x => x.id === id), q = c.probs[+k]; header(c); setScene(c.scene, null); padOff(); padOn(wq[0]);
   body.innerHTML = `<span class="tag">오답 다시 — 남은 ${wq.length}</span><div class="card"><div class="src">${q.s}</div><div class="q">${q.q}</div></div><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h">풀이: ${q.h}</div>` : ''}</div>`;
   foot([['답 확인', () => { body.querySelector('.ans').hidden = false; foot([['✗ 또 틀림', () => { wq.shift(); nextWrong(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== wq[0]); save(); wq.shift(); nextWrong(); }, 'pri']]); }, 'pri']]); }
 
-function menu() { const m = $('#menu'); m.hidden = false;
+function menu() { padOff(); const m = $('#menu'); m.hidden = false;
   m.innerHTML = `<div class="mc"><h1>기하 — 공간좌표와 벡터</h1><p>범위 p80~152, p160~166 (p153~158 평면과 구의 방정식 제외). 설명 → 직접 해 보기 → 교과서 문제 순서로 자동 진행돼요.</p>
   <div class="row"><button data-a="go">${S.ch < CH.length ? `이어하기 — ${CH[S.ch].t}` : '처음부터 다시'}</button><button class="s" data-a="wrong">오답 다시 (${S.wrong.length})</button><button class="s" data-a="home">과목 선택</button></div>
   <div class="ch">${CH.map((c, i) => `<button data-c="${i}" class="${S.right[c.id] ? 'done' : ''}"><b>${S.right[c.id] ? '✓ ' : ''}${i + 1}. ${c.t}</b><small>${c.p} · 문제 ${c.probs.length}개</small></button>`).join('')}</div></div>`;
