@@ -1,7 +1,7 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
 import * as THREE from 'three';
 import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus } from './world.js';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js';
 import { mol, NAME } from './mols.js';
 import { HUD, toast, banner, flash, say, choose, quiz, pickQs, marker, SAVE, save, chem } from './ui.js';
 
@@ -24,15 +24,15 @@ const P = { g: new THREE.Group(), vel: V(0, 0, 0), inMito: false, carry: [], das
 }
 /* ── 아이템 ── */
 const ITEMS = []; /* {o, type, mode:'free'|'carry'|'gone', vel, collect:bool, drift} */
-const ENERGY = { ATP: 1, NADH: 1, FADH2: 1 };
+const ENERGY = { ATP: 1, NADH: 1, FADH2: 1, NADPH: 1 };
 function spawn(type, pos, o = {}) { const m = mol(type); m.position.copy(pos); m.scale.setScalar(o.scale || 1); E.scene.add(m); const it = Object.assign({ o: m, type, mode: 'free', vel: o.vel || V(0, 0, 0), collect: o.collect !== false, t: 0 }, o); ITEMS.push(it); if (o.pop !== false) { m.scale.setScalar(.01); tween(.45, k => m.scale.setScalar((o.scale || 1) * ease.back(k))); } return it; }
 function kill(it) { it.mode = 'gone'; E.scene.remove(it.o); const i = ITEMS.indexOf(it); if (i >= 0) ITEMS.splice(i, 1); const c = P.carry.indexOf(it); if (c >= 0) P.carry.splice(c, 1); }
 function carrying(type) { return P.carry.filter(c => c.type === type); }
 /* 운반 중인 것 꺼내서 target으로 날리기 */
 function deliver(type, n, target, each) { const L = carrying(type).slice(0, n); L.forEach((it, i) => { P.carry.splice(P.carry.indexOf(it), 1); it.mode = 'fly'; setTimeout(() => { sfx('drop'); fly(it.o, target, .7, 3, () => { kill(it); each && each(it); }); }, i * 160); }); return L.length; }
-const counts = { ATP: 0, NADH: 0, FADH2: 0 };
+const counts = { ATP: 0, NADH: 0, FADH2: 0, NADPH: 0 };
 function collect(it) { /* 에너지 운반체: 플레이어에게 흡수 */
-  it.mode = 'fly'; fly(it.o, () => P.g.position, .35, 1, () => { kill(it); counts[it.type]++; HUD.add(it.type, 1); sfx(it.type === 'ATP' ? 'atp' : 'pick'); burst(P.g.position, it.type === 'ATP' ? '#ffd23f' : it.type === 'NADH' ? '#4aa8ff' : '#47e38a', 14, 5, .6, .3); it.onGet && it.onGet(); });
+  it.mode = 'fly'; fly(it.o, () => P.g.position, .35, 1, () => { kill(it); counts[it.type]++; HUD.add(it.type, 1); sfx(it.type === 'ATP' ? 'atp' : 'pick'); burst(P.g.position, it.type === 'ATP' ? '#ffd23f' : it.type === 'NADH' ? '#4aa8ff' : it.type === 'NADPH' ? '#7a8aff' : '#47e38a', 14, 5, .6, .3); it.onGet && it.onGet(); });
 }
 
 /* ── 결산판 ── */
@@ -77,6 +77,7 @@ function loop(now) {
   const p = P.g.position; const dc = p.distanceTo(CELL.c); if (dc > CELL.r - 4) p.sub(CELL.c).setLength(CELL.r - 4).add(CELL.c);
   const dn = p.distanceTo(NUC.c); if (dn < NUC.r + 2) p.sub(NUC.c).setLength(NUC.r + 2).add(NUC.c);
   P.inMito = mitoConstrain(p, was); if (P.inMito !== was) { toast(P.inMito ? '🟠 마이토콘드리아 <b>바탕질</b> 진입' : '🔵 <b>세포질</b>로 나옴', P.inMito ? '#ff9a3c' : '#5af0ff'); sfx('whoosh'); }
+  const wc = P.inChl; P.inChl = chloroConstrain(p, wc); if (P.inChl !== wc) { toast(P.inChl ? '🟢 <b>엽록체 스트로마</b> 진입' : '🔵 <b>세포질</b>로 나옴', P.inChl ? '#5aff7a' : '#5af0ff'); sfx('whoosh'); }
   /* 몸 방향·흔들림 */
   const hv = Math.hypot(P.vel.x, P.vel.z); if (hv > .5) P.face = Math.atan2(P.vel.x, P.vel.z); P.g.rotation.y += ((P.face - P.g.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 8);
   P.body.position.y = Math.sin(T * 3) * .12; P.halo.rotation.z += dt * 2; P.halo.position.y = .2 + Math.sin(T * 3) * .12;
@@ -99,6 +100,7 @@ let stepMission = () => { };
 
 /* ════════════════ 미션 ════════════════ */
 const MISSIONS = [
+  { id: 'enz', t: '0. 효소 공방', d: '활성화 에너지 · 기질 특이성 · 보조 인자 · 억제제', run: mEnzyme },
   { id: 'intro', t: '1. 세포 속으로', d: 'ATP · 마이토콘드리아 구조', run: mIntro },
   { id: 'gly', t: '2. 해당 과정', d: '포도당 → 피루브산 2 (세포질)', run: mGly },
   { id: 'pyr', t: '3. 피루브산의 산화', d: '마이토콘드리아 입장 → 아세틸 CoA', run: mPyr },
@@ -106,10 +108,12 @@ const MISSIONS = [
   { id: 'etc', t: '5. 전자 전달계 · 32 ATP', d: 'H⁺ 댐과 ATP 합성 효소 터빈', run: mETC },
   { id: 'poison', t: '6. 독극물 사건', d: '사이안화물 · 올리고마이신 · DNP', run: mPoison },
   { id: 'ferm', t: '7. 산소가 끊겼다 — 발효', d: '젖산 발효 · 알코올 발효 · NAD⁺ 재생', run: mFerm },
-  { id: 'boss', t: '8. 최종 시험 — 피로 괴물', d: '다른 연료 · 호흡률 · 효모 실험 · 종합', run: mBoss }
+  { id: 'light', t: '8. 엽록체 — 명반응', d: '색소 · 광계 Ⅱ/Ⅰ · 물의 광분해 · 광인산화', run: mLight },
+  { id: 'calvin', t: '9. 캘빈 회로 · 호흡과 비교', d: '탄소 고정 → 3PG 환원 → RuBP 재생', run: mCalvin },
+  { id: 'boss', t: '10. 최종 시험 — 피로 괴물', d: '세포호흡 + 효소 + 광합성 종합', run: mBoss }
 ];
 async function gate(chs, n, title) { HUD.obj(''); target(null); const qs = pickQs(chs, n); if (!qs.length) return; await say([['s', `🔒 <b>${title}</b> — 문제 ${qs.length}개. 맞힐 때마다 ATP 보너스!`]]); const r = await quiz(qs, title); if (r.right) { HUD.add('ATP', r.right); counts.ATP += r.right; } banner(`${r.right} / ${r.total}`, r.right === r.total ? '완벽! 관문 통과' : '틀린 문제는 메뉴의 “오답 다시 풀기”에 저장됐어요', r.right === r.total ? '#ffd23f' : '#ff9a3c'); await wait(1.2); }
-function done(k) { SAVE.reached = Math.max(SAVE.reached, k + 1); save(); }
+let CURK = 0; function done() { SAVE.reached = Math.max(SAVE.reached, CURK + 1); save(); }
 
 /* 1. 세포 속으로 */
 async function mIntro() {
@@ -310,7 +314,7 @@ async function mBoss() {
   P.g.position.copy(POS.arena).add(V(0, 0, 16)); IN.yaw = Math.PI; IN.pitch = -.05;
   await showcase(POS.arena.clone().add(V(16, 10, 26)), boss.position.clone(), 2.4);
   await say([['x', '크크크… 나는 <b>피로 괴물</b>. 네가 배운 걸 다 잊게 해 주지!'], '마지막 시험이야. 맞히면 <b>ATP 빔</b>, 틀리면 하트가 깎여. 하트 3개!']);
-  let hp = 8, hearts = 3; const qs = pickQs(['s9', 's10', 's2', 's4', 's5', 's6', 's8', 's11'], 14);
+  let hp = 8, hearts = 3; const qs = pickQs(['s9', 's10', 's2', 's4', 's5', 's6', 's8', 's11', 'e1', 'p1', 'p2', 'p3', 'p4'], 16);
   for (const qq of qs) {
     if (hp <= 0 || hearts <= 0) break;
     const r = await quiz([qq], `보스전 · 남은 체력 ${hp} · ❤ ${hearts}`);
@@ -324,6 +328,114 @@ async function mBoss() {
     await say(['해냈어! 정리 한 번 더:', '해당 과정(세포질) 2ATP · 피루브산 산화(바탕질) ATP 0 · TCA(바탕질) 2ATP · 산화적 인산화(내막) 28ATP = <b>32 ATP</b>.', '지방은 글리세롤·지방산 → 아세틸 CoA(β 산화), 단백질은 아미노산 → 탈아미노 → 암모니아는 요소로. 호흡률은 탄수화물 1, 단백질 0.8, 지방 0.7!', '메뉴에서 챕터를 골라 다시 하거나, <b>오답 다시 풀기</b>로 틀린 문제를 복습해 봐.']); }
   else { E.scene.remove(boss); banner('패배…', '하트가 다 떨어졌어요. 메뉴에서 다시 도전!', '#ff5a8a'); }
 }
+/* 0. 효소 공방 */
+async function mEnzyme() {
+  HUD.mission('효소 공방', '생체 촉매 · 활성화 에너지'); HUD.board(null);
+  await showcase(V(-10, 22, 120), ENZ.hill.clone().add(V(0, 2, 0)), 2.4);
+  await say(['세포 속 모든 화학 반응엔 <b>효소</b>가 필요해. 효소 = 주로 <b>단백질</b>로 된 <b>생체 촉매</b>.', '반응이 일어나려면 넘어야 하는 에너지 언덕이 있어. 이게 <b>활성화 에너지</b>. 일단 효소 없이 넘겨 보자!']);
+  const hillY = x => ENZ.hill.y - 6 + 16 * Math.exp(-((x - ENZ.hill.x) ** 2) / 22), hillY2 = x => ENZ.hill.y - 6 + 7 * Math.exp(-((x - ENZ.hill.x) ** 2) / 22);
+  let sub = spawn('subS', ENZ.hillA.clone().add(V(-2, 2, 10)));
+  HUD.obj('■ <b>기질(반응물)</b>을 주워서 주황 링(반응물 투입)으로'); stepMission = () => target(sub.mode === 'free' ? sub.o.position : ringOf(W.ringA));
+  await until(() => inRing(W.ringA) && carrying('subS').length); stepMission = () => { }; target(null);
+  deliver('subS', 1, ENZ.hillA.clone().add(V(0, -4, 0))); await wait(.9);
+  camOverride = { pos: ENZ.hill.clone().add(V(0, 6, 34)), look: ENZ.hill.clone().add(V(0, 2, 0)) };
+  let m = mol('subS'); E.scene.add(m); const x0 = ENZ.hill.x - 14;
+  await new Promise(r => tween(1.6, k => { const x = x0 + 11 * ease.out(k); m.position.set(x, hillY(x) + .8, ENZ.hill.z); m.rotation.z -= .08; }, r));
+  shake(.3); sfx('bad'); toast('활성화 에너지가 너무 커서 <b>못 넘음</b>!', '#ff4a5a');
+  await new Promise(r => tween(1.1, k => { const x = x0 + 11 - 11 * ease.inOut(k); m.position.set(x, hillY(x) + .8, ENZ.hill.z); m.rotation.z += .1; }, r));
+  E.scene.remove(m); camOverride = null;
+  await say(['역시 못 넘네. 이제 <b>효소</b>를 써 보자. 저기 효소 세 개는 <b>활성 부위</b> 모양이 ▲, ■, ● 로 달라.', '효소는 활성 부위와 <b>입체 구조가 딱 맞는 기질</b>과만 결합해. 이게 <b>기질 특이성</b>! 맞는 효소를 찾아서 기질을 넣어 봐.']);
+  sub = spawn('subS', ENZ.hillA.clone().add(V(-2, 2, 10))); let ok = false, cool = 0;
+  stepMission = dt => { cool -= dt; target(sub.mode === 'free' ? sub.o.position : ENZ.keys[1].clone().add(V(0, 4, 0)));
+    if (sub.mode !== 'carry' || cool > 0) return; HUD.obj('■ 기질을 <b>모양이 맞는 효소</b>의 링으로 (▲ ■ ● 중)');
+    W.keyEnz.forEach((e, i) => { if (ok || !inRing(e.userData.ring)) return; if (i === 1) { ok = true; } else { cool = 1.5; sfx('bad'); shake(.2); toast(`${['▲', '■', '●'][i]} 활성 부위 — 모양이 안 맞아 <b>결합 X</b>`, '#ff5a7a'); } }); };
+  await until(() => ok); stepMission = () => { }; target(null);
+  const ez = W.keyEnz[1]; deliver('subS', 1, ez.position.clone().add(V(0, 0, 2.6))); await wait(.9);
+  toast('효소·기질 <b>복합체</b> 형성!', '#5af0ff'); burst(ez.position, '#5af0ff', 40, 8); sfx('machine');
+  W.hillBlue.visible = true; W.hillRed.material.opacity = .22; camOverride = { pos: ENZ.hill.clone().add(V(0, 6, 34)), look: ENZ.hill.clone().add(V(0, 2, 0)) };
+  m = mol('subS'); E.scene.add(m);
+  await new Promise(r => tween(2, k => { const x = x0 + 28 * ease.inOut(k); m.position.set(x, hillY2(x) + .8, ENZ.hill.z + 1); m.rotation.z -= .1; }, r));
+  E.scene.remove(m); for (let i = 0; i < 2; i++) spawn('prod', ENZ.hillB.clone().add(V(i * 2, 0, 2)), { collect: false, life: 6, vel: V(2 - i * 4, 3, 2) });
+  flash('rgba(90,200,255,.3)'); sfx('ok'); banner('반응 성공!', '효소가 <b>활성화 에너지만</b> 낮췄다 · 반응열은 그대로 · 효소는 <b>재사용</b>', '#5af0ff'); await wait(1.5); camOverride = null;
+  await choose('효소가 있을 때 <b>변하지 않는</b> 것은?', ['활성화 에너지', '반응열 (반응물과 생성물의 에너지 차)', '반응 속도'], 1);
+  /* 보조 인자 */
+  await say(['저기 회색 효소는 <b>주효소</b>(단백질 부분)만 있어서 일을 못 해.', '비단백질 부분인 <b>보조 인자</b>가 붙어야 완전한 <b>전효소</b>가 돼. 전효소 = 주효소 + 보조 인자.', '보조 인자에는 <b>조효소</b>(NAD⁺, FAD, NADP⁺, 비타민)와 <b>금속 이온</b>(철, 구리, 아연, 마그네슘)이 있어. 조효소를 가져다줘!']);
+  const cf = spawn('cof', W.apo.position.clone().add(V(-12, 2, -8)));
+  stepMission = () => target(cf.mode === 'free' ? cf.o.position : ringOf(W.apoRing)); HUD.obj('💗 <b>조효소</b>를 주워 주효소에게');
+  await until(() => inRing(W.apoRing) && carrying('cof').length); stepMission = () => { }; target(null);
+  await new Promise(r => deliver('cof', 1, W.apo.position.clone(), r));
+  W.apo.userData.body.material.color.set('#ff9ad5'); W.apo.userData.body.material.emissive.set('#ff3a9a'); W.apo.userData.body.material.emissiveIntensity = 1.6; burst(W.apo.position, '#ff9ad5', 50, 9); sfx('win');
+  const nl = label('전효소 = 주효소 + 보조 인자 ✔', { scale: .6, border: '#ff9ad5' }); W.apo.remove(W.apo.userData.label); nl.position.y = 6; W.apo.add(nl);
+  await choose('다음 중 <b>조효소</b>인 것은?', ['NAD⁺', '철 이온', '마그네슘 이온'], 0);
+  await say(['효소 반응 속도에 영향을 주는 것: <b>온도</b>(최적 온도, 너무 뜨거우면 단백질 <b>변성</b>), <b>pH</b>(펩신 약 2, 아밀레이스 약 7, 트립신 약 8), <b>기질 농도</b>(늘리면 빨라지다가 효소가 다 차면 일정).', '<b>억제제</b>도 있어. <b>경쟁적 억제제</b>는 기질과 닮아서 활성 부위를 차지 → 기질을 많이 넣으면 억제 효과 ↓. <b>비경쟁적 억제제</b>는 다른 부위에 붙어 활성 부위 모양을 바꿈 → 기질을 늘려도 억제 효과 그대로.']);
+  await choose('기질 농도를 아주 높였더니 억제제가 없을 때와 최대 속도가 같아졌다. 이 억제제는?', ['경쟁적 억제제', '비경쟁적 억제제'], 0);
+  await choose('물 분자를 넣어 기질을 쪼개는 효소는?', ['가수 분해 효소', '연결 효소', '전이 효소'], 0);
+  await gate(['e1'], 4, '효소 관문'); done();
+}
+/* 8. 엽록체 — 명반응 */
+async function mLight() {
+  HUD.mission('엽록체 — 명반응', '타이라코이드 막 · 빛 → ATP + NADPH'); HUD.board(null); HUD.show('NAD', false); HUD.show('NADH', false); HUD.show('FADH2', false); HUD.show('NADPH', true); HUD.set('NADPH', 0);
+  E.scene.fog.color.set('#0a2230'); E.scene.background.set('#06121c'); W.lights.sun.color.set('#cfefff');
+  if (P.inMito) { P.g.position.copy(MITO.gate).add(V(10, 0, 0)); P.inMito = false; } setLumen(0);
+  await showcase(V(40, 26, 50), CHL.c.clone(), 2.6);
+  await say(['저 초록 거대한 게 <b>엽록체</b> (식물 세포). 마이토콘드리아처럼 <b>이중막</b>이고 자기 <b>DNA·리보솜</b>이 있어 → 광합성 원핵세포가 공생한 흔적(세포내 공생설).', '안에는 납작한 주머니 <b>타이라코이드</b>, 그게 쌓인 <b>그라나</b>, 액체 부분 <b>스트로마</b>가 있어.', '광합성: <b>6CO₂ + 12H₂O → C₆H₁₂O₆ + 6O₂ + 6H₂O</b>. 빛에너지 → 화학 에너지. 작은 분자로 큰 분자를 만드니까 <b>동화 작용</b>. 들어가 보자!']);
+  HUD.obj('🟢 <b>엽록체 입구</b>로'); target(CHL.gate.clone().add(V(4, 0, 0))); await until(() => P.inChl); target(null);
+  await say(['광합성 색소: <b>엽록소 a</b>(반응 중심 색소), 엽록소 b, <b>카로티노이드</b>(카로틴·잔토필 — 보조 색소 + 강한 빛으로부터 보호).', '엽록소는 <b>청자색광과 적색광</b>을 잘 흡수하고 녹색광은 거의 흡수하지 않아서 잎이 초록으로 보여.']);
+  await choose('엥겔만 실험: 프리즘 빛을 해캄에 비추면 산소 세균이 몰리는 곳은?', ['청자색광·적색광 부분', '녹색광 부분', '골고루'], 0);
+  await choose('흡수 스펙트럼과 거의 일치하는, 파장별 광합성 속도 그래프는?', ['작용 스펙트럼', '흡수 스펙트럼', '방출 스펙트럼'], 0);
+  await say(['이제 <b>타이라코이드 막</b>의 명반응! 광계 Ⅱ(<b>P680</b>) → 전자 전달계 → 광계 Ⅰ(<b>P700</b>) → NADP⁺ 순서로 전자가 흘러.', '광계 Ⅱ 링에서 ✋를 꾹 눌러 빛을 모아! 빛을 받은 P680이 전자를 내보내고, 빈자리는 <b>물이 쪼개져서(광분해)</b> 채워. 그때 <b>O₂</b>가 나와.']);
+  const pts = () => [W.ps2, W.cytb, W.ps1, W.nadpR].map(o => o.position.clone());
+  const runE = (from) => { const L = pts().slice(from); const e = mol('e'); e.scale.setScalar(1.6); e.position.copy(L[0]); E.scene.add(e); let k = 0; const step = () => { if (k >= L.length - 1) { E.scene.remove(e); return; } fly(e, L[k + 1], .3, .4, () => { k++; step(); }); }; step(); };
+  let water = 0, nadph = 0, atp = 0, acc = 0;
+  stepMission = dt => {
+    const hold = IN.act || IN.keys.KeyE;
+    if (water < 12) { target(ringOf(W.inPS2)); HUD.obj(`☀ 광계 Ⅱ 링에서 ✋ 꾹 — 물의 광분해 <b>${water}</b> / 12 H₂O`); if (hold && inRing(W.inPS2)) { acc += dt; if (acc > .28) { acc = 0; water++; runE(0); sfx('pick'); setLumen(water / 12 * .7);
+        const o = spawn('O2', W.ps2.position.clone().add(V(3, -2, 0)), { collect: false, life: 2.5, vel: V(-4, 4, (Math.random() - .5) * 4), scale: .6 }); if (water % 2 === 0) toast('2H₂O → <b>O₂</b> + 4H⁺ + 4e⁻', '#ff6a6a');
+        const n = spawn('NADPH', W.nadpR.position.clone().add(V(-2, 1, 0)), { vel: V(-6, 2, (Math.random() - .5) * 6), magnet: 40 }); nadph++; } } return; }
+    if (atp < 18) { target(ringOf(W.inCSyn)); HUD.obj(`⚙ H⁺가 타이라코이드 내부에 가득! ATP 합성 효소 링에서 ✋ 꾹 — 광인산화 <b>${atp}</b> / 18 ATP`); const on = hold && inRing(W.inCSyn); W.cSynRotor.rotation.x += (on ? 12 : 0) * dt; W.cSynHead.rotation.x += (on ? 4 : 0) * dt;
+      if (on) { acc += dt; if (acc > .22) { acc = 0; atp++; setLumen(.7 - atp / 18 * .55); spawn('ATP', W.cSynHead.getWorldPosition(V()), { vel: V(-6, (Math.random() - .5) * 5, (Math.random() - .5) * 5), magnet: 40 }); if (atp === 7) runE(2); } } return; }
+    target(null); };
+  await until(() => water >= 12 && atp >= 18 && !ITEMS.some(x => ENERGY[x.type] && x.mode === 'free')); stepMission = () => { }; target(null);
+  flash('rgba(160,255,120,.4)'); sfx('win'); banner('명반응 완료!', '12H₂O + 12NADP⁺ → 6O₂ + <b>18ATP</b> + <b>12NADPH</b> + 12H⁺', '#8aff6a');
+  await say(['H⁺는 전자가 지나갈 때 <b>스트로마 → 타이라코이드 내부</b>로 능동 수송돼서 쌓이고, <b>ATP 합성 효소</b>를 통해 다시 스트로마로 나오면서 ATP를 만들어. 이게 <b>광인산화</b>(화학 삼투).', '방금 한 건 <b>비순환적 전자 흐름</b> (광계 Ⅰ·Ⅱ 모두, 최종 전자 수용체 NADP⁺). 광계 Ⅰ만 써서 전자가 P700으로 되돌아오는 <b>순환적 전자 흐름</b>은 ATP만 만들어.']);
+  await choose('순환적 전자 흐름에서 <b>만들어지지 않는</b> 것은?', ['NADPH와 O₂', 'ATP'], 0);
+  await choose('광합성에서 나오는 O₂는 어디서 왔을까? (루벤의 ¹⁸O 실험)', ['물 (H₂O)', '이산화 탄소 (CO₂)'], 0);
+  await gate(['p1', 'p2'], 4, '엽록체·명반응 관문'); done();
+}
+/* 9. 캘빈 회로 + 비교 */
+async function mCalvin() {
+  HUD.mission('탄소 고정 반응 (캘빈 회로)', '스트로마 · 빛이 직접 필요 없음'); HUD.show('NAD', false); HUD.show('NADH', false); HUD.show('FADH2', false); HUD.show('NADPH', true);
+  if (!P.inChl) { P.g.position.copy(CHL.c).add(V(-10, 4, -8)); P.inChl = true; }
+  if ((HUD.inv.ATP || 0) < 18) HUD.set('ATP', 18); if ((HUD.inv.NADPH || 0) < 12) HUD.set('NADPH', 12);
+  await showcase(W.calvin.position.clone().add(V(-18, 6, -6)), W.calvin.position.clone(), 2);
+  await say(['명반응에서 만든 <b>ATP 18 · NADPH 12</b>를 들고 <b>스트로마</b>의 캘빈 회로로! 3단계: <b>탄소 고정 → 3PG 환원 → RuBP 재생</b>.', '먼저 떠다니는 <b>CO₂</b>를 모아서 투입구에 넣어. 한 바퀴에 CO₂ 3개!']);
+  const L = []; for (let i = 0; i < 6; i++) { const it = spawn('CO2', CHL.c.clone().add(V(-12 + (i % 3) * 5, 6 + (i % 2) * 3, -14 + i * 5))); L.push(it); }
+  const wheel = W.calWheel, nodes = W.calNodes;
+  for (let turn = 0; turn < 2; turn++) {
+    stepMission = () => { const n = L.find(x => x.mode === 'free'); const c = carrying('CO2').length; HUD.obj(`🌫 CO₂ 모으기 (${c}/3) → 캘빈 회로 투입구`); target(c >= 3 || !n ? ringOf(W.inCal) : n.o.position); };
+    await until(() => inRing(W.inCal) && carrying('CO2').length >= 3); stepMission = () => { }; target(null);
+    camOverride = { pos: W.calvin.position.clone().add(V(-20, 4, 4)), look: W.calvin.position.clone() };
+    await new Promise(r => { let n = 0; deliver('CO2', 3, nodes[0].getWorldPosition(V()), () => { if (++n === 3) r(); }); }); sfx('machine');
+    const spinTo = async i => { const from = wheel.rotation.x; await new Promise(r => tween(turn ? .6 : 1, k => wheel.rotation.x = from - (Math.PI / 2) * ease.inOut(k), r)); nodes.forEach(n => n.children[0].material.emissiveIntensity = 1.4); nodes[i].children[0].material.emissiveIntensity = 4; };
+    const pay = (k, n) => { HUD.add(k, -n); for (let j = 0; j < Math.min(n, 4); j++) { const a = mol(k); a.position.copy(P.g.position); E.scene.add(a); fly(a, () => wheel.getWorldPosition(V()), .7, 3, () => E.scene.remove(a)); } };
+    await spinTo(1); toast('1단계 <b>탄소 고정</b>: 3CO₂ + 3RuBP → 6 3PG (루비스코)', '#ffd23f');
+    if (!turn) await choose('1단계: CO₂와 결합하는 물질과 효소는?', ['RuBP · 루비스코', 'PGAL · ATP 합성 효소', '3PG · 탈수소 효소'], 0);
+    await spinTo(2); pay('ATP', 6); pay('NADPH', 6); toast('2단계 <b>3PG 환원</b>: 6ATP + 6NADPH 사용 → 6 PGAL', '#ff9a3c');
+    if (!turn) await choose('2단계에서 3PG를 PGAL로 환원할 때 쓰이는 것은?', ['ATP와 NADPH', 'O₂', 'NADH와 FADH₂'], 0);
+    await spinTo(3); spawn('pgal', nodes[3].getWorldPosition(V()).add(V(-2, 0, 0)), { collect: false, life: 4, vel: V(-4, -2, 0) }); toast('PGAL 6개 중 <b>1개</b>는 포도당 쪽으로', '#ff6fae');
+    await spinTo(0); pay('ATP', 3); toast('3단계 <b>RuBP 재생</b>: 5 PGAL + 3ATP → 3 RuBP', '#b8ff7a');
+    if (!turn) await choose('3단계 RuBP 재생에 쓰이는 것은?', ['ATP', 'NADPH', 'CO₂'], 0);
+    camOverride = null; banner(`${turn + 1}바퀴`, 'CO₂ 3 고정 · ATP 9 · NADPH 6 사용 → PGAL 1', '#b8ff7a'); await wait(1);
+  }
+  const g = spawn('glucose', W.calvin.position.clone().add(V(-6, 0, 0)), { collect: false, life: 8, vel: V(-2, 1, 0) }); flash('rgba(180,255,120,.4)'); sfx('win'); shake(.4);
+  banner('포도당 합성!', 'PGAL 2 → C₆H₁₂O₆ · 총 CO₂ 6 · ATP 18 · NADPH 12', '#ffd23f');
+  await say(['빛을 끄면 → ATP·NADPH 부족 → 3PG 환원이 멈춰서 <b>3PG ↑, RuBP ↓</b>. CO₂를 끊으면 → RuBP가 안 쓰여서 <b>RuBP ↑, 3PG ↓</b>.', '명반응과 탄소 고정 반응은 서로의 산물(ATP·NADPH ↔ ADP·NADP⁺)이 필요해서 <b>함께</b> 일어나야 계속돼.']);
+  await choose('빛을 끊으면 잠시 동안 <b>증가</b>하는 물질은?', ['3PG', 'RuBP'], 0);
+  await gate(['p3'], 3, '탄소 고정 관문');
+  await say(['마지막으로 <b>세포호흡 vs 광합성</b> 정리!', '공통: <b>전자전달계 + ATP 합성 효소 (화학 삼투)</b>, 탄소 수가 변하는 회로(TCA ↔ 캘빈)와 효소 조절.', '차이: 장소(세포질·마이토콘드리아 ↔ 엽록체), 이화 ↔ 동화, 조효소 NAD⁺·FAD ↔ <b>NADP⁺</b>, 최종 전자 수용체 <b>O₂ ↔ NADP⁺</b>, 전자 공여체 NADH·FADH₂ ↔ <b>H₂O</b>, H⁺ 쌓이는 곳 <b>막 사이 공간 ↔ 타이라코이드 내부</b>, 기질 수준 인산화는 세포호흡에만.']);
+  await choose('H⁺가 능동 수송되어 쌓이는 곳을 바르게 짝지은 것은? (마이토콘드리아 · 엽록체)', ['막 사이 공간 · 타이라코이드 내부', '기질 · 스트로마', '막 사이 공간 · 스트로마'], 0);
+  await gate(['p4'], 3, '세포호흡 vs 광합성 관문'); HUD.show('NADPH', false); ['NAD', 'NADH', 'FADH2'].forEach(k => HUD.show(k, true)); done();
+}
 function ensureCarry(type, n) { const have = carrying(type).length; for (let i = have; i < n; i++) { const it = spawn(type, P.g.position.clone().add(V(2, 2, 0))); it.mode = 'carry'; P.carry.push(it); } }
 
 /* ════════════════ 메뉴 ════════════════ */
@@ -331,10 +443,12 @@ let running = false;
 async function play(from) {
   running = true; $('#menu').hidden = true; $('#hud').hidden = false;
   P.carry.slice().forEach(kill); ITEMS.slice().forEach(kill);
-  if (from > 0) { HUD.set('ATP', 5); } else HUD.set('ATP', 0); HUD.set('NADH', 0); HUD.set('FADH2', 0); HUD.set('NAD', 0);
-  if (from >= 1 && from <= 4) { if (from >= 2) { B.ATP = 2; B.NADH = 2; } if (from >= 3) { B.NADH = 4; B.CO2 = 2; } if (from >= 4) { B.ATP = 4; B.NADH = 10; B.FADH2 = 2; B.CO2 = 6; } board(); } else if (from > 4) HUD.board(null);
-  if (from < 2) P.g.position.copy(POS.start), P.inMito = false;
-  for (let k = from; k < MISSIONS.length; k++) { HUD.obj(''); target(null); stepMission = () => { }; await MISSIONS[k].run(); if (k === 4) HUD.board(null); if (k < MISSIONS.length - 1) { banner('다음 챕터', MISSIONS[k + 1].t, '#7fffe0'); await wait(1.6); } }
+  const ord = MISSIONS.map(m => m.id), at = id => ord.indexOf(id);
+  HUD.set('ATP', from > at('intro') ? 5 : 0); HUD.set('NADH', 0); HUD.set('FADH2', 0); HUD.set('NAD', 0); HUD.set('NADPH', 0); HUD.show('NADPH', false); ['NAD', 'NADH', 'FADH2'].forEach(k => HUD.show(k, true));
+  B.ATP = B.NADH = B.FADH2 = B.CO2 = B.H2O = 0;
+  if (from >= at('gly') && from <= at('etc')) { if (from >= at('pyr')) { B.ATP = 2; B.NADH = 2; } if (from >= at('tca')) { B.NADH = 4; B.CO2 = 2; } if (from >= at('etc')) { B.ATP = 4; B.NADH = 10; B.FADH2 = 2; B.CO2 = 6; } board(); } else HUD.board(null);
+  if (from <= at('gly')) P.g.position.copy(POS.start), P.inMito = false, P.inChl = false;
+  for (let k = from; k < MISSIONS.length; k++) { CURK = k; HUD.obj(''); target(null); stepMission = () => { }; await MISSIONS[k].run(); if (MISSIONS[k].id === 'etc') HUD.board(null); if (k < MISSIONS.length - 1) { banner('다음 챕터', MISSIONS[k + 1].t, '#7fffe0'); await wait(1.6); } }
   running = false; menu();
 }
 function menu() {
@@ -356,7 +470,7 @@ function cards() { const c = $('#cards'); c.hidden = false; c.innerHTML = `<div 
 
 $('#bMenu').onclick = () => { if (confirm('메뉴로 나갈까요? (진행 중인 챕터는 처음부터 다시 시작해요)')) location.reload(); };
 /* 테스트용 (주소 끝에 #dev) */
-if (location.hash === '#dev') window.BIO = { P, IN, ITEMS, target: () => TARGET, tp(v) { const ab = MITO.b.clone().sub(MITO.a); const t = Math.max(0, Math.min(1, v.clone().sub(MITO.a).dot(ab) / ab.lengthSq())); P.inMito = v.distanceTo(MITO.a.clone().addScaledVector(ab, t)) < MITO.r; P.g.position.copy(v); }, rings: () => W };
+if (location.hash === '#dev') window.BIO = { P, IN, ITEMS, target: () => TARGET, tp(v) { const ab = MITO.b.clone().sub(MITO.a); const t = Math.max(0, Math.min(1, v.clone().sub(MITO.a).dot(ab) / ab.lengthSq())); P.inMito = v.distanceTo(MITO.a.clone().addScaledVector(ab, t)) < MITO.r; const d = v.clone().sub(CHL.c); P.inChl = Math.hypot(d.x / CHL.r.x, d.y / CHL.r.y, d.z / CHL.r.z) < 1; P.g.position.copy(v); }, rings: () => W };
 menu(); requestAnimationFrame(loop);
 /* 메뉴 뒤 배경: 천천히 도는 카메라 */
 camOverride = { pos: V(70, 30, 90), look: V(0, 0, -40) };

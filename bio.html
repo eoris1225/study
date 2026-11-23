@@ -7,7 +7,7 @@
 <title>MITO — 세포 속 발전소</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/bio.css?v=202611230501">
+<link rel="stylesheet" href="css/bio.css?v=202611230516">
 <script type="importmap">{ "imports": { "three": "./js/vendor/three.module.min.js", "three/addons/": "./js/vendor/jsm/" } }</script>
 </head>
 <body>
@@ -15,7 +15,7 @@
 <div id="hud" hidden>
   <div id="mt"></div>
   <div id="obj" hidden></div>
-  <div id="inv"><div data-k="ATP" style="--c:#ffd23f"><i>ATP</i><b>0</b></div><div data-k="NADH" style="--c:#4aa8ff"><i>NADH</i><b>0</b></div><div data-k="FADH2" style="--c:#47e38a"><i>FADH<sub>2</sub></i><b>0</b></div><div data-k="NAD" style="--c:#8fb8ff"><i>NAD<sup>+</sup></i><b>0</b></div></div>
+  <div id="inv"><div data-k="ATP" style="--c:#ffd23f"><i>ATP</i><b>0</b></div><div data-k="NADH" style="--c:#4aa8ff"><i>NADH</i><b>0</b></div><div data-k="FADH2" style="--c:#47e38a"><i>FADH<sub>2</sub></i><b>0</b></div><div data-k="NADPH" style="--c:#7a8aff" hidden><i>NADPH</i><b>0</b></div><div data-k="NAD" style="--c:#8fb8ff"><i>NAD<sup>+</sup></i><b>0</b></div></div>
   <div id="board" hidden></div>
   <div id="gauges" hidden></div>
   <button id="bMenu">☰</button>
@@ -32,9 +32,10 @@
 <div id="cards" hidden></div>
 <div id="menu" hidden></div>
 <div id="boot">세포 속으로 들어가는 중…</div>
-<script src="js/bio/qbank.js?v=202611230501"></script>
+<script src="js/bio/qbank.js?v=202611230516"></script>
+<script src="js/bio/qbank2.js?v=202611230516"></script>
 <script type="module">
-  import('./js/bio/main.js?v=202611230501').then(() => document.getElementById('boot').remove()).catch(e => { document.getElementById('boot').textContent = '불러오기 실패: ' + e.message + ' — 새로고침해 보세요 (WebGL 지원 브라우저 필요)'; console.error(e); });
+  import('./js/bio/main.js?v=202611230516').then(() => document.getElementById('boot').remove()).catch(e => { document.getElementById('boot').textContent = '불러오기 실패: ' + e.message + ' — 새로고침해 보세요 (WebGL 지원 브라우저 필요)'; console.error(e); });
 </script>
 </body>
 </html>

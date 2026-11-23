@@ -12,6 +12,7 @@ export function save() { try { localStorage.setItem('bio_game_v1', JSON.stringif
 export const HUD = {
   inv: {}, set(k, v) { this.inv[k] = v; const el = $(`#inv [data-k="${k}"] b`); if (el) { el.textContent = Number.isInteger(v) ? v : v.toFixed(1); const p = el.parentElement; p.classList.remove('pop'); void p.offsetWidth; p.classList.add('pop'); } },
   add(k, d) { this.set(k, (this.inv[k] || 0) + d); },
+  show(k, on) { const el = $(`#inv [data-k="${k}"]`); if (el) el.hidden = !on; },
   mission(t, sub) { $('#mt').innerHTML = `<b>${esc(t)}</b><span>${chemHTML(sub || '')}</span>`; },
   obj(html) { $('#obj').innerHTML = chemHTML(html || ''); $('#obj').hidden = !html; },
   board(rows) { const b = $('#board'); if (!rows) { b.hidden = true; return; } b.hidden = false; b.innerHTML = '<i>포도당 1분자 결산</i>' + rows.map(([k, v, c]) => `<div style="--c:${c}"><span>${chem(k)}</span><b>${v}</b></div>`).join(''); }

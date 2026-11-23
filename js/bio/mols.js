@@ -35,8 +35,14 @@ const BUILD = {
   lactate(g) { chain(g, 3, 1.15, .2); g.add(glow('#ff6fae', 1.9, .9)); tag(g, '젖산 C₃', 1.6, '#ff6fae', .48); },
   acetald(g) { chain(g, 2); g.add(sph(O(), .3, 1, .6, 0)); tag(g, '아세트알데하이드 C₂', 1.4, '#ffd27f', .45); },
   ethanol(g) { chain(g, 2); g.add(sph(O(), .3, 1.1, .5, 0)); g.add(glow('#ffe27a', 1.6, .9)); tag(g, '에탄올 C₂', 1.4, '#ffe27a', .48); },
+  NADPH(g) { const c = new THREE.Mesh(G.cap, mat('nadph', '#7a8aff', '#3a3aff', 2.2)); c.rotation.z = Math.PI / 2; c.scale.setScalar(.7); g.add(c); g.add(glow('#5a6aff', 1.3, 1.8)); tag(g, 'NADPH', 1.4, '#7a8aff', .45); },
+  subS(g) { g.add(new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), mat('subS', '#5af0ff', '#1a9ab0', 1.6))); tag(g, '기질 ■', 1.5, '#5af0ff', .42); },
+  prod(g) { g.add(new THREE.Mesh(new THREE.TetrahedronGeometry(.8), mat('prod', '#ffd23f', '#c08000', 1.8))); tag(g, '생성물', 1.2, '#ffd23f', .38); },
+  cof(g) { g.add(new THREE.Mesh(new THREE.OctahedronGeometry(.6), mat('cof', '#ff9ad5', '#ff3a9a', 2.4))); g.add(glow('#ff6ab0', .9, 1.6)); tag(g, '조효소', 1.2, '#ff9ad5', .4); },
+  RuBP(g) { chain(g, 5, .9); g.add(sph(P(), .3, -2.4, 0, 0)); g.add(sph(P(), .3, 2.4, 0, 0)); tag(g, 'RuBP C₅', 1.4, '#b8ff7a', .42); },
+  PG3(g) { chain(g, 3); g.add(sph(P(), .34, 1.9, 0, 0)); tag(g, '3PG C₃', 1.4, '#ffd23f', .42); },
   Hp(g) { g.add(sph(mat('hp', '#ff7a9a', '#ff2a5a', 2.4), .3)); },
   e(g) { g.add(sph(mat('el', '#fff27a', '#ffd000', 3), .22)); }
 };
 export function mol(type) { const g = new THREE.Group(); (BUILD[type] || BUILD.e)(g); g.userData.type = type; g.userData.spin = Math.random() * 2 + .5; return g; }
-export const NAME = { ATP: 'ATP', NADH: 'NADH', FADH2: 'FADH₂', NAD: 'NAD⁺', glucose: '포도당', fbp: '과당 2인산', pgal: 'PGAL', pyruvate: '피루브산', acetyl: '아세틸 CoA', CO2: 'CO₂', O2: 'O₂', H2O: 'H₂O', lactate: '젖산', acetald: '아세트알데하이드', ethanol: '에탄올' };
+export const NAME = { ATP: 'ATP', NADH: 'NADH', FADH2: 'FADH₂', NAD: 'NAD⁺', glucose: '포도당', fbp: '과당 2인산', pgal: 'PGAL', pyruvate: '피루브산', acetyl: '아세틸 CoA', CO2: 'CO₂', O2: 'O₂', H2O: 'H₂O', lactate: '젖산', NADPH: 'NADPH', subS: '기질', cof: '조효소', RuBP: 'RuBP', PG3: '3PG', prod: '생성물', acetald: '아세트알데하이드', ethanol: '에탄올' };

@@ -56,7 +56,7 @@ export function buildWorld() {
   for (let i = 0; i < nR; i++) { const d = new THREE.Vector3().randomDirection().multiplyScalar(30 + Math.random() * 90).add(CELL.c); m4.makeTranslation(d.x, d.y, d.z); ribo.setMatrixAt(i, m4); } S.add(ribo);
   for (let i = 0; i < 24; i++) { const r = 1.5 + Math.random() * 3; const v = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 12), glass('#b6fff2', '#2fbfa0', .22, .5)); const d = new THREE.Vector3().randomDirection().multiplyScalar(40 + Math.random() * 80).add(CELL.c); if (d.distanceTo(MITO.a.clone().add(MITO.b).multiplyScalar(.5)) < 45) continue; v.position.copy(d); S.add(v); }
 
-  buildMito(S); buildFactory(S); buildPDH(S); buildTCA(S); buildETC(S); buildFerment(S);
+  buildMito(S); buildFactory(S); buildPDH(S); buildTCA(S); buildETC(S); buildFerment(S); buildEnzymeLab(); buildChloroplast();
   return W;
 }
 
@@ -187,4 +187,70 @@ export function stepWorld(dt, t) {
   if (W.pdh) W.pdh.rotation.y += dt * .25;
   if (W.ldh && W.ldh.visible) W.ldh.userData.core.rotation.y += dt; if (W.yeast && W.yeast.visible) W.yeast.userData.core.rotation.y += dt;
   if (W.Q) { W.Q.position.y += Math.sin(t * 3) * .01; } if (W.cytc) W.cytc.position.y += Math.cos(t * 2.6) * .01;
+}
+
+/* ════════ 효소 실험실 (세포질, 시작 지점 왼쪽) ════════ */
+export const ENZ = { hillA: V(-62, 0, 88), hillB: V(-28, 0, 88), hill: V(-45, 0, 88), keys: [V(-66, 0, 64), V(-54, 0, 60), V(-42, 0, 64)], apo: V(-12, 0, 94) };
+export const KEY_TYPES = ['subT', 'subS', 'subC'];
+export function buildEnzymeLab() {
+  const S = E.scene; const g = new THREE.Group(); S.add(g); W.lab = g;
+  /* 활성화 에너지 언덕: 빨강(효소 없음) / 파랑(효소 있음) */
+  const hill = (H, col) => { const sh = new THREE.Shape(); sh.moveTo(-14, 0); for (let i = 0; i <= 40; i++) { const x = -14 + i * .7; sh.lineTo(x, H * Math.exp(-x * x / 22)); } sh.lineTo(14, 0); sh.lineTo(-14, 0); const geo = new THREE.ExtrudeGeometry(sh, { depth: 8, bevelEnabled: false }); const m = new THREE.Mesh(geo, std(col, col, .9, { transparent: true, opacity: .75 })); m.position.copy(ENZ.hill).add(V(0, -6, -4)); g.add(m); return m; };
+  W.hillRed = hill(16, '#ff4a5a'); W.hillBlue = hill(7, '#3fa0ff'); W.hillBlue.visible = false;
+  const l = label('활성화 에너지 언덕\n(효소가 없으면 못 넘는다)', { scale: .9, border: '#ff4a5a' }); l.position.copy(ENZ.hill).add(V(0, 15, 0)); g.add(l); W.hillLabel = l;
+  W.ringA = makeRing(ENZ.hillA.clone().add(V(0, -4, 0)), '#ff9a3c', '반응물 투입'); W.ringB = makeRing(ENZ.hillB.clone().add(V(0, -4, 0)), '#3fa0ff', '생성물');
+  /* 효소 세 개: 활성 부위 모양(삼각·사각·원) */
+  W.keyEnz = ENZ.keys.map((p, i) => { const o = new THREE.Group(); o.position.copy(p).add(V(0, 2, 0)); const body = new THREE.Mesh(new THREE.SphereGeometry(3, 28, 20, .7, Math.PI * 2 - 1.4), std(['#3fd88a', '#5af0ff', '#ffb547'][i], ['#1a8a50', '#1a8aa0', '#a06010'][i], .9, { side: THREE.DoubleSide })); body.rotation.y = Math.PI / 2; o.add(body); const site = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1.2, [3, 4, 24][i]), std('#fff', '#fff', 1.5, { wireframe: true })); site.rotation.x = Math.PI / 2; site.position.z = 2.6; o.add(site); const t = label(['효소 ▲', '효소 ■', '효소 ●'][i], { scale: .6, border: ['#3fd88a', '#5af0ff', '#ffb547'][i] }); t.position.y = 5; o.add(t); g.add(o); o.userData.ring = makeRing(p.clone().add(V(0, -4, 4)), ['#3fd88a', '#5af0ff', '#ffb547'][i], ''); return o; });
+  /* 주효소 (보조 인자가 없으면 회색) */
+  const apo = new THREE.Group(); apo.position.copy(ENZ.apo).add(V(0, 2, 0)); const ab = new THREE.Mesh(new THREE.TorusKnotGeometry(2.2, .8, 80, 12), std('#777', '#222', .4)); apo.add(ab); apo.userData.body = ab; const al = label('주효소 (단백질만)\n→ 혼자서는 활성 없음', { scale: .6, border: '#999' }); al.position.y = 6; apo.add(al); apo.userData.label = al; g.add(apo); W.apo = apo; W.apoRing = makeRing(ENZ.apo.clone().add(V(0, -4, 4)), '#8fb8ff', '조효소');
+  const lt = label('효소 공방', { scale: 1.6, border: '#3fd88a' }); lt.position.set(-45, 22, 76); g.add(lt);
+}
+function makeRingLocal(p, c, t) { return makeRing(p, c, t); }
+
+/* ════════ 엽록체 (세포질 오른쪽) ════════ */
+export const CHL = { c: V(80, 0, 0), r: V(24, 16, 34), gate: V(56, 0, 0) };
+export function buildChloroplast() {
+  const S = E.scene, c = CHL.c; const g = new THREE.Group(); g.position.copy(c); S.add(g); W.chl = g;
+  const ell = (k, col, e, op) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), glass(col, e, op, .7)); m.scale.set(CHL.r.x * k, CHL.r.y * k, CHL.r.z * k); g.add(m); return m; };
+  ell(1, '#5aff7a', '#0a7a20', .18); ell(.94, '#8aff9a', '#109030', .1);
+  /* 그라나 (틸라코이드 더미) */
+  const disc = new THREE.CylinderGeometry(3.2, 3.2, .7, 28), dm = std('#3fdc5a', '#0f8a2a', 1.2, { transparent: true, opacity: .9 });
+  [[-8, -6, -22], [6, -7, -24], [-10, -8, 20], [4, -6, 24], [-14, 4, -4]].forEach(([x, y, z]) => { for (let k = 0; k < 6; k++) { const d = new THREE.Mesh(disc, dm); d.position.set(x, y + k * 1, z); g.add(d); } });
+  const gl = label('그라나 (틸라코이드 더미)', { scale: .7, border: '#3fdc5a' }); gl.position.set(-8, 2, -22); g.add(gl);
+  const sl = label('스트로마', { scale: .8, border: '#9fffb0' }); sl.position.set(-12, 10, 10); g.add(sl);
+  const tl = label('엽록체', { scale: 2, border: '#5aff7a' }); tl.position.set(0, CHL.r.y + 7, 0); g.add(tl);
+  /* 입구 */
+  const gate = new THREE.Mesh(new THREE.TorusGeometry(6.5, .6, 12, 48), std('#d0ffa0', '#8aff40', 3)); gate.position.copy(CHL.gate); gate.rotation.y = Math.PI / 2; S.add(gate); W.chlGate = gate;
+  const gtl = label('엽록체 입구', { scale: .9, border: '#8aff40' }); gtl.position.copy(CHL.gate).add(V(-2, 9, 0)); S.add(gtl);
+  /* 햇빛 기둥 */
+  for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 6, 60, 24, 1, true), new THREE.MeshBasicMaterial({ color: '#fff3a0', transparent: true, opacity: .07, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending })); b.position.set(c.x + 6 + (i % 2) * 6, 30, c.z - 12 + i * 8); S.add(b); }
+  /* 틸라코이드 막 벽 (명반응) — 앞(-x)은 스트로마, 뒤(+x)는 틸라코이드 내부 */
+  const px = c.x + 8; W.thyX = px;
+  const mem = new THREE.Mesh(new THREE.PlaneGeometry(30, 22), std('#2fa84a', '#0c6a24', .9, { transparent: true, opacity: .7, side: THREE.DoubleSide })); mem.position.set(px, 0, c.z); mem.rotation.y = Math.PI / 2; S.add(mem); W.thyMem = mem;
+  const ml = label('틸라코이드 막 — 명반응', { scale: .9, border: '#3fdc5a' }); ml.position.set(px - 1, 13, c.z); S.add(ml);
+  const il = label('← 스트로마 | 틸라코이드 내부 →', { scale: .6, border: '#9fffb0' }); il.position.set(px, -13, c.z); S.add(il);
+  const comp = (name, z, col, sz, y = 0) => { const o = new THREE.Group(); o.position.set(px - 1.5, y, c.z + z); const b = new THREE.Mesh(new THREE.CapsuleGeometry(sz * .6, sz, 8, 16), std(col, col, .9)); b.rotation.x = Math.PI / 2; o.add(b); const l = label(name, { scale: .55, border: col }); l.position.set(-1, sz + 1.6, 0); o.add(l); S.add(o); o.userData.body = b; return o; };
+  W.ps2 = comp('광계 Ⅱ\n(P680)', -11, '#8a5aff', 3.2); W.cytb = comp('전자 전달계\n(사이토크롬)', -4, '#ff6a8a', 2.4, -1); W.ps1 = comp('광계 Ⅰ\n(P700)', 3, '#5a8aff', 3.2); W.nadpR = comp('NADP⁺ 환원', 8, '#4aa8ff', 1.8, 3);
+  const sy = new THREE.Group(); sy.position.set(px, -2, c.z + 12); S.add(sy); const rot = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 2, 12), std('#ffd23f', '#ff9a00', 1.6)); rot.rotation.z = Math.PI / 2; rot.position.x = 1.4; sy.add(rot); W.cSynRotor = rot;
+  const st = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 4, 10), std('#ffe9a0', '#b07a10', 1)); st.rotation.z = Math.PI / 2; st.position.x = -1.4; sy.add(st);
+  const hd = new THREE.Group(); hd.position.x = -4.4; sy.add(hd); W.cSynHead = hd; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const s = new THREE.Mesh(new THREE.SphereGeometry(1.1, 14, 10), std(i % 2 ? '#ffd23f' : '#ff9a3c', '#ff8a00', 1.4)); s.position.set(0, Math.cos(a) * 1.5, Math.sin(a) * 1.5); hd.add(s); }
+  const syl = label('ATP 합성 효소\n(머리는 스트로마 쪽)', { scale: .55, border: '#ffd23f' }); syl.position.set(-3, 5, 0); sy.add(syl); W.cSyn = sy;
+  /* 틸라코이드 내부 H+ */
+  const n = 900, pg = new THREE.BufferGeometry(), pa = new Float32Array(n * 3); for (let i = 0; i < n; i++) pa.set([px + 1 + Math.random() * 9, (Math.random() - .5) * 18, c.z + (Math.random() - .5) * 26], i * 3);
+  pg.setAttribute('position', new THREE.BufferAttribute(pa, 3)); pg.setDrawRange(0, 0); W.lumen = new THREE.Points(pg, new THREE.PointsMaterial({ color: '#ff5a8a', size: .9, map: dotTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); S.add(W.lumen); W.lumenMax = n;
+  W.inPS2 = makeRing(V(px - 4, -8, c.z - 11), '#8a5aff', '광계 Ⅱ (빛)'); W.inPS1 = makeRing(V(px - 4, -8, c.z + 3), '#5a8aff', '광계 Ⅰ (빛)'); W.inCSyn = makeRing(V(px - 6, -9, c.z + 12), '#ffd23f', '터빈 돌리기');
+  /* 캘빈 회로 바퀴 (스트로마) */
+  const cg = new THREE.Group(); cg.position.set(c.x - 8, 0, c.z + 2); S.add(cg); W.calvin = cg; const wh = new THREE.Group(); cg.add(wh); wh.rotation.y = Math.PI / 2; W.calWheel = wh;
+  wh.add(new THREE.Mesh(new THREE.TorusGeometry(7.5, .5, 14, 70), std('#b8ff7a', '#5ac020', 1.8)));
+  W.calNodes = []; CAL_ST.forEach((s, i) => { const a = i / CAL_ST.length * Math.PI * 2; const n2 = new THREE.Group(); n2.position.set(Math.sin(a) * 7.5, Math.cos(a) * 7.5, 0); n2.add(new THREE.Mesh(new THREE.SphereGeometry(1.4, 16, 12), std(s.col, s.col, 1.4))); const l2 = label(s.name, { scale: .5, border: s.col }); l2.position.y = 2.5; n2.add(l2); wh.add(n2); W.calNodes.push(n2); });
+  const cl = label('캘빈 회로 (탄소 고정)\n스트로마', { scale: .9, border: '#b8ff7a' }); cl.position.set(0, 12, 0); cg.add(cl);
+  W.inCal = makeRing(V(c.x - 2, -9, c.z + 10), '#b8ff7a', 'CO₂ 투입');
+}
+export const CAL_ST = [{ name: 'RuBP (C₅) ×3', col: '#b8ff7a' }, { name: '3PG (C₃) ×6', col: '#ffd23f' }, { name: 'PGAL (C₃) ×6', col: '#ff9a3c' }, { name: 'PGAL 1개 → 포도당 쪽', col: '#ff6fae' }];
+export function setLumen(f) { W.lumen.geometry.setDrawRange(0, Math.round(Math.max(0, Math.min(1, f)) * W.lumenMax)); }
+export function chloroConstrain(p, wasInside) {
+  const d = p.clone().sub(CHL.c); const f = Math.sqrt((d.x / CHL.r.x) ** 2 + (d.y / CHL.r.y) ** 2 + (d.z / CHL.r.z) ** 2);
+  const inGate = p.x < CHL.c.x - CHL.r.x + 7 && Math.hypot(p.y - CHL.gate.y, p.z - CHL.gate.z) < 6.2;
+  if (!inGate) { if (wasInside && f > .9) p.copy(CHL.c).add(d.multiplyScalar(.9 / f)); else if (!wasInside && f < 1.08 && f > 1e-3) p.copy(CHL.c).add(d.multiplyScalar(1.08 / f)); }
+  const d2 = p.clone().sub(CHL.c); return Math.sqrt((d2.x / CHL.r.x) ** 2 + (d2.y / CHL.r.y) ** 2 + (d2.z / CHL.r.z) ** 2) < 1;
 }
