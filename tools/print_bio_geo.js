@@ -3,7 +3,9 @@
 const fs = require('fs'), path = require('path');
 global.window = global; global.document = {};
 const J = f => require(path.join(__dirname, '..', 'js', f));
-['bio/qbank.js', 'bio/qbank2.js', 'bio/qbank3.js', 'bio/qbank4.js', 'geo/data.js', 'geo/figs.js'].forEach(J);
+['bio/qbank.js', 'bio/qbank2.js', 'bio/qbank3.js', 'bio/qbank4.js', 'bio/qimgs.js', 'geo/data.js', 'geo/figs.js'].forEach(J);
+const IMG = 'file://' + path.join(__dirname, '..', 'img', 'bio');
+const ph = (...ks) => `<div class="ph">${ks.map(([k, c]) => `<figure><img src="${IMG}/c/${k}.jpg"><figcaption>${c}</figcaption></figure>`).join('')}</div>`;
 const OUT = process.argv[2], FONT = process.argv[3] || '';
 const circ = ['①', '②', '③', '④', '⑤', '⑥'];
 const css = `@import url('${FONT}/400.css');@import url('${FONT}/700.css');@import url('${FONT}/900.css');
@@ -29,6 +31,8 @@ th{background:#eee}
 .fig text{fill:#111}
 small{font-size:8.5pt}.dim{color:#555}
 .work{height:22mm}
+.ph{display:flex;gap:3mm;margin:1.5mm 0 2.5mm;break-inside:avoid}.ph figure{flex:1;margin:0;border:1px solid #999;border-radius:1.5mm;padding:1mm;text-align:center}.ph img{max-width:100%;max-height:62mm}.ph figcaption{font-size:8pt;color:#444}
+.tb{columns:2;column-gap:6mm}.tb .tq{break-inside:avoid;margin:0 0 4mm;border-top:1.5px solid #111;padding-top:1mm}.tb .tq img{width:100%;max-height:250mm;object-fit:contain;display:block}.tb .tq .n{font-weight:900}.tb .lines{height:16mm;background:repeating-linear-gradient(#fff 0 7.5mm,#bbb 7.5mm 7.8mm)}
 .vec{position:relative;display:inline-block;padding-top:.5em;line-height:1}.vec::before{content:'→';position:absolute;top:-.15em;left:0;right:0;text-align:center;font-size:.85em}`;
 const page = (title, body) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${title}</title><style>${css}</style></head><body>${body}</body></html>`;
 
@@ -46,6 +50,7 @@ const BIO_SUM = `
 <tr><th>효소 6종류</th><td>산화·환원(탈수소 효소) · 전이 · 가수 분해(소화 효소) · 제거(탈탄산 효소) · 이성질화 · 연결(DNA 연결 효소, ATP 사용)</td></tr></table>
 <div class="warn"><b class="t">헷갈리는 것</b> ① 효소는 꼭대기만 낮춤 → <b>반응열은 그대로</b>. ② 활성화 에너지는 기질 양·효소 양·온도·pH로 안 바뀜. 바뀌는 건 효소가 있느냐 없느냐뿐. ③ 시간–물질 그래프의 <b>기울기 = 반응 속도</b>.</div>
 
+${ph(['e_energy', '활성화 에너지와 반응열'], ['e_inh', '경쟁적 · 비경쟁적 억제제'])}
 <h3>2. 세포 호흡 한눈에 (포도당 1개 기준)</h3>
 <div class="flow"><span>포도당 C₆</span><i>→ 해당 과정(세포질) →</i><span>피루브산 C₃ ×2</span><i>→ 산화(기질) →</i><span>아세틸 CoA C₂ ×2</span><i>→ TCA 회로(기질) →</i><span>CO₂</span><i>+ NADH·FADH₂ → 전자 전달계(내막) → ATP</i></div>
 <table><tr><th>단계</th><th>장소</th><th>탄소 변화</th><th>CO₂</th><th>NADH</th><th>FADH₂</th><th>ATP</th><th>O₂ 필요?</th></tr>
@@ -56,10 +61,12 @@ const BIO_SUM = `
 <tr><th colspan="3">합계</th><td>6</td><td>10</td><td>2</td><td><b>32 ATP</b></td><td></td></tr></table>
 <div class="box"><b>TCA 회로 = 탄소 떼어 내기 게임</b>: 피루브산(C₃) → <b>CO₂</b>·NADH 나오며 C₂ + CoA = 아세틸 CoA → 옥살아세트산(C₄)과 합쳐 <b>시트르산(C₆)</b> → CO₂·NADH 나오며 <b>C₅</b> → CO₂·NADH 나오며 <b>C₄</b> → ATP·FADH₂·NADH 나오며 다시 <b>옥살아세트산(C₄)</b>.<br>
 <b>CO₂가 나오는 곳 = 탄소 수가 줄어드는 곳</b> (C₃→C₂, C₆→C₅, C₅→C₄). 피루브산 1개당 CO₂ 3, NADH 4, FADH₂ 1, ATP 1.</div>
+${ph(['r_gly', '해당 과정'], ['r_tca', '피루브산 산화와 TCA 회로'])}
 <table><tr><th style="width:24%">마이토콘드리아</th><td>외막 / <b>내막</b>(주름 = 크리스타, 전자 전달계·ATP 합성 효소) / <b>막 사이 공간</b>(H⁺ 많음) / <b>기질</b>(TCA 회로 효소, DNA, 리보솜)</td></tr>
 <tr><th>산화적 인산화</th><td>NADH·FADH₂의 전자가 전자 전달계를 지나며 에너지를 조금씩 내놓음 → 그 에너지로 H⁺를 <b>기질 → 막 사이 공간</b>으로 능동 수송 → H⁺가 <b>ATP 합성 효소</b>를 지나 기질로 확산하며 ATP 합성 = <b>화학 삼투</b>. 끝에서 O₂ + 전자 + H⁺ → H₂O.</td></tr>
 <tr><th>NADH vs FADH₂</th><td>NADH → 2.5 ATP, FADH₂ → 1.5 ATP (FADH₂는 전자를 더 뒤쪽에 넣어서 H⁺를 덜 퍼 올림)</td></tr>
 <tr><th>기질 수준 인산화</th><td>효소가 기질의 인산을 ADP에 <b>직접</b> 붙임 (해당 과정, TCA 회로). ↔ 산화적 인산화 (H⁺ 농도 차 이용)</td></tr></table>
+${ph(['r_oxp', '산화적 인산화 (전자 전달계 · ATP 합성 효소)'])}
 <table><tr><th>약물</th><th>작용</th><th>전자 전달·O₂ 소비</th><th>H⁺ 농도 차</th><th>ATP 합성</th></tr>
 <tr><td>사이안화물·CO·로테논</td><td>전자 전달 저해</td><td>멈춤</td><td>안 생김</td><td>멈춤</td></tr>
 <tr><td>올리고마이신</td><td>ATP 합성 효소 막음</td><td>곧 멈춤</td><td>커짐(못 흘러감)</td><td>멈춤</td></tr>
@@ -73,6 +80,7 @@ const BIO_SUM = `
 <tr><th>최종 전자 수용체</th><td>피루브산</td><td>아세트알데하이드</td></tr>
 <tr><th>식</th><td>C₆H₁₂O₆ → 2C₃H₆O₃ + 2ATP</td><td>C₆H₁₂O₆ → 2C₂H₅OH + 2CO₂ + 2ATP</td></tr>
 <tr><th>이용</th><td>요구르트, 김치</td><td>술, 빵(CO₂로 부풂)</td></tr></table>
+${ph(['f_lac', '젖산 발효'], ['f_alc', '알코올 발효'])}
 <div class="box"><b>발효의 목적 = NAD⁺ 재생</b>. 해당 과정은 NAD⁺가 있어야 돌아가니까, NADH의 전자를 피루브산(또는 아세트알데하이드)에 버려서 NAD⁺를 되돌려 받음 → 해당 과정의 2 ATP라도 계속 얻음. 산물(젖산·에탄올)에 에너지가 많이 남아 있음(불완전 산화).</div>
 
 <h3>4. 광합성</h3>
@@ -85,6 +93,7 @@ const BIO_SUM = `
 <tr><th>순환적 전자 흐름</th><td>광계 Ⅰ → 전자 전달계 → 광계 Ⅰ. <b>ATP만</b> (캘빈 회로는 ATP 18 : NADPH 12로 ATP가 더 필요해서)</td></tr>
 <tr><th>광인산화</th><td>H⁺를 <b>스트로마 → 틸라코이드 내부</b>로 퍼 올림 → ATP 합성 효소로 스트로마 쪽으로 확산하며 ATP. 야겐도르프: pH 4 → pH 8로 옮기면 빛 없이도 ATP 합성</td></tr>
 <tr><th>캘빈 회로</th><td>① 탄소 고정: CO₂ + RuBP(C₅) → 3PG(C₃) ×2 (루비스코) ② 환원: 3PG → PGAL (ATP, NADPH 사용) ③ RuBP 재생 (ATP 사용). 포도당 1개 = 6바퀴 = <b>ATP 18, NADPH 12</b>. 최초 고정 산물 = 3PG (캘빈 ¹⁴C 실험)</td></tr></table>
+${ph(['p_z', '명반응 전자 흐름'], ['p_calvin', '캘빈 회로'])}
 <div class="warn"><b class="t">헷갈리는 것</b> ① 빛을 끊으면 3PG ↑, RuBP ↓ (ATP·NADPH가 없어 3PG를 못 바꿈). CO₂를 끊으면 RuBP ↑, 3PG ↓. ② H⁺ 방향: 광합성은 스트로마 → 틸라코이드 내부, 호흡은 기질 → 막 사이 공간. ③ 최종 전자 수용체: 광합성 NADP⁺, 호흡 O₂ / 전자 공여체: 광합성 H₂O, 호흡 NADH·FADH₂.</div>`;
 
 const BIO_BLANK = `
@@ -122,15 +131,22 @@ function bioQs() {
   return { body, ans: ans.join(''), n };
 }
 const BQS = bioQs();
+const ORD = ['te', 't01', 't02', 't03', 't04', 't05', 'tu', 'tq'];
+const TBQ = window.BQ.filter(q => q.img).sort((a, b) => ORD.indexOf(a.ch) - ORD.indexOf(b.ch));
+const tAns = q => q.ans || (q.o && typeof q.a === 'number' ? `${circ[q.a]} ${q.o[q.a]}` : q.s ? q.s.map((x, i) => `(${i + 1}) ${x[1] ? '○' : '×'}`).join(' ') : q.b ? q.b.map((b, i) => `(${i + 1}) ${Array.isArray(b) ? b[0] : b.a}`).join(' ') : '');
+const TB = TBQ.map((q, i) => `<div class="tq"><span class="n">교${i + 1}.</span> <span class="src">${q.src}</span><img src="${IMG.replace('/bio', '')}/../${q.img}">${q.type === 'w' ? '<div class="lines"></div>' : ''}</div>`).join('');
+const TBA = TBQ.map((q, i) => `<p><b>교${i + 1}.</b> ${tAns(q)}${q.exp ? ` <span class="dim">— ${q.exp}</span>` : ''}</p>`).join('');
 const bio = page('생명과학 자습 프린트', `<h1>생명과학 1시간 자습 프린트</h1>
 <p>범위: 효소 · 세포 호흡(해당 과정 → TCA 회로 → 산화적 인산화) · 발효 · 광합성</p>
 <table class="tt"><tr><th>0~20분</th><td><b>① 핵심 정리</b> 읽기. 빨간 점선 박스 = 시험에 잘 나오는 함정. 세포 호흡 표는 손으로 한 번 따라 쓰기.</td></tr>
 <tr><th>20~27분</th><td><b>② 흐름 빈칸 테스트</b>: 앞 장을 덮고 표와 빈칸 채우기 → 아래 정답으로 채점.</td></tr>
-<tr><th>27~52분</th><td><b>③ 연습 문제 ${BQS.n}문항</b> (문제은행에서 단원별로). 막히면 ☆ 표시하고 넘어가기.</td></tr>
-<tr><th>52~60분</th><td><b>④ 채점 + 해설 읽기</b>. 틀린 문제는 ① 해당 표를 다시 읽기.</td></tr></table>
+<tr><th>27~55분</th><td><b>③ 교과서 문제 ${TBQ.length}문항 (원본 사진)</b>: 서술형은 사진 아래 줄에 직접 쓰기. 빈칸은 사진 속 빈칸에. 막히면 ☆.</td></tr>
+<tr><th>55~60분</th><td><b>채점</b> (맨 뒤 정답). 틀린 문제는 ① 해당 표를 다시 읽기.</td></tr>
+<tr><th>더 하고 싶으면</th><td><b>④ 추가 연습 ${BQS.n}문항</b> (문제은행). 정답은 맨 뒤.</td></tr></table>
 ${BIO_SUM}${BIO_BLANK}
-<h2 class="part">③ 연습 문제 <small>· 27~52분</small></h2><div class="two">${BQS.body}</div>
-<div class="part ans"><h2>④ 정답 · 해설</h2>${BQS.ans}</div>`);
+<h2 class="part">③ 교과서 문제 (원본 사진) <small>· 27~55분</small></h2><div class="tb">${TB}</div>
+<h2 class="part">④ 추가 연습 <small>· 시간 남으면</small></h2><div class="two">${BQS.body}</div>
+<div class="part ans"><h2>정답 · 해설 — ③ 교과서 문제</h2>${TBA}<h2 style="margin-top:4mm">정답 · 해설 — ④ 추가 연습</h2>${BQS.ans}</div>`);
 
 /* ───────── 기하 ───────── */
 const geoSum = window.GEO.map(c => `<h3>${c.t} <small class="dim">${c.p}</small></h3><table>${c.learn.map(([k, v]) => `<tr><th style="width:24%">${k}</th><td>${v}</td></tr>`).join('')}</table>`).join('');
