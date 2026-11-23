@@ -31,6 +31,9 @@ th{background:#eee}
 .fig text{fill:#111}
 small{font-size:8.5pt}.dim{color:#555}
 .work{height:22mm}
+.chap{break-inside:auto;margin-bottom:3mm}.chap+.chap{break-before:page}
+.rc{margin:.6mm 0 0 2mm}.ex{border:1.5px solid #1f4fb8;border-radius:2mm;padding:2mm 3mm;margin:2mm 0;break-inside:avoid}.exh{font-weight:900;color:#1f4fb8;margin-bottom:1mm}
+.st{margin:1.2mm 0 0 1mm;padding-left:2mm;border-left:3px solid #1f4fb855;font-size:9.4pt}.ea{margin-top:1.5mm;font-size:10pt}.pr{border-top:1.5px dashed #111;padding-top:2mm;margin-top:3mm}
 .ph{display:flex;gap:3mm;margin:1.5mm 0 2.5mm;break-inside:avoid}.ph figure{flex:1;margin:0;border:1px solid #999;border-radius:1.5mm;padding:1mm;text-align:center}.ph img{max-width:100%;max-height:62mm}.ph figcaption{font-size:8pt;color:#444}
 .tb{columns:2;column-gap:6mm}.tb .tq{break-inside:avoid;margin:0 0 4mm;border-top:1.5px solid #111;padding-top:1mm}.tb .tq img{width:100%;max-height:250mm;object-fit:contain;display:block}.tb .tq .n{font-weight:900}.tb .lines{height:16mm;background:repeating-linear-gradient(#fff 0 7.5mm,#bbb 7.5mm 7.8mm)}
 .vec{position:relative;display:inline-block;padding-top:.5em;line-height:1}.vec::before{content:'→';position:absolute;top:-.15em;left:0;right:0;text-align:center;font-size:.85em}`;
@@ -149,22 +152,28 @@ ${BIO_SUM}${BIO_BLANK}
 <div class="part ans"><h2>정답 · 해설 — ③ 교과서 문제</h2>${TBA}<h2 style="margin-top:4mm">정답 · 해설 — ④ 추가 연습</h2>${BQS.ans}</div>`);
 
 /* ───────── 기하 ───────── */
-const geoSum = window.GEO.map(c => `<h3>${c.t} <small class="dim">${c.p}</small></h3><table>${c.learn.map(([k, v]) => `<tr><th style="width:24%">${k}</th><td>${v}</td></tr>`).join('')}</table>`).join('');
+const FR = require('./geo_friendly.js'); J('geo/guide.js');
 let gn = 0; const gAns = [];
-const geoQ = window.GEO.map(c => { const n = Math.min(3, c.probs.length), step = c.probs.length / n;
-  const idx = Array.from({ length: n }, (_, i) => Math.floor(i * step) + (c.probs.length > 6 ? 1 : 0)).map(i => Math.min(i, c.probs.length - 1));
-  return [...new Set(idx)].map(i => { const p = c.probs[i]; gn++; const f = window.GEOFIG && window.GEOFIG[`${c.id}:${i}`];
-    gAns.push(`<p><b>${gn}.</b> <b>${p.a}</b> <span class="dim">— ${p.h || ''}</span></p>`);
-    return `<div class="q"><span class="n">${gn}.</span> <span class="src">[${c.t} · ${p.s}]</span><br>${p.q}${f ? `<div class="fig">${f()}</div>` : ''}<div class="work"></div></div>`; }).join(''); }).join('');
+const figOf = k => { const f = window.GEOFIG && window.GEOFIG[k]; return f ? `<div class="fig">${f()}</div>` : ''; };
+const geoCh = window.GEO.map(c => { const F = FR[c.id] || { k: c.learn, r: [] };
+  const keys = Object.keys(window.GEOQA).filter(k => k.startsWith(c.id + ':')).sort((x, y) => window.GEOQA[y].length - window.GEOQA[x].length);
+  const ex = keys[0], exI = ex ? +ex.split(':')[1] : 0, P = c.probs[exI];
+  const steps = ex ? window.GEOQA[ex].map(([q, o, a, why], i) => `<div class="st"><b>${circ[i] || (i + 1) + '.'}</b> ${q} → <b>${o[a]}</b><br><span class="dim">${why}</span></div>`).join('') : '';
+  const prI = (c.probs.findIndex((p, i) => i !== exI && i > exI) + 1 || c.probs.findIndex((p, i) => i !== exI) + 1) - 1, PR = c.probs[prI];
+  let pr = ''; if (PR) { gn++; gAns.push(`<p><b>${gn}.</b> <b>${PR.a}</b> <span class="dim">— ${PR.h || ''}</span></p>`);
+    pr = `<div class="q pr"><span class="n">직접 풀기 ${gn}.</span> <span class="src">[${PR.s}]</span><br>${PR.q}${figOf(c.id + ':' + prI)}<div class="work"></div></div>`; }
+  return `<div class="chap"><h2>${c.t} <small>${c.p}</small></h2>
+<table>${F.k.map(([k, v]) => `<tr><th style="width:22%">${k}</th><td>${v}</td></tr>`).join('')}</table>
+${F.r.length ? `<div class="box"><b>이런 문제는 이렇게</b>${F.r.map(([t, v]) => `<div class="rc"><b>${t}</b>: ${v}</div>`).join('')}</div>` : ''}
+${P ? `<div class="ex"><div class="exh">예제 따라 풀기 <span class="src">[${P.s}]</span></div>${P.q}${figOf(c.id + ':' + exI)}${steps}<div class="ea">답: <b>${P.a}</b></div></div>` : ''}
+${pr}</div>`; }).join('');
 const geo = page('기하 자습 프린트', `<h1>기하 1시간 자습 프린트</h1>
 <p>범위: 교과서 p80~152, p160~166 — 좌표공간 · 벡터 · 내적 · 직선의 방정식</p>
-<table class="tt"><tr><th>0~15분</th><td><b>① 핵심 정리</b> 읽기. 공식은 손으로 한 번씩 따라 쓰기. <b>v</b> 위 화살표 = 벡터.</td></tr>
-<tr><th>15~50분</th><td><b>② 교과서 문제 ${gn}문항</b> (단원마다 2~3개). 그림은 문제 조건만 그린 것. 풀이 공간에 식부터 쓰기.</td></tr>
-<tr><th>50~60분</th><td><b>③ 채점 + 풀이 읽기</b>. 틀린 문제는 그 단원 핵심 정리를 다시 읽기.</td></tr></table>
-<div class="box">자주 쓰는 공식: 거리 √(Δx² + Δy² + Δz²) · 내분점 ((mx₂ + nx₁)/(m + n), …) · 무게중심 (세 점 평균) · 내적 a·b = |a||b|cos θ = a₁b₁ + a₂b₂ + a₃b₃ · 수직 ⇔ 내적 0 · 평행 ⇔ 한쪽이 다른 쪽의 실수배</div>
-<h2>① 핵심 정리 <small>· 0~15분</small></h2>${geoSum}
-<h2 class="part">② 교과서 문제 <small>· 15~50분</small></h2><div class="two">${geoQ}</div>
-<div class="part ans"><h2>③ 정답 · 풀이</h2>${gAns.join('')}</div>`);
+<table class="tt"><tr><th>단원마다 6분</th><td>① <b>개념</b> 표 읽기 (쉬운 말 정리) → ② <b>이런 문제는 이렇게</b> 순서 외우기 → ③ <b>예제 따라 풀기</b>: 답을 손으로 가리고 단계마다 먼저 생각해 보고 확인 → ④ <b>직접 풀기</b> 1문제</td></tr>
+<tr><th>마지막 5분</th><td>채점 (맨 뒤). 틀린 문제는 그 단원 "이런 문제는 이렇게"를 다시 읽기.</td></tr></table>
+<div class="box">자주 쓰는 공식: 거리 √(Δx² + Δy² + Δz²) · 내분점 (mB + nA)/(m + n) · 무게중심 = 세 점 평균 · 내적 a·b = a₁b₁ + a₂b₂ + a₃b₃ = |a||b|cos θ · 수직 ⇔ 내적 0 · 평행 ⇔ 실수배</div>
+${geoCh}
+<div class="part ans"><h2>직접 풀기 정답 · 풀이</h2>${gAns.join('')}</div>`);
 const fixV = h => h.replace(/<v>([^<]*)<\/v>/g, '<span class="vec">$1</span>');
 fs.writeFileSync(path.join(OUT, 'bio.html'), bio); fs.writeFileSync(path.join(OUT, 'geo.html'), fixV(geo));
 console.log('bio', BQS.n, 'geo', gn);
