@@ -112,13 +112,13 @@ window.LAB = (() => {
       /* ── 프레임 ── */
       function frame(now) { if (!alive) return; const dt = Math.min(.05, (now - last) / 1000); last = now; c.t += dt;
         g.setTransform(c._dpr, 0, 0, c._dpr, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.translate(offX, offY); g.scale(scale, scale);
-        g.save(); g.beginPath(); g.rect(0, 0, VW, VH); g.clip(); const bgr = g.createLinearGradient(0, 0, 0, VH); bgr.addColorStop(0, 'rgba(10,36,51,.72)'); bgr.addColorStop(1, 'rgba(6,21,32,.8)'); g.fillStyle = bgr; g.fillRect(0, 0, VW, VH);
+        g.save(); g.beginPath(); g.rect(0, 0, VW, VH); g.clip(); const bgr = g.createLinearGradient(0, 0, 0, VH); bgr.addColorStop(0, 'rgba(38,28,18,.78)'); bgr.addColorStop(1, 'rgba(22,16,10,.86)'); g.fillStyle = bgr; g.fillRect(0, 0, VW, VH);
         for (let i = tweens.length - 1; i >= 0; i--) { const w = tweens[i]; w.t += dt; const k = Math.min(1, w.t / w.dur); w.fn(k); if (k >= 1) { tweens.splice(i, 1); w.done && w.done(); } }
         try { loops.forEach(f => f(dt, c.t)); } catch (e) { console.error('[lab ' + id + ']', e); c.err = e; }
         drags.forEach(o => { if (!o.off && o.draw) o.draw(o.x, o.y, o); });
         for (let i = fxs.length - 1; i >= 0; i--) { const p = fxs[i]; p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .94; p.vy *= .94; if (p.t > p.life) { fxs.splice(i, 1); continue; } g.globalAlpha = 1 - p.t / p.life; c.circle(p.x, p.y, 3.5, p.col); g.globalAlpha = 1; }
         for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.t += dt; if (f.t > 1.4) { floats.splice(i, 1); continue; } g.globalAlpha = 1 - f.t / 1.4; c.txt(f.txt, f.x, f.y - f.t * 40, 20, f.col, 'center', 900); g.globalAlpha = 1; }
-        if (tip) { g.font = `700 17px 'Noto Sans KR',sans-serif`; const w = Math.min(960, g.measureText(tip).width + 30); c.rr(VW / 2 - w / 2, 10, w, 34, 12, 'rgba(4,16,26,.82)', '#5af0ff66', 1.5); c.txt(tip, VW / 2, 27, 17, '#eafffb'); }
+        if (tip) { g.font = `700 17px 'Noto Sans KR',sans-serif`; const w = Math.min(960, g.measureText(tip).width + 30); c.rr(VW / 2 - w / 2, 10, w, 34, 12, 'rgba(30,22,14,.88)', '#e8a33d88', 1.5); c.txt(tip, VW / 2, 27, 17, '#eafffb'); }
         if (msg) { msg.k += dt; const a = msg.k < .2 ? msg.k / .2 : Math.max(0, 1 - (msg.k - .7) / .5); g.globalAlpha = a; c.txt(msg.t, VW / 2, VH / 2 - 20 - msg.k * 20, 54, msg.col, 'center', 900); g.globalAlpha = 1; if (msg.k > 1.3) msg = null; }
         g.restore();
         readouts.forEach(o => { const h = o.fn(); if (h !== o.last) { o.el.innerHTML = h; o.last = h; } });

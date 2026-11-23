@@ -10,7 +10,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 /* ── 3D ── */
 const view = $('#view');
 const R = new THREE.WebGLRenderer({ antialias: true }); R.setPixelRatio(Math.min(2, devicePixelRatio)); view.appendChild(R.domElement);
-const scene = new THREE.Scene(); scene.background = new THREE.Color('#0a1020');
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#f6f1e4');
 const cam = new THREE.PerspectiveCamera(40, 1, .1, 200);
 let yaw = .75, pitch = .42, dist = 14, auto = true;
 function place() { cam.position.set(Math.sin(yaw) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(0, 0.5, 0); }
@@ -29,15 +29,15 @@ view.addEventListener('wheel', e => { dist = Math.max(8, Math.min(40, dist * (1 
 const M = (x, y, z) => new THREE.Vector3(y, z, x);
 const G = new THREE.Group(); scene.add(G);
 const mat = c => new THREE.LineBasicMaterial({ color: c });
-function line(a, b, c = '#8899bb', dash = false) { const g = new THREE.BufferGeometry().setFromPoints([a, b]); const l = new THREE.Line(g, dash ? new THREE.LineDashedMaterial({ color: c, dashSize: .2, gapSize: .15 }) : mat(c)); if (dash) l.computeLineDistances(); G.add(l); return l; }
+function line(a, b, c = '#6b665c', dash = false) { const g = new THREE.BufferGeometry().setFromPoints([a, b]); const l = new THREE.Line(g, dash ? new THREE.LineDashedMaterial({ color: c, dashSize: .2, gapSize: .15 }) : mat(c)); if (dash) l.computeLineDistances(); G.add(l); return l; }
 function arrow(a, b, c, w = 1) { const d = b.clone().sub(a), L = d.length(); if (L < .01) return; const h = new THREE.ArrowHelper(d.normalize(), a, L, c, Math.min(.55, L * .35) * w, Math.min(.3, L * .2) * w); G.add(h); }
-function dot(p, c = '#ffd23f', r = .14) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), new THREE.MeshBasicMaterial({ color: c })); m.position.copy(p); G.add(m); }
-function label(t, p, c = '#ffffff', s = .55) { const cv = document.createElement('canvas'), x = cv.getContext('2d'); x.font = '900 44px Noto Sans KR, sans-serif'; const w = x.measureText(t).width + 20; cv.width = w; cv.height = 60;
-  x.font = '900 44px Noto Sans KR, sans-serif'; x.fillStyle = c; x.strokeStyle = '#000'; x.lineWidth = 7; x.strokeText(t, 10, 46); x.fillText(t, 10, 46);
+function dot(p, c = '#c8392b', r = .14) { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), new THREE.MeshBasicMaterial({ color: c })); m.position.copy(p); G.add(m); }
+function label(t, p, c = '#22201c', s = .55) { const cv = document.createElement('canvas'), x = cv.getContext('2d'); x.font = '700 44px Gowun Dodum, Noto Sans KR, sans-serif'; const w = x.measureText(t).width + 20; cv.width = w; cv.height = 60;
+  x.font = '700 44px Gowun Dodum, Noto Sans KR, sans-serif'; x.fillStyle = c; x.strokeStyle = '#f6f1e4'; x.lineWidth = 9; x.strokeText(t, 10, 46); x.fillText(t, 10, 46);
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthTest: false })); sp.scale.set(s * w / 60, s, 1); sp.position.copy(p).add(new THREE.Vector3(0, .35, 0)); G.add(sp); }
-function axes(n = 6) { [[M(n, 0, 0), 'x'], [M(0, n, 0), 'y'], [M(0, 0, n), 'z']].forEach(([v, t]) => { line(v.clone().multiplyScalar(-1), v, '#55688f'); arrow(v.clone().multiplyScalar(.95), v.clone().multiplyScalar(1.05), '#8aa0d0'); label(t, v.clone().multiplyScalar(1.08), '#9fb4e8'); });
-  label('O', M(0, 0, 0), '#9fb4e8', .45);
-  for (let i = -n + 1; i < n; i++) if (i) [M(i, 0, 0), M(0, i, 0), M(0, 0, i)].forEach(p => dot(p, '#3a4a70', .05)); }
+function axes(n = 6) { [[M(n, 0, 0), 'x'], [M(0, n, 0), 'y'], [M(0, 0, n), 'z']].forEach(([v, t]) => { line(v.clone().multiplyScalar(-1), v, '#9a9384'); arrow(v.clone().multiplyScalar(.95), v.clone().multiplyScalar(1.05), '#22201c'); label(t, v.clone().multiplyScalar(1.08), '#22201c'); });
+  label('O', M(0, 0, 0), '#22201c', .45);
+  for (let i = -n + 1; i < n; i++) if (i) [M(i, 0, 0), M(0, i, 0), M(0, 0, i)].forEach(p => dot(p, '#b5ad9c', .05)); }
 function clear() { while (G.children.length) { const o = G.children.pop(); o.traverse(q => { q.geometry && q.geometry.dispose(); q.material && (q.material.map && q.material.map.dispose(), q.material.dispose()); }); } }
 const P = (a) => M(a[0], a[1], a[2]);
 
@@ -47,63 +47,63 @@ const frac = (n, d) => { if (d < 0) { n = -n; d = -d; } const g = gcd(Math.round
 const sq = v => { const n = Math.round(v); if (Math.abs(n - v) > 1e-9) return v.toFixed(2); for (let k = Math.floor(Math.sqrt(n)); k > 1; k--) if (n % (k * k) === 0) { const r = n / (k * k); return r === 1 ? `${k}` : `${k}√${r}`; } return Number.isInteger(Math.sqrt(n)) ? `${Math.sqrt(n)}` : `√${n}`; };
 const SC = {
   coord: { c: [['a (x)', -5, 5, 1, 1], ['b (y)', -5, 5, 1, 1], ['c (z)', -5, 5, 1, 2]], f([a, b, c]) {
-      axes(); const p = M(a, b, c); dot(p); label(`P(${a}, ${b}, ${c})`, p, '#ffd23f');
+      axes(); const p = M(a, b, c); dot(p); label(`P(${a}, ${b}, ${c})`, p, '#c8392b');
       const A = M(a, 0, 0), B = M(0, b, 0), Cc = M(0, 0, c), ab = M(a, b, 0), bc = M(0, b, c), ca = M(a, 0, c);
-      [[p, ab], [p, bc], [p, ca], [ab, A], [ab, B], [bc, B], [bc, Cc], [ca, A], [ca, Cc]].forEach(([u, v]) => line(u, v, '#6af0d0', true));
-      [A, B, Cc].forEach(q => dot(q, '#6af0d0', .1)); line(M(0, 0, 0), p, '#ff8a5a');
+      [[p, ab], [p, bc], [p, ca], [ab, A], [ab, B], [bc, B], [bc, Cc], [ca, A], [ca, Cc]].forEach(([u, v]) => line(u, v, '#1f8a5a', true));
+      [A, B, Cc].forEach(q => dot(q, '#1f8a5a', .1)); line(M(0, 0, 0), p, '#d9761a');
       return { r: `P(<b>${a}, ${b}, ${c}</b>)<br>OP = √(${a}² + ${b}² + ${c}²) = <b>${sq(a * a + b * b + c * c)}</b><br>xy평면 대칭 (${a}, ${b}, ${-c}) · x축 대칭 (${a}, ${-b}, ${-c})`, done: a === 2 && b === -3 && c === 4, msg: '좌표는 축과 만나는 값! OP = √(4 + 9 + 16) = √29' }; } },
   divide: { c: [['m', 1, 5, 1, 3], ['n', 1, 5, 1, 1]], f([m, n]) {
       axes(); const A = [5, -2, 3], B = [2, 1, 6]; const Pn = A.map((x, i) => m * B[i] + n * x);
-      line(P(A), P(B), '#8fa8ff'); dot(P(A), '#ff8a5a'); dot(P(B), '#5ab0ff'); label('A(5, −2, 3)', P(A), '#ffb08a', .45); label('B(2, 1, 6)', P(B), '#8ac8ff', .45);
-      const p = Pn.map(v => v / (m + n)); dot(P(p), '#ffd23f', .18); label(`P (${m} : ${n})`, P(p), '#ffd23f', .5);
+      line(P(A), P(B), '#8fa8ff'); dot(P(A), '#d9761a'); dot(P(B), '#1f4fb8'); label('A(5, −2, 3)', P(A), '#b85a10', .45); label('B(2, 1, 6)', P(B), '#1f4fb8', .45);
+      const p = Pn.map(v => v / (m + n)); dot(P(p), '#c8392b', .18); label(`P (${m} : ${n})`, P(p), '#c8392b', .5);
       return { r: `AB를 <b>${m} : ${n}</b>로 내분<br>P = ( (${m}·2 + ${n}·5)/${m + n}, … ) = (<b>${Pn.map(v => frac(v, m + n)).join(', ')}</b>)`, done: m * 2 === n, msg: '1 : 2 → (1·B + 2·A)/3 = (4, −1, 4). m은 B 쪽, n은 A 쪽에 곱해요.' }; } },
   sphere: { c: [['중심 a', -3, 3, 1, 0], ['중심 b', -3, 3, 1, 0], ['중심 c', -3, 3, 1, 0], ['반지름 r', 1, 4, 1, 3]], f([a, b, c, r]) {
-      axes(); const s = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), new THREE.MeshBasicMaterial({ color: '#6a8aff', wireframe: true, transparent: true, opacity: .35 })); s.position.copy(M(a, b, c)); G.add(s);
-      dot(M(a, b, c)); label(`C(${a}, ${b}, ${c})`, M(a, b, c), '#ffd23f', .45); line(M(a, b, c), M(a, b, c + r), '#ff8a5a'); label(`r = ${r}`, M(a, b, c + r / 2), '#ffb08a', .4);
+      axes(); const s = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), new THREE.MeshBasicMaterial({ color: '#1f4fb8', wireframe: true, transparent: true, opacity: .35 })); s.position.copy(M(a, b, c)); G.add(s);
+      dot(M(a, b, c)); label(`C(${a}, ${b}, ${c})`, M(a, b, c), '#c8392b', .45); line(M(a, b, c), M(a, b, c + r), '#d9761a'); label(`r = ${r}`, M(a, b, c + r / 2), '#b85a10', .4);
       const t = (v, s) => v === 0 ? `${s}²` : `(${s}${v > 0 ? '−' : '+'}${Math.abs(v)})²`;
       return { r: `<b>${t(a, 'x')} + ${t(b, 'y')} + ${t(c, 'z')} = ${r * r}</b><br>xy평면과 만나는 원의 반지름: ${Math.abs(c) < r ? sq(r * r - c * c) : '만나지 않음 (접하면 r = |c|)'}`, done: a === 2 && b === 0 && c === -1 && r === 2, msg: '(x−2)² + y² + (z+1)² = 4. 부호는 중심 좌표와 반대!' }; } },
   cube: { c: [['평행이동 t', 0, 1, .05, 0]], f([t]) {
       const s = 3, o = -1.5; const V = { A: [o, o, o + s], B: [o + s, o, o + s], C: [o + s, o + s, o + s], D: [o, o + s, o + s], E: [o, o, o], F: [o + s, o, o], G: [o + s, o + s, o], H: [o, o + s, o] };
-      [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A'], ['E', 'F'], ['F', 'G'], ['G', 'H'], ['H', 'E'], ['A', 'E'], ['B', 'F'], ['C', 'G'], ['D', 'H']].forEach(([p, q]) => line(P(V[p]), P(V[q]), '#55688f'));
-      Object.entries(V).forEach(([k, v]) => label(k, P(v), '#cfe', .45));
-      arrow(P(V.D), P(V.C), '#5aff9a'); const sh = [0, s * t, 0]; arrow(P(V.A.map((x, i) => x + sh[i])), P(V.B.map((x, i) => x + sh[i])), '#ffd23f', 1.3);
+      [['A', 'B'], ['B', 'C'], ['C', 'D'], ['D', 'A'], ['E', 'F'], ['F', 'G'], ['G', 'H'], ['H', 'E'], ['A', 'E'], ['B', 'F'], ['C', 'G'], ['D', 'H']].forEach(([p, q]) => line(P(V[p]), P(V[q]), '#9a9384'));
+      Object.entries(V).forEach(([k, v]) => label(k, P(v), '#22201c', .45));
+      arrow(P(V.D), P(V.C), '#1f8a5a'); const sh = [0, s * t, 0]; arrow(P(V.A.map((x, i) => x + sh[i])), P(V.B.map((x, i) => x + sh[i])), '#c8392b', 1.3);
       return { r: `<v>AB</v>를 <v>AD</v> 방향으로 ${Math.round(t * 100)}% 평행이동<br>크기·방향이 같으면 위치가 달라도 <b>같은 벡터</b>`, done: t >= .99, msg: '<v>AB</v> = <v>DC</v> = <v>EF</v> = <v>HG</v> — 모두 같은 벡터!' }; } },
   add: { c: [['b의 각도', 0, 180, 5, 40]], f([th]) {
       axes(4); const a = [3, 0, 0], r = th * Math.PI / 180, b = [2.5 * Math.cos(r), 2.5 * Math.sin(r), 0]; const s = a.map((x, i) => x + b[i]), d = a.map((x, i) => x - b[i]);
-      const O = M(0, 0, 0); arrow(O, P(a), '#ff8a5a'); label('a', P(a), '#ffb08a'); arrow(O, P(b), '#5ab0ff'); label('b', P(b), '#8ac8ff');
-      line(P(a), P(s), '#5ab0ff', true); line(P(b), P(s), '#ff8a5a', true); arrow(O, P(s), '#ffd23f', 1.2); label('a+b', P(s), '#ffd23f');
-      arrow(P(b), P(a), '#d07aff'); label('a−b', P(a).clone().add(P(b)).multiplyScalar(.5), '#e0a0ff', .45);
+      const O = M(0, 0, 0); arrow(O, P(a), '#d9761a'); label('a', P(a), '#b85a10'); arrow(O, P(b), '#1f4fb8'); label('b', P(b), '#1f4fb8');
+      line(P(a), P(s), '#1f4fb8', true); line(P(b), P(s), '#d9761a', true); arrow(O, P(s), '#c8392b', 1.2); label('a+b', P(s), '#c8392b');
+      arrow(P(b), P(a), '#7a3fb0'); label('a−b', P(a).clone().add(P(b)).multiplyScalar(.5), '#7a3fb0', .45);
       const L = v => Math.hypot(...v); return { r: `|<v>a</v> + <v>b</v>| = <b>${L(s).toFixed(2)}</b> · |<v>a</v> − <v>b</v>| = <b>${L(d).toFixed(2)}</b><br>노란 대각선 = 합 (평행사변형법), 보라 = 차 (<v>b</v>의 끝 → <v>a</v>의 끝)`, done: th === 90, msg: '두 대각선 길이가 같으면 직사각형 → <v>a</v> ⊥ <v>b</v>. 내적으로 보면 4<v>a</v>·<v>b</v> = 0!' }; } },
   scale: { c: [['k', -3, 3, .5, 1]], f([k]) {
-      axes(4); const a = [1.2, 1, .6], O = M(0, 0, 0); arrow(O, P(a), '#ff8a5a'); label('a', P(a), '#ffb08a');
-      const off = M(0, 0, -.6); arrow(off, P(a.map(x => -2 * x)).add(off), '#5aff9a'); label('목표', P(a.map(x => -2 * x)).add(off), '#8affb0', .4);
-      arrow(O, P(a.map(x => k * x)), '#ffd23f', 1.2); label(`${k}a`, P(a.map(x => k * x)), '#ffd23f', .45);
+      axes(4); const a = [1.2, 1, .6], O = M(0, 0, 0); arrow(O, P(a), '#d9761a'); label('a', P(a), '#b85a10');
+      const off = M(0, 0, -.6); arrow(off, P(a.map(x => -2 * x)).add(off), '#1f8a5a'); label('목표', P(a.map(x => -2 * x)).add(off), '#1f8a5a', .4);
+      arrow(O, P(a.map(x => k * x)), '#c8392b', 1.2); label(`${k}a`, P(a.map(x => k * x)), '#c8392b', .45);
       return { r: `k = <b>${k}</b> → ${k > 0 ? '같은 방향' : k < 0 ? '반대 방향' : '영벡터'}, 크기 <b>${Math.abs(k)}</b>배`, done: k === -2, msg: '−2<v>a</v>: 반대 방향, 크기 2배. 평행 ⇔ <v>b</v> = k<v>a</v>' }; } },
   pos: { c: [['t', 0, 1, .1, .2]], f([t]) {
       axes(4); const A = [4, -2, 1], B = [-1, 3, 3], O = M(0, 0, 0); const p = A.map((x, i) => (1 - t) * x + t * B[i]);
-      arrow(O, P(A), '#ff8a5a'); label('A (a)', P(A), '#ffb08a', .45); arrow(O, P(B), '#5ab0ff'); label('B (b)', P(B), '#8ac8ff', .45); line(P(A), P(B), '#8899bb');
-      arrow(O, P(p), '#ffd23f', 1.2); label('P', P(p), '#ffd23f');
+      arrow(O, P(A), '#d9761a'); label('A (a)', P(A), '#b85a10', .45); arrow(O, P(B), '#1f4fb8'); label('B (b)', P(B), '#1f4fb8', .45); line(P(A), P(B), '#6b665c');
+      arrow(O, P(p), '#c8392b', 1.2); label('P', P(p), '#c8392b');
       const m = Math.round(t * 10), n = 10 - m, g = gcd(m, n) || 1;
       return { r: `<v>p</v> = (1−t)<v>a</v> + t<v>b</v>, t = <b>${t.toFixed(1)}</b><br>AP : PB = <b>${m / g} : ${n / g}</b>`, done: Math.abs(t - .6) < .01, msg: '3 : 2 내분 → <v>p</v> = (3<v>b</v> + 2<v>a</v>)/5 = (2/5)<v>a</v> + (3/5)<v>b</v>' }; } },
   comp: { c: [['a₁', -4, 4, 1, 1], ['a₂', -4, 4, 1, 1], ['a₃', -4, 4, 1, 1]], f([x, y, z]) {
-      axes(5); const O = M(0, 0, 0); arrow(O, M(x, 0, 0), '#ff7a7a'); arrow(M(x, 0, 0), M(x, y, 0), '#7aff9a'); arrow(M(x, y, 0), M(x, y, z), '#7aaaff');
-      arrow(O, M(x, y, z), '#ffd23f', 1.2); label(`a = (${x}, ${y}, ${z})`, M(x, y, z), '#ffd23f', .45); line(O, M(x, y, 0), '#ffffff44', true);
-      return { r: `<v>a</v> = <b style="color:#ff9a9a">${x}</b><v>e₁</v> + <b style="color:#9affb0">${y}</b><v>e₂</v> + <b style="color:#9ac0ff">${z}</b><v>e₃</v><br>|<v>a</v>| = <b>${sq(x * x + y * y + z * z)}</b>`, done: x === 2 && y === 3 && z === -1, msg: '(2, 3, −1) = 2<v>e₁</v> + 3<v>e₂</v> − <v>e₃</v>, 크기 √14' }; } },
+      axes(5); const O = M(0, 0, 0); arrow(O, M(x, 0, 0), '#c8392b'); arrow(M(x, 0, 0), M(x, y, 0), '#1f8a5a'); arrow(M(x, y, 0), M(x, y, z), '#1f4fb8');
+      arrow(O, M(x, y, z), '#c8392b', 1.2); label(`a = (${x}, ${y}, ${z})`, M(x, y, z), '#c8392b', .45); line(O, M(x, y, 0), '#22201c44', true);
+      return { r: `<v>a</v> = <b style="color:#c8392b">${x}</b><v>e₁</v> + <b style="color:#1f8a5a">${y}</b><v>e₂</v> + <b style="color:#1f4fb8">${z}</b><v>e₃</v><br>|<v>a</v>| = <b>${sq(x * x + y * y + z * z)}</b>`, done: x === 2 && y === 3 && z === -1, msg: '(2, 3, −1) = 2<v>e₁</v> + 3<v>e₂</v> − <v>e₃</v>, 크기 √14' }; } },
   dot: { c: [['각 θ', 0, 180, 5, 45]], f([th]) {
       axes(4); const r = th * Math.PI / 180, O = M(0, 0, 0), a = [3, 0, 0], b = [2 * Math.cos(r), 2 * Math.sin(r), 0];
-      arrow(O, P(a), '#ff8a5a'); label('a', P(a), '#ffb08a'); arrow(O, P(b), '#5ab0ff'); label('b', P(b), '#8ac8ff');
-      line(P(b), M(b[0], 0, 0), '#ffffff88', true); arrow(O, M(b[0], 0, 0), '#ffd23f', .8); label('정사영', M(b[0], 0, 0), '#ffd23f', .35);
+      arrow(O, P(a), '#d9761a'); label('a', P(a), '#b85a10'); arrow(O, P(b), '#1f4fb8'); label('b', P(b), '#1f4fb8');
+      line(P(b), M(b[0], 0, 0), '#22201c88', true); arrow(O, M(b[0], 0, 0), '#c8392b', .8); label('정사영', M(b[0], 0, 0), '#c8392b', .35);
       const d = 6 * Math.cos(r); return { r: `<v>a</v>·<v>b</v> = |<v>a</v>||<v>b</v>|cos θ = 3·2·cos ${th}° = <b>${Math.abs(d) < 1e-9 ? 0 : d.toFixed(2)}</b><br>${th < 90 ? '예각 → 양수' : th > 90 ? '둔각 → 음수' : '직각 → 0'}`, done: th === 90, msg: '<v>a</v> ⊥ <v>b</v> ⇔ <v>a</v>·<v>b</v> = 0' }; } },
   line: { c: [['t', -3, 3, .5, 0]], f([t]) {
       axes(5); const A = [1, -2, 1], u = [1, 2, 1], O = M(0, 0, 0), B = A.map((x, i) => x + 2 * u[i]), p = A.map((x, i) => x + t * u[i]);
-      line(P(A.map((x, i) => x - 4 * u[i])), P(A.map((x, i) => x + 4 * u[i])), '#8899bb'); arrow(O, P(A), '#ff8a5a'); label('A(1, −2, 1)', P(A), '#ffb08a', .42);
-      arrow(P(A), P(A.map((x, i) => x + u[i])), '#5aff9a', 1); label('u', P(A.map((x, i) => x + u[i] / 2)), '#8affb0', .4); dot(P(B), '#5ab0ff'); label('B(3, 2, 3)', P(B), '#8ac8ff', .42);
-      arrow(O, P(p), '#ffd23f', 1.1); label('P', P(p), '#ffd23f');
+      line(P(A.map((x, i) => x - 4 * u[i])), P(A.map((x, i) => x + 4 * u[i])), '#6b665c'); arrow(O, P(A), '#d9761a'); label('A(1, −2, 1)', P(A), '#b85a10', .42);
+      arrow(P(A), P(A.map((x, i) => x + u[i])), '#1f8a5a', 1); label('u', P(A.map((x, i) => x + u[i] / 2)), '#1f8a5a', .4); dot(P(B), '#1f4fb8'); label('B(3, 2, 3)', P(B), '#1f4fb8', .42);
+      arrow(O, P(p), '#c8392b', 1.1); label('P', P(p), '#c8392b');
       return { r: `<v>p</v> = <v>a</v> + t<v>u</v>, <v>u</v> = (1, 2, 1), t = <b>${t}</b><br>P = (<b>${p.join(', ')}</b>)<br>직선: <b>x − 1 = (y + 2)/2 = z − 1</b>`, done: t === 2, msg: 't = 2에서 B. 방향벡터 성분이 분모, 지나는 점이 분자에!' }; } }
 };
 
 /* ── 흐름 ── */
-const face = `<svg class="pf" viewBox="0 0 64 64"><rect x="8" y="10" width="46" height="46" rx="10" fill="#6af0d0"/><path d="M8 20 L20 8 L66 8 L54 20Z" fill="#9affe6" opacity=".7"/><circle cx="23" cy="34" r="6" fill="#fff"/><circle cx="40" cy="34" r="6" fill="#fff"/><circle cx="24" cy="35" r="3" fill="#061018"/><circle cx="41" cy="35" r="3" fill="#061018"/><path d="M24 46 q8 6 16 0" stroke="#061018" stroke-width="3" fill="none"/></svg>`;
+const face = `<svg class="pf" viewBox="0 0 64 64" fill="none" stroke="#22201c" stroke-width="2.6" stroke-linejoin="round"><path d="M10 22 L24 10 L56 12 L54 46 L40 58 L8 56Z" fill="#fff"/><path d="M10 22 L42 24 L40 58 M42 24 L56 12"/><circle cx="20" cy="36" r="2.6" fill="#22201c"/><circle cx="32" cy="37" r="2.6" fill="#22201c"/><path d="M20 46 q6 4 12 0"/><path d="M44 30 l6 -4" stroke="#c8392b"/></svg>`;
 const hd = $('#hd'), body = $('#body'), ft = $('#ft');
 function header(c) { hd.innerHTML = `${face}<div><b>${c.t}</b><small>교과서 ${c.p} · 큐비와 함께</small></div><button class="mb">목차</button>`; hd.querySelector('.mb').onclick = menu; }
 function foot(btns) { ft.innerHTML = ''; btns.forEach(([t, f, cls]) => { const b = document.createElement('button'); b.textContent = t; if (cls) b.className = cls; b.onclick = f; ft.appendChild(b); }); body.scrollTop = 0; }

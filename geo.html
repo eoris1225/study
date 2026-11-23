@@ -4,52 +4,54 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>기하 — 공간좌표와 벡터</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#eef4ff;--gold:#ffd23f;--mint:#6af0d0;--bg:#0a1020}
+:root{--paper:#f6f1e4;--ink:#22201c;--red:#c8392b;--blue:#1f4fb8;--pencil:#6b665c;--grid:#d9e3ec}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:'Gowun Dodum','Noto Sans KR',sans-serif}
 button{font:inherit;color:inherit;cursor:pointer}
 [hidden]{display:none!important}
 #app{position:fixed;inset:0;display:flex}
-#view{flex:1;min-width:0;position:relative;touch-action:none}#view canvas{display:block}
-#side{width:min(430px,46vw);display:flex;flex-direction:column;background:#0f1830;border-left:1.5px solid #6af0d044}
-#hd{padding:10px 14px;border-bottom:1px solid #ffffff18;display:flex;align-items:center;gap:10px}
-#hd .pf{width:42px;height:42px;flex:none}#hd b{display:block;font-size:17px}#hd small{color:#9ab;font-size:12px}
-#hd .mb{margin-left:auto;background:#1a2748;border:1px solid #ffffff33;border-radius:10px;padding:6px 10px;font-size:13px}
-#body{flex:1;overflow:auto;padding:12px 14px;user-select:text;-webkit-user-select:text}
-#ft{padding:10px 14px;border-top:1px solid #ffffff18;display:flex;gap:8px}
-#ft button{flex:1;border-radius:12px;padding:11px;font-weight:900;font-size:15px;background:#1a2748;border:1.5px solid #ffffff33}
-#ft .pri{background:#145a4a;border-color:#6af0d0}#ft .pri:disabled{opacity:.35}
-.tag{display:inline-block;font-size:12px;font-weight:700;color:var(--mint);margin-bottom:4px}
-h2{font-size:20px;margin:2px 0 10px}
-.card{background:#16223f;border:1.5px solid #6af0d055;border-radius:14px;padding:12px 14px;font-size:16.5px;line-height:1.75}
-.card b{color:var(--gold)}
+#view{flex:1;min-width:0;position:relative;touch-action:none;background:var(--paper)}#view canvas{display:block}
+#side{width:min(440px,46vw);display:flex;flex-direction:column;background:var(--paper);border-left:2px solid var(--ink);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+#hd{padding:10px 14px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:10px;background:var(--paper)}
+#hd .pf{width:42px;height:42px;flex:none}#hd b{display:block;font-family:'Nanum Pen Script',cursive;font-size:30px;line-height:1;font-weight:400}#hd small{color:var(--pencil);font-size:12px}
+#hd .mb{margin-left:auto;background:none;border:2px solid var(--ink);border-radius:4px;padding:4px 10px;font-size:14px;box-shadow:2px 2px 0 var(--ink)}
+#body{flex:1;overflow:auto;padding:14px 16px;user-select:text;-webkit-user-select:text}
+#ft{padding:10px 14px;border-top:2px solid var(--ink);display:flex;gap:10px;background:var(--paper)}
+#ft button{flex:1;border-radius:4px;padding:10px;font-weight:700;font-size:16px;background:#fff;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+#ft button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+#ft .pri{background:var(--ink);color:var(--paper)}#ft .pri:disabled{opacity:.3}
+.tag{display:inline-block;font-family:'Nanum Pen Script',cursive;font-size:22px;color:var(--red);transform:rotate(-2deg)}
+h2{font-family:'Nanum Pen Script',cursive;font-weight:400;font-size:34px;margin:0 0 6px;line-height:1.05;text-decoration:underline;text-decoration-color:#f3c64a;text-decoration-thickness:8px;text-underline-offset:-2px;text-decoration-skip-ink:none}
+.card{background:#fffdf7;border:2px solid var(--ink);border-radius:3px;padding:12px 14px;font-size:16.5px;line-height:1.8;box-shadow:4px 4px 0 #22201c22}
+.card b{color:var(--red);font-weight:700}
 .bub{display:flex;gap:10px;align-items:flex-start}.bub .pf{width:46px;height:46px;flex:none}
 v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::before{content:'→';position:absolute;top:-.55em;left:0;right:0;text-align:center;font-size:.72em;font-style:normal}
-.prog{display:flex;gap:4px;margin:8px 0}.prog i{flex:1;height:5px;border-radius:3px;background:#ffffff22}.prog i.on{background:var(--mint)}
-.ctl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-top:12px;font-size:15px}
-.ctl input{width:100%;accent-color:var(--mint);height:28px}.ctl b{color:var(--gold);min-width:2.6em;text-align:right}
-.read{margin-top:10px;background:#0b1428;border-radius:10px;padding:8px 12px;font-size:15px;line-height:1.7}.read b{color:var(--gold)}
-.ok{margin-top:10px;background:#103a2a;border:1.5px solid #5aff9a;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.6}
-.q{font-size:17px;line-height:1.8}.src{font-size:12px;color:#9ab;font-weight:700}
-.ans{margin-top:12px;background:#2a2410;border:1.5px solid #ffd23f88;border-radius:12px;padding:10px 12px;font-size:16px;line-height:1.75}.ans .h{color:#cdd;font-size:14.5px;margin-top:6px}
-.paper{margin-top:10px;font-size:13px;color:#9ab}
-#menu{position:fixed;inset:0;z-index:20;background:#0a1020f2;overflow:auto;padding:18px}
-#menu .mc{max-width:720px;margin:auto}#menu h1{margin:0 0 4px}#menu p{color:#9ab;margin:0 0 14px}
-#menu .ch{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
-#menu .ch button{text-align:left;background:#16223f;border:1.5px solid #ffffff22;border-radius:12px;padding:10px 12px}
-#menu .ch button.done{border-color:#5aff9a88}#menu .ch small{display:block;color:#9ab;font-size:12px}
-#menu .row{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}#menu .row button{background:#145a4a;border:1.5px solid #6af0d0;border-radius:12px;padding:10px 14px;font-weight:900}
-#menu .row button.s{background:#1a2748;border-color:#ffffff33}
-@media (max-aspect-ratio:1/1){#app{flex-direction:column}#side{width:auto;height:58vh;border-left:0;border-top:1.5px solid #6af0d044}}
+.prog{display:flex;gap:3px;margin:6px 0 10px}.prog i{flex:1;height:6px;border:1.5px solid var(--ink);background:#fff}.prog i.on{background:var(--ink)}
+.ctl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-top:12px;font-size:16px}
+.ctl input{width:100%;accent-color:var(--blue);height:28px}.ctl b{color:var(--blue);min-width:2.6em;text-align:right;font-size:18px}
+.read{margin-top:10px;background:#fff;border:1.5px dashed var(--pencil);padding:8px 12px;font-size:15.5px;line-height:1.7}.read b{color:var(--blue)}
+.ok{margin-top:10px;border:2.5px solid var(--red);border-radius:50% 46% 52% 44%/12px 16px 12px 16px;padding:10px 14px;font-size:15.5px;line-height:1.6;color:var(--ink);background:#fff6f2}
+.q{font-size:17px;line-height:1.85}.src{font-size:13px;color:var(--pencil);font-weight:700}
+.ans{margin-top:12px;background:#fff;border-left:5px solid var(--red);padding:10px 12px;font-size:17px;line-height:1.75}.ans>b{font-family:'Nanum Pen Script',cursive;font-size:26px;color:var(--red);font-weight:400}.ans .h{color:var(--blue);font-size:15px;margin-top:6px}
+.paper{margin-top:10px;font-size:13px;color:var(--pencil)}
+#menu{position:fixed;inset:0;z-index:20;background:var(--paper);overflow:auto;padding:22px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+#menu .mc{max-width:760px;margin:auto}#menu h1{font-family:'Nanum Pen Script',cursive;font-weight:400;font-size:52px;margin:0}#menu p{color:var(--pencil);margin:0 0 14px}
+#menu .ch{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+#menu .ch button{text-align:left;background:#fffdf7;border:2px solid var(--ink);border-radius:3px;padding:10px 12px;box-shadow:3px 3px 0 #22201c33}
+#menu .ch button.done b{text-decoration:line-through;text-decoration-color:var(--red)}#menu .ch small{display:block;color:var(--pencil);font-size:12px}
+#menu .row{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap}#menu .row button{background:var(--ink);color:var(--paper);border:2px solid var(--ink);border-radius:3px;padding:10px 14px;font-weight:700;box-shadow:3px 3px 0 #22201c55}
+#menu .row button.s{background:#fff;color:var(--ink)}
+@media (max-aspect-ratio:1/1){#app{flex-direction:column}#side{width:auto;height:58vh;border-left:0;border-top:2px solid var(--ink)}}
 </style>
 <script type="importmap">{ "imports": { "three": "./js/vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <div id="app"><div id="view"></div><div id="side"><div id="hd"></div><div id="body"></div><div id="ft"></div></div></div>
 <div id="menu" hidden></div>
-<script src="js/geo/data.js?v=1"></script>
-<script type="module" src="js/geo/main.js?v=1"></script>
+<script src="js/geo/data.js?v=2"></script>
+<script type="module" src="js/geo/main.js?v=2"></script>
 </body>
 </html>
