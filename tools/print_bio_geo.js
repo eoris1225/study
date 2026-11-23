@@ -25,7 +25,7 @@ th{background:#eee}
 .q{margin:0 0 3.2mm;break-inside:avoid}.q .n{font-weight:900}.q .src{color:#666;font-size:8pt}
 .o{display:block;margin-left:4mm}
 .bl{display:inline-block;min-width:20mm;border-bottom:1px solid #111;text-align:center;font-size:8pt;color:#888}
-.ans p{margin:0 0 1.6mm;font-size:9pt;break-inside:avoid}
+.ans p{margin:0 0 1.2mm;font-size:8.4pt;line-height:1.4;break-inside:avoid}.ans{columns:2;column-gap:5mm}.ans h2{column-span:all}
 .tt th{width:22mm}
 .fig svg{max-width:62mm!important;margin:1mm auto!important}
 .fig text{fill:#111}
@@ -34,8 +34,8 @@ small{font-size:8.5pt}.dim{color:#555}
 .chap{break-inside:auto;margin-bottom:3mm}.chap+.chap{break-before:page}
 .rc{margin:.6mm 0 0 2mm}.ex{border:1.5px solid #1f4fb8;border-radius:2mm;padding:2mm 3mm;margin:2mm 0;break-inside:avoid}.exh{font-weight:900;color:#1f4fb8;margin-bottom:1mm}
 .st{margin:1.2mm 0 0 1mm;padding-left:2mm;border-left:3px solid #1f4fb855;font-size:9.4pt}.ea{margin-top:1.5mm;font-size:10pt}.pr{border-top:1.5px dashed #111;padding-top:2mm;margin-top:3mm}
-.ph{display:flex;gap:3mm;margin:1.5mm 0 2.5mm;break-inside:avoid}.ph figure{flex:1;margin:0;border:1px solid #999;border-radius:1.5mm;padding:1mm;text-align:center}.ph img{max-width:100%;max-height:62mm}.ph figcaption{font-size:8pt;color:#444}
-.tb{columns:2;column-gap:6mm}.tb .tq{break-inside:avoid;margin:0 0 4mm;border-top:1.5px solid #111;padding-top:1mm}.tb .tq img{width:100%;max-height:250mm;object-fit:contain;display:block}.tb .tq .n{font-weight:900}.tb .lines{height:16mm;background:repeating-linear-gradient(#fff 0 7.5mm,#bbb 7.5mm 7.8mm)}
+.ph{display:flex;gap:3mm;margin:1.5mm 0 2.5mm;break-inside:avoid}.ph figure{flex:1;margin:0;border:1px solid #999;border-radius:1.5mm;padding:1mm;text-align:center}.ph img{max-width:100%;max-height:44mm}.ph figcaption{font-size:8pt;color:#444}
+.tb{columns:3;column-gap:4mm}.tb .tq{break-inside:avoid;margin:0 0 2.5mm;border-top:1.5px solid #111;padding-top:1mm}.tb .tq img{width:100%;max-height:105mm;object-fit:contain;display:block}.tb .tq .n{font-weight:900}.tb .lines{height:16mm;background:repeating-linear-gradient(#fff 0 7.5mm,#bbb 7.5mm 7.8mm)}
 .vec{position:relative;display:inline-block;padding-top:.5em;line-height:1}.vec::before{content:'→';position:absolute;top:-.15em;left:0;right:0;text-align:center;font-size:.85em}`;
 const page = (title, body) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${title}</title><style>${css}</style></head><body>${body}</body></html>`;
 
@@ -100,7 +100,7 @@ ${ph(['p_z', '명반응 전자 흐름'], ['p_calvin', '캘빈 회로'])}
 <div class="warn"><b class="t">헷갈리는 것</b> ① 빛을 끊으면 3PG ↑, RuBP ↓ (ATP·NADPH가 없어 3PG를 못 바꿈). CO₂를 끊으면 RuBP ↑, 3PG ↓. ② H⁺ 방향: 광합성은 스트로마 → 틸라코이드 내부, 호흡은 기질 → 막 사이 공간. ③ 최종 전자 수용체: 광합성 NADP⁺, 호흡 O₂ / 전자 공여체: 광합성 H₂O, 호흡 NADH·FADH₂.</div>`;
 
 const BIO_BLANK = `
-<h2 class="part">② 흐름 빈칸 테스트 <small>· 20~27분 · 앞 장을 덮고</small></h2>
+<h2 style="margin-top:4mm">② 흐름 빈칸 테스트 <small>· 20~27분 · 앞 장을 덮고</small></h2>
 <table><tr><th>단계</th><th>장소</th><th>탄소 변화</th><th>CO₂</th><th>NADH</th><th>FADH₂</th><th>ATP</th></tr>
 ${['해당 과정', '피루브산 산화', 'TCA 회로', '산화적 인산화', '합계'].map(s => `<tr><td><b>${s}</b></td><td></td><td></td><td></td><td></td><td></td><td style="height:7mm"></td></tr>`).join('')}</table>
 <div class="two">
@@ -137,19 +137,17 @@ const BQS = bioQs();
 const ORD = ['te', 't01', 't02', 't03', 't04', 't05', 'tu', 'tq'];
 const TBQ = window.BQ.filter(q => q.img).sort((a, b) => ORD.indexOf(a.ch) - ORD.indexOf(b.ch));
 const tAns = q => q.ans || (q.o && typeof q.a === 'number' ? `${circ[q.a]} ${q.o[q.a]}` : q.s ? q.s.map((x, i) => `(${i + 1}) ${x[1] ? '○' : '×'}`).join(' ') : q.b ? q.b.map((b, i) => `(${i + 1}) ${Array.isArray(b) ? b[0] : b.a}`).join(' ') : '');
-const TB = TBQ.map((q, i) => `<div class="tq"><span class="n">교${i + 1}.</span> <span class="src">${q.src}</span><img src="${IMG.replace('/bio', '')}/../${q.img}">${q.type === 'w' ? '<div class="lines"></div>' : ''}</div>`).join('');
+const TB = TBQ.map((q, i) => `<div class="tq"><span class="n">교${i + 1}.</span> <span class="src">${q.src}</span><img src="${IMG.replace('/bio', '')}/../${q.img}"></div>`).join('');
 const TBA = TBQ.map((q, i) => `<p><b>교${i + 1}.</b> ${tAns(q)}${q.exp ? ` <span class="dim">— ${q.exp}</span>` : ''}</p>`).join('');
 const bio = page('생명과학 자습 프린트', `<h1>생명과학 1시간 자습 프린트</h1>
 <p>범위: 효소 · 세포 호흡(해당 과정 → TCA 회로 → 산화적 인산화) · 발효 · 광합성</p>
 <table class="tt"><tr><th>0~20분</th><td><b>① 핵심 정리</b> 읽기. 빨간 점선 박스 = 시험에 잘 나오는 함정. 세포 호흡 표는 손으로 한 번 따라 쓰기.</td></tr>
 <tr><th>20~27분</th><td><b>② 흐름 빈칸 테스트</b>: 앞 장을 덮고 표와 빈칸 채우기 → 아래 정답으로 채점.</td></tr>
 <tr><th>27~55분</th><td><b>③ 교과서 문제 ${TBQ.length}문항 (원본 사진)</b>: 서술형은 사진 아래 줄에 직접 쓰기. 빈칸은 사진 속 빈칸에. 막히면 ☆.</td></tr>
-<tr><th>55~60분</th><td><b>채점</b> (맨 뒤 정답). 틀린 문제는 ① 해당 표를 다시 읽기.</td></tr>
-<tr><th>더 하고 싶으면</th><td><b>④ 추가 연습 ${BQS.n}문항</b> (문제은행). 정답은 맨 뒤.</td></tr></table>
+<tr><th>55~60분</th><td><b>채점</b> (맨 뒤 정답). 틀린 문제는 ① 해당 표를 다시 읽기.</td></tr></table>
 ${BIO_SUM}${BIO_BLANK}
 <h2 class="part">③ 교과서 문제 (원본 사진) <small>· 27~55분</small></h2><div class="tb">${TB}</div>
-<h2 class="part">④ 추가 연습 <small>· 시간 남으면</small></h2><div class="two">${BQS.body}</div>
-<div class="part ans"><h2>정답 · 해설 — ③ 교과서 문제</h2>${TBA}<h2 style="margin-top:4mm">정답 · 해설 — ④ 추가 연습</h2>${BQS.ans}</div>`);
+<div class="part ans"><h2>정답 · 해설 — ③ 교과서 문제</h2>${TBA}</div>`);
 
 /* ───────── 기하 ───────── */
 const FR = require('./geo_friendly.js'); J('geo/guide.js');
