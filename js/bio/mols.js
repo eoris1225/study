@@ -4,12 +4,12 @@ import { label } from './engine.js';
 
 const G = { s: new THREE.SphereGeometry(1, 20, 14), cyl: new THREE.CylinderGeometry(.16, .16, 1, 8), cap: new THREE.CapsuleGeometry(.55, 1.1, 6, 14), ring: new THREE.TorusGeometry(.8, .14, 8, 24) };
 const M = {};
-const mat = (k, c, e, ei = 1, o = {}) => M[k] || (M[k] = new THREE.MeshStandardMaterial(Object.assign({ color: c, emissive: e || '#000', emissiveIntensity: ei, roughness: .35, metalness: .1 }, o)));
-const C = () => mat('C', '#3a3f52', '#1b2240', .9);
-const O = () => mat('O', '#ff4a4a', '#7a0000', .8);
-const H = () => mat('H', '#f4f6ff', '#5a6070', .5);
-const P = () => mat('P', '#c48bff', '#6a2ad0', 1.4);
-const bond = () => mat('B', '#9fb3c8', '#223344', .5);
+const mat = (k, c, e, ei = 1, o = {}) =>M[k] || (M[k] = new THREE.MeshStandardMaterial(Object.assign({ color: c, emissive: e || '#000', emissiveIntensity: ei * .45, roughness: .35, metalness: .1 }, o)));
+const C = () =>mat('C', '#3a3f52', '#1b2240', .9);
+const O = () =>mat('O', '#ff4a4a', '#7a0000', .8);
+const H = () =>mat('H', '#f4f6ff', '#5a6070', .5);
+const P = () =>mat('P', '#c48bff', '#6a2ad0', 1.4);
+const bond = () =>mat('B', '#9fb3c8', '#223344', .5);
 
 function sph(m, r, x = 0, y = 0, z = 0) { const s = new THREE.Mesh(G.s, m); s.scale.setScalar(r); s.position.set(x, y, z); return s; }
 function link(g, a, b) { const d = new THREE.Vector3().subVectors(b, a); const c = new THREE.Mesh(G.cyl, bond()); c.scale.set(1, d.length(), 1); c.position.copy(a).addScaledVector(d, .5); c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); g.add(c); }

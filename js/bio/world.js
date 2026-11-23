@@ -3,9 +3,9 @@ import * as THREE from 'three';
 import { E, label, dotTex } from './engine.js';
 
 export const W = {};
-const V = (x, y, z) => new THREE.Vector3(x, y, z);
-const std = (c, e, ei = 1, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, emissive: e || '#000', emissiveIntensity: ei, roughness: .45, metalness: .05 }, o));
-const glass = (c, e, op = .25, ei = .6) => new THREE.MeshStandardMaterial({ color: c, emissive: e, emissiveIntensity: ei, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide, roughness: .2 });
+const V = (x, y, z) =>new THREE.Vector3(x, y, z);
+const std = (c, e, ei = 1, o = {}) =>new THREE.MeshStandardMaterial(Object.assign({ color: c, emissive: e || '#000', emissiveIntensity: ei * .45, roughness: .45, metalness: .05 }, o));
+const glass = (c, e, op = .25, ei = .6) =>new THREE.MeshStandardMaterial({ color: c, emissive: e, emissiveIntensity: ei * .5, transparent: true, opacity: op, depthWrite: false, side: THREE.DoubleSide, roughness: .2 });
 
 export const CELL = { c: V(0, 0, -20), r: 135 };
 export const MITO = { a: V(-32, 0, -85), b: V(32, 0, -85), r: 20, gate: V(52, 0, -85) };
@@ -42,7 +42,7 @@ export function buildWorld() {
   const nP = Q === 'low' ? 1500 : 3500; const pg = new THREE.BufferGeometry(); const pa = new Float32Array(nP * 3);
   for (let i = 0; i < nP; i++) { const d = new THREE.Vector3().randomDirection().multiplyScalar(Math.cbrt(Math.random()) * (CELL.r - 4)).add(CELL.c); pa.set([d.x, d.y, d.z], i * 3); }
   pg.setAttribute('position', new THREE.BufferAttribute(pa, 3));
-  W.dust = new THREE.Points(pg, new THREE.PointsMaterial({ color: '#7fe8ff', size: .55, map: dotTex(), transparent: true, opacity: .55, depthWrite: false, blending: THREE.AdditiveBlending })); S.add(W.dust);
+  W.dust = new THREE.Points(pg, new THREE.PointsMaterial({ color: '#7fe8ff', size: .45, map: dotTex(), transparent: true, opacity: .3, depthWrite: false, blending: THREE.AdditiveBlending })); S.add(W.dust);
 
   /* 세포 골격 (가는 실) */
   for (let i = 0; i < 26; i++) { const a = new THREE.Vector3().randomDirection().multiplyScalar(CELL.r - 6).add(CELL.c), b = new THREE.Vector3().randomDirection().multiplyScalar(CELL.r - 6).add(CELL.c); const d = b.clone().sub(a); const c = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, d.length(), 5), std('#88ffe8', '#2a9', .6, { transparent: true, opacity: .16, depthWrite: false })); c.position.copy(a).addScaledVector(d, .5); c.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); S.add(c); }
@@ -84,7 +84,7 @@ function buildMito(S) {
 /* 캡슐 충돌: 안/밖을 막고 입구로만 드나들게 */
 export function mitoConstrain(p, wasInside) {
   const ab = MITO.b.clone().sub(MITO.a); const t = Math.max(0, Math.min(1, p.clone().sub(MITO.a).dot(ab) / ab.lengthSq())); const q = MITO.a.clone().addScaledVector(ab, t);
-  const d = p.distanceTo(q), sdf = d - MITO.r; const inGate = p.x > MITO.b.x + 8 && Math.hypot(p.y - MITO.gate.y, p.z - MITO.gate.z) < 6.2;
+  const d = p.distanceTo(q), sdf = d - MITO.r; const inGate = p.x >MITO.b.x + 8 && Math.hypot(p.y - MITO.gate.y, p.z - MITO.gate.z) < 6.2;
   const dir = d > 1e-4 ? p.clone().sub(q).divideScalar(d) : V(0, 1, 0);
   if (!inGate) { if (wasInside && sdf > -1.6) p.copy(q).addScaledVector(dir, MITO.r - 1.6); else if (!wasInside && sdf < 1.6) p.copy(q).addScaledVector(dir, MITO.r + 1.6); }
   return (p.distanceTo(q) - MITO.r) < 0;
@@ -149,7 +149,7 @@ function buildETC(S) {
   mem.position.copy(c); mem.rotation.y = Math.PI / 2; S.add(mem); W.etcMem = mem;
   const lm = label('내막 (크리스타) — 전자 전달계', { scale: 1, border: '#ff8a3d' }); lm.position.copy(c).add(V(1, 15, 0)); S.add(lm);
   const ls = label('막 사이 공간 →', { scale: .8, border: '#ff4a7a' }); ls.position.copy(c).add(V(-6, -14, 0)); S.add(ls);
-  const g = new THREE.Group(); S.add(g); W.etc = g; const at = (z, y = 0) => V(x + 1.6, c.y + y, c.z + z);
+  const g = new THREE.Group(); S.add(g); W.etc = g; const at = (z, y = 0) =>V(x + 1.6, c.y + y, c.z + z);
   const comp = (name, z, col, sz, y = 0) => { const o = new THREE.Group(); o.position.copy(at(z, y)); const b = new THREE.Mesh(new THREE.CapsuleGeometry(sz * .6, sz, 8, 16), std(col, col, .8, { roughness: .5 })); b.rotation.z = Math.PI / 2; b.rotation.y = Math.PI / 2; o.add(b); const l = label(name, { scale: .55, border: col }); l.position.set(1.5, sz + 1.2, 0); o.add(l); g.add(o); o.userData.body = b; return o; };
   W.cI = comp('복합체 Ⅰ\n(NADH)', -12, '#4aa8ff', 3.4, 1); W.cII = comp('복합체 Ⅱ\n(FADH₂)', -6.5, '#47e38a', 2.2, -4); W.cIII = comp('복합체 Ⅲ', -1, '#c48bff', 3);
   W.cIV = comp('복합체 Ⅳ\n(O₂ → H₂O)', 5, '#ff5a5a', 3, 1);
@@ -169,7 +169,7 @@ function buildETC(S) {
   pg.setAttribute('position', new THREE.BufferAttribute(pa, 3)); pg.setDrawRange(0, 0);
   W.hp = new THREE.Points(pg, new THREE.PointsMaterial({ color: '#ff5a8a', size: .9, map: dotTex(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); S.add(W.hp); W.hpMax = n;
   W.inI = ring(S, at(-12, -7).add(V(3, 0, 0)), '#4aa8ff', 'NADH'); W.inII = ring(S, at(-6.5, -11).add(V(3, 0, 0)), '#47e38a', 'FADH₂'); W.inIV = ring(S, at(5, -7).add(V(3, 0, 0)), '#ff5a5a', 'O₂'); W.inSyn = ring(S, at(12.5, -8).add(V(4, 0, 0)), '#ffd23f', '터빈 돌리기');
-  [W.inI, W.inII, W.inIV, W.inSyn].forEach(r => r.rotation.z = 0);
+  [W.inI, W.inII, W.inIV, W.inSyn].forEach(r =>r.rotation.z = 0);
 }
 export function setHplus(f) { W.hp.geometry.setDrawRange(0, Math.round(Math.max(0, Math.min(1, f)) * W.hpMax)); }
 

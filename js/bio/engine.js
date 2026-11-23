@@ -13,12 +13,12 @@ E.quality = (() => { try { return localStorage.getItem('bio_q') || (mobile ? 'mi
 export function initEngine(host) {
   const R = new THREE.WebGLRenderer({ antialias: E.quality === 'high', powerPreference: 'high-performance' });
   R.setPixelRatio(Math.min(devicePixelRatio || 1, E.quality === 'low' ? 1 : E.quality === 'mid' ? 1.25 : 1.75));
-  R.setSize(innerWidth, innerHeight); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; R.outputColorSpace = THREE.SRGBColorSpace;
+  R.setSize(innerWidth, innerHeight); R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .82; R.outputColorSpace = THREE.SRGBColorSpace;
   host.appendChild(R.domElement);
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#06121c'); scene.fog = new THREE.FogExp2('#0a2230', 0.012);
   const cam = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 900);
   const composer = new EffectComposer(R); composer.addPass(new RenderPass(scene, cam));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.85, 0.55, 0.22); composer.addPass(bloom); composer.addPass(new OutputPass());
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth / 2, innerHeight / 2), 0.28, 0.35, 0.62); composer.addPass(bloom); composer.addPass(new OutputPass());
   bloom.enabled = E.quality !== 'low';
   addEventListener('resize', () => { R.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); });
   Object.assign(E, { R, scene, cam, composer, bloom, THREE });
@@ -101,7 +101,7 @@ export function burst(pos, color = '#7fffe0', n = 40, speed = 8, life = 1.1, siz
   const g = new THREE.BufferGeometry(); const P = new Float32Array(n * 3), V = [];
   for (let i = 0; i < n; i++) { P[i * 3] = pos.x; P[i * 3 + 1] = pos.y; P[i * 3 + 2] = pos.z; const v = new THREE.Vector3().randomDirection().multiplyScalar(speed * (.4 + Math.random() * .8)); V.push(v); }
   g.setAttribute('position', new THREE.BufferAttribute(P, 3));
-  const m = new THREE.PointsMaterial({ color, size, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, map: dotTex() });
+  const m = new THREE.PointsMaterial({ color, size: size * .8, opacity: .7, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, map: dotTex() });
   const p = new THREE.Points(g, m); E.scene.add(p); BURSTS.push({ p, V, t: 0, life });
 }
 export function stepBursts(dt) { for (let i = BURSTS.length - 1; i >= 0; i--) { const b = BURSTS[i]; b.t += dt; const a = b.p.geometry.attributes.position; for (let k = 0; k < b.V.length; k++) { a.array[k * 3] += b.V[k].x * dt; a.array[k * 3 + 1] += b.V[k].y * dt; a.array[k * 3 + 2] += b.V[k].z * dt; b.V[k].multiplyScalar(1 - dt * 2.2); } a.needsUpdate = true; b.p.material.opacity = Math.max(0, 1 - b.t / b.life); if (b.t > b.life) { E.scene.remove(b.p); b.p.geometry.dispose(); b.p.material.dispose(); BURSTS.splice(i, 1); } } }
