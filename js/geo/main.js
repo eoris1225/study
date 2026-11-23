@@ -1,5 +1,6 @@
 /* 기하 — 설명(3D 그림) → 직접 조작 확인 → 교과서 문제. 생명과학과 완전히 분리 (저장 키 geo_v1) */
 import * as THREE from 'three';
+import { initPlot } from './plot.js?v=2';
 const $ = s => document.querySelector(s);
 const CH = window.GEO;
 const KEY = 'geo_v1';
@@ -128,13 +129,15 @@ pad.querySelector('.pt').onclick = e => { const b = e.target.closest('button'); 
   if (b.dataset.x !== undefined && confirm('이 문제의 필기를 모두 지울까요?')) { px.clearRect(0, 0, pc.width, pc.height); store(); }
   if (b.dataset.p !== undefined) { penOnly = !penOnly; b.classList.toggle('on', penOnly); try { localStorage.setItem('geo_penonly', penOnly ? '1' : '0'); } catch (e) { } }
   if (b.dataset.v !== undefined) { pad.classList.toggle('peek'); b.textContent = pad.classList.contains('peek') ? '연습장으로' : '3D 보기'; } };
+let curScene = null;
+const plot = initPlot({ THREE, view, G, M, line, arrow, dot, label, axes, clear, restore: () => { if (curScene) setScene(curScene, null); }, setAuto: v => { auto = v; }, setDist: d => { dist = Math.max(10, Math.min(40, d)); } });
 /* ── 흐름 ── */
 const face = `<svg class="pf" viewBox="0 0 64 64" fill="none" stroke="#22201c" stroke-width="2.6" stroke-linejoin="round"><path d="M10 22 L24 10 L56 12 L54 46 L40 58 L8 56Z" fill="#fff"/><path d="M10 22 L42 24 L40 58 M42 24 L56 12"/><circle cx="20" cy="36" r="2.6" fill="#22201c"/><circle cx="32" cy="37" r="2.6" fill="#22201c"/><path d="M20 46 q6 4 12 0"/><path d="M44 30 l6 -4" stroke="#c8392b"/></svg>`;
 const hd = $('#hd'), body = $('#body'), ft = $('#ft');
 function header(c) { hd.innerHTML = `${face}<div><b>${c.t}</b><small>교과서 ${c.p} · 큐비와 함께</small></div><button class="mb">목차</button>`; hd.querySelector('.mb').onclick = menu; }
 function foot(btns) { ft.innerHTML = ''; btns.forEach(([t, f, cls]) => { const b = document.createElement('button'); b.textContent = t; if (cls) b.className = cls; b.onclick = f; ft.appendChild(b); }); body.scrollTop = 0; }
 let ctlVals = [];
-function setScene(name, interactive) { const sc = SC[name]; ctlVals = sc.c.map(c => c[4]); const run = () => { clear(); return sc.f(ctlVals); }; let out = run();
+function setScene(name, interactive) { curScene = name; const sc = SC[name]; ctlVals = sc.c.map(c => c[4]); const run = () => { clear(); return sc.f(ctlVals); }; let out = run();
   if (!interactive) return null;
   const box = document.createElement('div'); box.className = 'ctl'; const read = document.createElement('div'); read.className = 'read'; read.innerHTML = out.r;
   sc.c.forEach(([n, lo, hi, st], i) => { const lb = document.createElement('span'); lb.textContent = n; const inp = document.createElement('input'); inp.type = 'range'; inp.min = lo; inp.max = hi; inp.step = st; inp.value = ctlVals[i]; const v = document.createElement('b'); v.textContent = ctlVals[i];
@@ -143,7 +146,7 @@ function setScene(name, interactive) { const sc = SC[name]; ctlVals = sc.c.map(c
   const check = () => { if (out.done && !hit) { hit = true; okEl.hidden = false; okEl.innerHTML = '✓ 성공! ' + out.msg; interactive(); } };
   return [box, read, okEl]; }
 
-function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); padOff(); pad.classList.remove('peek');
+function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); padOff(); pad.classList.remove('peek'); plot.hide();
   const L = c.learn.length, n = c.probs.length;
   if (S.step < L) { const [t, x] = c.learn[S.step]; setScene(c.scene, null); auto = true;
     body.innerHTML = `<span class="tag">개념 ${S.step + 1} / ${L}</span><div class="prog">${c.learn.map((_, i) => `<i class="${i <= S.step ? 'on' : ''}"></i>`).join('')}</div><div class="bub">${face}<div class="card"><h2>${t}</h2>${x}</div></div><p class="paper">왼쪽 3D 그림은 끌어서 돌릴 수 있어요 (두 손가락으로 확대).</p>`;
@@ -151,7 +154,7 @@ function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); 
   if (S.step === L) { body.innerHTML = `<span class="tag">직접 해 보기</span><div class="card">${c.mission}</div>`; const next = () => { nb.disabled = false; };
     const els = setScene(c.scene, next); body.append(...els); foot([['건너뛰기', () => { S.step++; show(); }], ['문제 풀기 ▶', () => { S.step++; show(); }, 'pri']]); const nb = ft.lastChild; nb.disabled = true; return; }
   const k = S.step - L - 1; if (k >= n) { S.right[c.id] = 1; S.ch++; S.step = 0; save(); return show(); }
-  const q = c.probs[k]; padOn(c.id + ':' + k);
+  const q = c.probs[k]; padOn(c.id + ':' + k); setScene(c.scene, null); plot.set(c.id + ':' + k, q.q);
   body.innerHTML = probHTML(c, k, q, `<span class="tag">교과서 문제 ${k + 1} / ${n}</span><div class="prog">${c.probs.map((_, i) => `<i class="${i <= k ? 'on' : ''}"></i>`).join('')}</div>`) + `<p class="paper">왼쪽 연습장에 펜으로 풀어 보세요. 막히면 힌트를 하나씩. (필기는 문제마다 저장돼요)</p>`;
   const key = c.id + ':' + k;
   hintButtons(c, q, null, () => foot([['✗ 틀림', () => { if (!S.wrong.includes(key)) S.wrong.push(key); S.step++; show(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== key); S.step++; show(); }, 'pri']]), key); }
@@ -167,11 +170,11 @@ function hintButtons(c, q, onDone, finish, id) { const steps = hintSteps(q, id),
   render(); }
 let wq = null;
 function wrongMode() { $('#menu').hidden = true; wq = S.wrong.slice(); nextWrong(); }
-function nextWrong() { if (!wq.length) { wq = null; return menu(); } const [id, k] = wq[0].split(':'); const c = CH.find(x => x.id === id), q = c.probs[+k]; header(c); setScene(c.scene, null); padOff(); padOn(wq[0]);
+function nextWrong() { if (!wq.length) { wq = null; return menu(); } const [id, k] = wq[0].split(':'); const c = CH.find(x => x.id === id), q = c.probs[+k]; header(c); setScene(c.scene, null); padOff(); padOn(wq[0]); plot.set(wq[0], q.q);
   body.innerHTML = probHTML(c, +k, q, `<span class="tag">오답 다시 — 남은 ${wq.length}</span>`);
   hintButtons(c, q, null, () => foot([['✗ 또 틀림', () => { wq.shift(); nextWrong(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== wq[0]); save(); wq.shift(); nextWrong(); }, 'pri']]), id + ':' + k); }
 
-function menu() { padOff(); const m = $('#menu'); m.hidden = false;
+function menu() { padOff(); plot.hide(); const m = $('#menu'); m.hidden = false;
   m.innerHTML = `<div class="mc"><h1>기하 — 공간좌표와 벡터</h1><p>범위 p80~152, p160~166 (p153~158 평면과 구의 방정식 제외). 설명 → 직접 해 보기 → 교과서 문제 순서로 자동 진행돼요.</p>
   <div class="row"><button data-a="go">${S.ch < CH.length ? `이어하기 — ${CH[S.ch].t}` : '처음부터 다시'}</button><button class="s" data-a="wrong">오답 다시 (${S.wrong.length})</button><button class="s" data-a="home">과목 선택</button></div>
   <div class="ch">${CH.map((c, i) => `<button data-c="${i}" class="${S.right[c.id] ? 'done' : ''}"><b>${S.right[c.id] ? '✓ ' : ''}${i + 1}. ${c.t}</b><small>${c.p} · 문제 ${c.probs.length}개</small></button>`).join('')}</div></div>`;
