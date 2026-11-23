@@ -32,8 +32,11 @@ th{background:#eee}
 small{font-size:8.5pt}.dim{color:#555}
 .work{height:22mm}
 .chap{break-inside:auto;margin-bottom:3mm}.chap+.chap{break-before:page}
-.rc{margin:.6mm 0 0 2mm}.ex{border:1.5px solid #1f4fb8;border-radius:2mm;padding:2mm 3mm;margin:2mm 0;break-inside:avoid}.exh{font-weight:900;color:#1f4fb8;margin-bottom:1mm}
+.rc{margin:.6mm 0 0 2mm}.ex{border:1.5px solid #1f4fb8;border-radius:2mm;padding:2mm 3mm;margin:2mm 0}.st,.copy,.fig{break-inside:avoid}.exh{font-weight:900;color:#1f4fb8;margin-bottom:1mm}
 .st{margin:1.2mm 0 0 1mm;padding-left:2mm;border-left:3px solid #1f4fb855;font-size:9.4pt}.ea{margin-top:1.5mm;font-size:10pt}.pr{border-top:1.5px dashed #111;padding-top:2mm;margin-top:3mm}
+.memo{background:repeating-linear-gradient(#fff 0 6.6mm,#d4d4d4 6.6mm 6.9mm)}
+.copy{margin-top:2mm;height:30mm;border:1px solid #bbb;border-radius:1.5mm;font-size:8pt;color:#888;padding:1mm 2mm;background-image:linear-gradient(#e6e6e6 1px,transparent 1px),linear-gradient(90deg,#e6e6e6 1px,transparent 1px);background-size:5mm 5mm}
+.pr .work{height:48mm;border:1px solid #bbb;border-radius:1.5mm;background-image:linear-gradient(#e6e6e6 1px,transparent 1px),linear-gradient(90deg,#e6e6e6 1px,transparent 1px);background-size:5mm 5mm}
 .ph{display:flex;gap:3mm;margin:1.5mm 0 2.5mm;break-inside:avoid}.ph figure{flex:1;margin:0;border:1px solid #999;border-radius:1.5mm;padding:1mm;text-align:center}.ph img{max-width:100%;max-height:44mm}.ph figcaption{font-size:8pt;color:#444}
 .tb{columns:3;column-gap:4mm}.tb .tq{break-inside:avoid;margin:0 0 2.5mm;border-top:1.5px solid #111;padding-top:1mm}.tb .tq img{width:100%;max-height:105mm;object-fit:contain;display:block}.tb .tq .n{font-weight:900}.tb .lines{height:16mm;background:repeating-linear-gradient(#fff 0 7.5mm,#bbb 7.5mm 7.8mm)}
 .vec{position:relative;display:inline-block;padding-top:.5em;line-height:1}.vec::before{content:'→';position:absolute;top:-.15em;left:0;right:0;text-align:center;font-size:.85em}`;
@@ -161,9 +164,9 @@ const geoCh = window.GEO.map(c => { const F = FR[c.id] || { k: c.learn, r: [] };
   let pr = ''; if (PR) { gn++; gAns.push(`<p><b>${gn}.</b> <b>${PR.a}</b> <span class="dim">— ${PR.h || ''}</span></p>`);
     pr = `<div class="q pr"><span class="n">직접 풀기 ${gn}.</span> <span class="src">[${PR.s}]</span><br>${PR.q}${figOf(c.id + ':' + prI)}<div class="work"></div></div>`; }
   return `<div class="chap"><h2>${c.t} <small>${c.p}</small></h2>
-<table>${F.k.map(([k, v]) => `<tr><th style="width:22%">${k}</th><td>${v}</td></tr>`).join('')}</table>
+<table class="nt"><tr><th style="width:18%">개념</th><th>쉬운 말 정리</th><th style="width:27%">내 필기</th></tr>${F.k.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td><td class="memo"></td></tr>`).join('')}</table>
 ${F.r.length ? `<div class="box"><b>이런 문제는 이렇게</b>${F.r.map(([t, v]) => `<div class="rc"><b>${t}</b>: ${v}</div>`).join('')}</div>` : ''}
-${P ? `<div class="ex"><div class="exh">예제 따라 풀기 <span class="src">[${P.s}]</span></div>${P.q}${figOf(c.id + ':' + exI)}${steps}<div class="ea">답: <b>${P.a}</b></div></div>` : ''}
+${P ? `<div class="ex"><div class="exh">예제 따라 풀기 <span class="src">[${P.s}]</span></div>${P.q}${figOf(c.id + ':' + exI)}${steps}<div class="ea">답: <b>${P.a}</b></div><div class="copy">보지 않고 다시 풀어 보기</div></div>` : ''}
 ${pr}</div>`; }).join('');
 const geo = page('기하 자습 프린트', `<h1>기하 1시간 자습 프린트</h1>
 <p>범위: 교과서 p80~152, p160~166 — 좌표공간 · 벡터 · 내적 · 직선의 방정식</p>
@@ -172,6 +175,7 @@ const geo = page('기하 자습 프린트', `<h1>기하 1시간 자습 프린트
 <div class="box">자주 쓰는 공식: 거리 √(Δx² + Δy² + Δz²) · 내분점 (mB + nA)/(m + n) · 무게중심 = 세 점 평균 · 내적 a·b = a₁b₁ + a₂b₂ + a₃b₃ = |a||b|cos θ · 수직 ⇔ 내적 0 · 평행 ⇔ 실수배</div>
 ${geoCh}
 <div class="part ans"><h2>직접 풀기 정답 · 풀이</h2>${gAns.join('')}</div>`);
+const MATH = require('./mathify.js');
 const fixV = h => h.replace(/<v>([^<]*)<\/v>/g, '<span class="vec">$1</span>');
-fs.writeFileSync(path.join(OUT, 'bio.html'), bio); fs.writeFileSync(path.join(OUT, 'geo.html'), fixV(geo));
+fs.writeFileSync(path.join(OUT, 'bio.html'), bio); fs.writeFileSync(path.join(OUT, 'geo.html'), MATH(fixV(geo)).replace('</style>', MATH.css + '</style>'));
 console.log('bio', BQS.n, 'geo', gn);
