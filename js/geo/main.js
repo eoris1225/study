@@ -154,7 +154,7 @@ function setScene(name, interactive) { curScene = name; const sc = SC[name]; ctl
   const check = () => { if (out.done && !hit) { hit = true; okEl.hidden = false; okEl.innerHTML = '✓ 성공! ' + out.msg; interactive(); } };
   return [box, read, okEl]; }
 
-function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); padOff(); pad.classList.remove('peek'); plot.hide();
+function show() { const c = CH[S.ch]; if (!c) return menu(); S.pos = S.pos || {}; S.seen = S.seen || {}; S.pos[c.id] = S.step; S.seen[c.id + '@' + S.step] = 1; header(c); save(); padOff(); pad.classList.remove('peek'); plot.hide();
   const L = c.learn.length, n = c.probs.length;
   if (S.step < L) { const [t, x] = c.learn[S.step]; setScene(c.scene, null); auto = true;
     body.innerHTML = `<span class="tag">개념 ${S.step + 1} / ${L}</span><div class="prog">${c.learn.map((_, i) => `<i class="${i <= S.step ? 'on' : ''}"></i>`).join('')}</div><div class="bub">${face}<div class="card"><h2>${t}</h2>${x}</div></div><p class="paper">왼쪽 3D 그림은 끌어서 돌릴 수 있어요 (두 손가락으로 확대).</p>`;
@@ -198,11 +198,20 @@ function nextWrong() { if (!wq.length) { wq = null; return menu(); } const [id, 
   body.innerHTML = probHTML(c, +k, q, `<span class="tag">오답 다시 — 남은 ${wq.length}</span>`);
   hintButtons(c, q, null, () => foot([['✗ 또 틀림', () => { wq.shift(); nextWrong(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== wq[0]); save(); wq.shift(); nextWrong(); }, 'pri']]), id + ':' + k); }
 
+/* 챕터의 원하는 단계부터: 개념 n · 직접 해 보기 · 문제 n */
+function stepPick(ci) { const c = CH[ci], m = $('#menu'), L = c.learn.length, P = (S.pos || {})[c.id], seen = S.seen || {};
+  const btn = (st, t, sub) => `<button data-go="${ci}:${st}" class="${seen[c.id + '@' + st] ? 'seen' : ''}${P === st ? ' here' : ''}"><b>${seen[c.id + '@' + st] ? '✓ ' : ''}${t}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
+  const ps = c.probs.map((q, k) => { const w = S.wrong.includes(c.id + ':' + k); return btn(L + 1 + k, `문제 ${k + 1}${w ? ' ✗' : ''}`, q.s); });
+  m.innerHTML = `<div class="mc"><h1>${ci + 1}. ${c.t}</h1><p>${c.p} · 원하는 곳을 눌러 거기서부터 시작해요.</p>
+  <div class="row">${P != null ? `<button data-go="${ci}:${P}">이어하기 (마지막 위치)</button>` : ''}<button class="s" data-back>◀ 목차</button></div>
+  <h3>개념 설명</h3><div class="ch">${c.learn.map(([t], i) => btn(i, `개념 ${i + 1}`, t)).join('')}</div>
+  <h3>직접 해 보기</h3><div class="ch">${btn(L, '3D 조작 확인')}</div>
+  <h3>교과서 문제</h3><div class="ch">${ps.join('')}</div></div>`; m.scrollTop = 0; }
 function menu() { padOff(); plot.hide(); const m = $('#menu'); m.hidden = false;
   m.innerHTML = `<div class="mc"><h1>기하 — 공간좌표와 벡터</h1><p>범위 p80~152, p160~166 (p153~158 평면과 구의 방정식 제외). 설명 → 직접 해 보기 → 교과서 문제 순서로 자동 진행돼요.</p>
   <div class="row"><button data-a="go">${S.ch < CH.length ? `이어하기 — ${CH[S.ch].t}` : '처음부터 다시'}</button><button class="s" data-a="wrong">오답 다시 (${S.wrong.length})</button><button class="s" data-a="home">과목 선택</button></div>
   <div class="ch">${CH.map((c, i) => `<button data-c="${i}" class="${S.right[c.id] ? 'done' : ''}"><b>${S.right[c.id] ? '✓ ' : ''}${i + 1}. ${c.t}</b><small>${c.p} · 문제 ${c.probs.length}개</small></button>`).join('')}</div></div>`;
-  m.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.c) { S.ch = +b.dataset.c; S.step = 0; m.hidden = true; return show(); }
+  m.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.c) return stepPick(+b.dataset.c); if (b.dataset.go) { const [ci, st] = b.dataset.go.split(':').map(Number); S.ch = ci; S.step = st; m.hidden = true; return show(); } if (b.dataset.back !== undefined) return menu();
     const a = b.dataset.a; if (a === 'go') { if (S.ch >= CH.length) { S.ch = 0; S.step = 0; } m.hidden = true; show(); } if (a === 'wrong') { if (S.wrong.length) wrongMode(); } if (a === 'home') location.href = 'index.html'; }; }
 
 if (S.ch < CH.length) show(); else menu();
