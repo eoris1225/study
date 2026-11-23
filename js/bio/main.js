@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js';
 import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js';
 import { mol, NAME } from './mols.js';
-import { HUD, toast, banner, flash, say, choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice } from './ui.js';
+import { HUD, toast, banner, flash, say, choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST } from './ui.js';
 
 const $ = s =>document.querySelector(s);
 const V = (x, y, z) =>new THREE.Vector3(x, y, z);
@@ -22,6 +22,13 @@ const P = { g: new THREE.Group(), vel: V(0, 0, 0), inMito: false, carry: [], das
   const light = new THREE.PointLight('#7ff8ff', 7, 14, 1.8); light.position.y = 1; P.g.add(light);
   P.g.position.copy(POS.start); E.scene.add(P.g);
 }
+/* ── 따라다니는 친구들 ── */
+const PALS = [];
+{ const mk = (col, build, name, off) => { const g = new THREE.Group(); build(g, new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .35, roughness: .4 })); const ew = new THREE.MeshBasicMaterial({ color: '#fff' }), ep = new THREE.MeshBasicMaterial({ color: '#061018' }); for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.13, 10, 8), ew); e.position.set(s * .22, .15, .5); g.add(e); const p = new THREE.Mesh(new THREE.SphereGeometry(.07, 8, 6), ep); p.position.set(s * .22, .15, .6); g.add(p); } const l = label(name, { scale: .38, border: col }); l.position.y = 1; g.add(l); g.scale.setScalar(.9); g.position.copy(POS.start); E.scene.add(g); PALS.push({ g, off }); };
+  mk('#3fd88a', (g, m) => { const b = new THREE.Mesh(new THREE.SphereGeometry(.55, 20, 14, .9, Math.PI * 2 - 1.8), m); b.material.side = THREE.DoubleSide; b.rotation.y = Math.PI / 2; g.add(b); }, '엔지', V(-2.6, .8, 2.2));
+  mk('#ffd23f', (g, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(.7, .8, .5), m); g.add(b); const c = new THREE.Mesh(new THREE.BoxGeometry(.24, .14, .24), m); c.position.y = .47; g.add(c); }, '아티', V(2.6, .9, 2.2));
+  mk('#4aa8ff', (g, m) => { const b = new THREE.Mesh(new THREE.CapsuleGeometry(.3, .6, 6, 12), m); b.rotation.z = Math.PI / 2; g.add(b); }, '나디', V(0, 1.8, 3)); }
+function stepPals(dt, T) { PALS.forEach((p, i) => { const o = p.off.clone().applyAxisAngle(V(0, 1, 0), P.g.rotation.y); const want = P.g.position.clone().add(o); want.y += Math.sin(T * 2 + i) * .3; p.g.position.lerp(want, 1 - Math.exp(-dt * 3)); p.g.rotation.y = P.g.rotation.y + Math.sin(T + i) * .3; }); }
 /* ── 아이템 ── */
 const ITEMS = []; /* {o, type, mode:'free'|'carry'|'gone', vel, collect:bool, drift} */
 const ENERGY = { ATP: 1, NADH: 1, FADH2: 1, NADPH: 1 };
@@ -91,7 +98,7 @@ function loop(now) {
     else if (d < 3.4 && P.carry.length < 10) { it.mode = 'carry'; P.carry.push(it); sfx('pick'); toast(`${NAME[it.type] || it.type} 획득`, '#7fffe0'); it.onGet && it.onGet(); } }
   for (let i = UNTIL.length - 1; i >= 0; i--) if (UNTIL[i].fn()) { const u = UNTIL.splice(i, 1)[0]; u.r(); }
   if (IN.actPress) IN.actPress = false;
-  stepTweens(dt); stepBursts(dt); stepWorld(dt, T); stepMission(dt); stepCam(dt);
+  stepTweens(dt); stepBursts(dt); stepPals(dt, T); stepWorld(dt, T); stepMission(dt); stepCam(dt);
   marker(E.cam, TARGET, THREE);
   if (E.bloom.enabled) E.composer.render(); else E.R.render(E.scene, E.cam);
   requestAnimationFrame(loop);
@@ -470,7 +477,17 @@ async function checkpoint(L, title) {
   if (wrong.length) { await notice('틀린 문제 다시', `${wrong.length}문제를 다시 풀어요. 이번엔 해설에서 본 내용을 떠올려 보세요.`, '다시 풀기'); await quiz(wrong, '다시 풀기 · ' + title); }
   banner(`${r.right} / ${r.total}`, '중간 점검 첫 시도 점수', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(1);
 }
+const SPK = { enz: 'enzy', intro: 'mito', gly: 'enzy', pyr: 'nadi', tca: 'nadi', etc: 'oxy', poison: 'oxy', ferm: 'nadi', light: 'chloe', calvin: 'chloe', boss: 'mito' };
 async function studyFlow(k, run) {
+  speaker(SPK[MISSIONS[k].id]);
+  if (k === 0 && !SAVE.met) { await meet([
+    ['mito', '안녕, 나는 <b>미토</b>! 세포 속 발전소 마이토콘드리아야. 너는 이제 나가 되어 세포 안을 날아다닐 거야.'],
+    ['enzy', '나는 <b>엔지</b>, 효소야. 몸속 화학 반응이 체온에서도 빨리 일어나게 도와줘. 내 입 모양(활성 부위)에 딱 맞는 것만 붙잡지!'],
+    ['atty', '나는 <b>아티</b>, ATP야. 세포가 쓰는 에너지 배터리! 인산 3개를 달고 다니다가 하나 떼면서 에너지를 줘.'],
+    ['nadi', '나는 <b>나디</b>, NAD⁺! 전자 택배 기사야. 포도당에서 떼어 낸 전자를 싣고 전자전달계까지 배달해.'],
+    ['oxy', '나는 <b>옥시</b>, 산소. 전자의 마지막 도착지야. 내가 없으면 배달이 막혀서 발전소가 멈춰!'],
+    ['chloe', '나는 <b>클로이</b>, 엽록체. 햇빛으로 포도당을 요리하는 식물 세포의 주방장이야. 뒤 챕터에서 만나자!'],
+    ['mito', '챕터마다 <b>떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리</b> 순서로 가. 모르는 말이 나오면 우리가 먼저 그림으로 설명해 줄게.']]); SAVE.met = 1; save(); }
   const M = MISSIONS[k], L = (window.BLESSON || {})[M.id] || { facts: [], check: {} }, pool = poolFacts(), title = M.t.replace(/^\d+\.\s*/, '');
   banner(M.t, '떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리', '#7fffe0'); await wait(1.4);
   /* 1. 지난 챕터 떠올리기 (틀렸던 문장 먼저) */

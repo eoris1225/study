@@ -42,8 +42,8 @@ export function say(lines) {
     const box = $('#talk'); IN.locked = true; let i = 0, typing = null;
     const show = () => {
       if (i >= lines.length) { box.hidden = true; IN.locked = false; box.onclick = null; removeEventListener('keydown', kd); res(); return; }
-      let [w, t] = typeof lines[i] === 'string' ? ['m', lines[i]] : lines[i]; const [n, c] = WHO[w] || WHO.m;
-      box.hidden = false; box.querySelector('.who').textContent = n; box.querySelector('.who').style.color = c; box.querySelector('.face').className = 'face ' + w;
+      let [w, t] = typeof lines[i] === 'string' ? [SPEAK === 'mito' ? 'm' : SPEAK, lines[i]] : lines[i]; const [n, c] = WHO[w] || [CAST[w] ? CAST[w].n : '미토', CAST[w] ? CAST[w].c : '#5af0ff'];
+      box.hidden = false; box.querySelector('.who').textContent = n; box.querySelector('.who').style.color = c; const fc = box.querySelector('.face'); if (CAST[w]) { fc.className = 'face cast'; fc.innerHTML = face(w, 58); box.querySelector('.who').textContent = CAST[w].n; box.querySelector('.who').style.color = CAST[w].c; } else { fc.className = 'face ' + w; fc.innerHTML = '<span></span><span></span>'; }
       const el = box.querySelector('.txt'); const full = chemHTML(t); el.innerHTML = ''; let k = 0; const plain = full.replace(/<[^>]+>/g, '');
       clearInterval(typing); typing = setInterval(() => { k += 2; if (k >= plain.length) { clearInterval(typing); typing = null; el.innerHTML = full; } else el.textContent = plain.slice(0, k); }, 16); sfx('tick');
     };
@@ -114,6 +114,19 @@ export function quiz(qs, title = '지식 관문') {
   });
 }
 
+/* ── 친구들 ── */
+const eyes = (x1, x2, y) => `<circle cx="${x1}" cy="${y}" r="5" fill="#fff"/><circle cx="${x2}" cy="${y}" r="5" fill="#fff"/><circle cx="${x1 + 1}" cy="${y + 1}" r="2.6" fill="#061018"/><circle cx="${x2 + 1}" cy="${y + 1}" r="2.6" fill="#061018"/>`;
+export const CAST = {
+  mito: { n: '미토', who: '마이토콘드리아 · 나', c: '#5af0ff', svg: `<ellipse cx="32" cy="34" rx="22" ry="20" fill="#5af0ff"/><ellipse cx="32" cy="34" rx="28" ry="7" fill="none" stroke="#ffe27a" stroke-width="3"/>${eyes(25, 39, 30)}<path d="M26 41 Q32 45 38 41" stroke="#06303a" stroke-width="2" fill="none"/>` },
+  enzy: { n: '엔지', who: '효소 · 반응 도우미', c: '#5aff9a', svg: `<path d="M8 20 Q8 54 32 56 Q56 54 56 20 L42 20 L38 30 L26 30 L22 20 Z" fill="#3fd88a"/>${eyes(22, 42, 40)}<path d="M27 48 Q32 51 37 48" stroke="#08301a" stroke-width="2" fill="none"/><text x="32" y="17" text-anchor="middle" font-size="8" fill="#bfffd8">활성 부위</text>` },
+  atty: { n: '아티', who: 'ATP · 에너지 배터리', c: '#ffd23f', svg: `<rect x="12" y="12" width="40" height="44" rx="8" fill="#ffd23f"/><rect x="26" y="6" width="12" height="7" rx="2" fill="#c09000"/>${eyes(25, 39, 28)}<path d="M26 37 Q32 41 38 37" stroke="#4a3500" stroke-width="2" fill="none"/><circle cx="22" cy="49" r="4" fill="#8a4aff"/><circle cx="32" cy="49" r="4" fill="#8a4aff"/><circle cx="42" cy="49" r="4" fill="#8a4aff"/>` },
+  nadi: { n: '나디', who: 'NAD⁺ · 전자 택배 기사', c: '#5ab8ff', svg: `<rect x="6" y="22" width="52" height="28" rx="14" fill="#4aa8ff"/><rect x="18" y="10" width="28" height="14" rx="6" fill="#1f6bff"/>${eyes(24, 40, 34)}<path d="M27 42 Q32 45 37 42" stroke="#082040" stroke-width="2" fill="none"/><circle cx="52" cy="30" r="4" fill="#fff27a"/>` },
+  oxy: { n: '옥시', who: '산소 · 마지막 전자 받는 친구', c: '#ff6a7a', svg: `<circle cx="22" cy="34" r="16" fill="#ff5a5a"/><circle cx="42" cy="34" r="16" fill="#ff7a7a"/>${eyes(26, 38, 31)}<path d="M27 40 Q32 44 37 40" stroke="#4a0a10" stroke-width="2" fill="none"/>` },
+  chloe: { n: '클로이', who: '엽록체 · 햇빛 요리사', c: '#8aff6a', svg: `<ellipse cx="32" cy="34" rx="26" ry="20" fill="#3fdc5a"/><rect x="14" y="40" width="10" height="3" fill="#1a8a30"/><rect x="14" y="44" width="10" height="3" fill="#1a8a30"/><rect x="40" y="40" width="10" height="3" fill="#1a8a30"/><rect x="40" y="44" width="10" height="3" fill="#1a8a30"/>${eyes(25, 39, 30)}<path d="M27 38 Q32 42 37 38" stroke="#0a3010" stroke-width="2" fill="none"/>` }
+};
+export const face = (k, sz = 56) => { const C = CAST[k] || CAST.mito; return `<svg class="pf" width="${sz}" height="${sz}" viewBox="0 0 64 64" style="--c:${C.c}">${C.svg}</svg>`; };
+let SPEAK = 'mito'; export function speaker(k) { SPEAK = k || 'mito'; }
+
 /* ── 흐름형 학습: 개념 카드 → 바로 빈칸 확인 ── */
 const full = f => chemHTML(f.replace(/\[([^\]]+)\]/g, '<b>$1</b>'));
 const blankOf = f => chemHTML(f.replace(/\[([^\]]+)\]/g, '<span class="lb">( ? )</span>'));
@@ -123,8 +136,8 @@ function closeLesson() { $('#lesson').hidden = true; IN.locked = false; }
 /* 카드 보여주기: cards = [[fact, why], ...] */
 export function teach(cards, head, from, total) {
   return new Promise(res => { const b = lessonBox(); let i = 0;
-    const one = () => { if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg] = cards[i];
-      b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
+    const one = () => { if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito;
+      b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div><div class="sp1">${face(sp || SPEAK)}<div class="bub" style="--c:${C.c}"><i>${C.n}</i><p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}</div></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
       b.querySelector('.pri').onclick = () => { sfx('pick'); i++; one(); }; };
     one(); });
 }
@@ -132,9 +145,9 @@ export function teach(cards, head, from, total) {
 export function recall(facts, head, pool, stat) {
   return new Promise(res => { const b = lessonBox(); const Q = facts.map(f => ({ f, tries: 0 })); let right = 0, total = facts.length;
     const answers = [...new Set(pool.map(p => ansOf(p[0])).filter(Boolean))];
-    const one = () => { if (!Q.length) { closeLesson(); res({ right, total }); return; } const it = Q.shift(); const [f, why, dg] = it.f, a = ansOf(f);
+    const one = () => { if (!Q.length) { closeLesson(); res({ right, total }); return; } const it = Q.shift(); const [f, why, dg, sp] = it.f, a = ansOf(f);
       const opts = shuffle([a, ...shuffle(answers.filter(x => x !== a)).slice(0, 3)]);
-      b.innerHTML = `<div class="lh"><span>${head}</span><span>남은 문장 ${Q.length + 1}</span></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg].replace(/<p class="cap">[\s\S]*<\/p>/, '')}</div>` : ''}<p class="lf">${blankOf(f)}</p><div class="lo"></div><div class="lx" hidden></div><div class="lbt"></div>`;
+      b.innerHTML = `<div class="lh"><span>${head}</span><span>남은 문장 ${Q.length + 1}</span></div><div class="sp2">${face(sp || SPEAK, 34)}<span>${(CAST[sp || SPEAK] || CAST.mito).n}: 빈칸에 들어갈 말은?</span></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg].replace(/<p class="cap">[\s\S]*<\/p>/, '')}</div>` : ''}<p class="lf">${blankOf(f)}</p><div class="lo"></div><div class="lx" hidden></div><div class="lbt"></div>`;
       const box = b.querySelector('.lo'); opts.forEach(o => { const x = document.createElement('button'); x.innerHTML = chem(o); x.onclick = () => {
         [...box.children].forEach((y, j) => { y.disabled = true; if (opts[j] === a) y.classList.add('right'); }); const ok = o === a; sfx(ok ? 'ok' : 'bad');
         if (stat) stat(f, ok);
@@ -148,6 +161,9 @@ export function summary(facts, title) {
   return new Promise(res => { const b = lessonBox(); b.innerHTML = `<div class="lh"><span>정리 — ${title}</span><span>소리 내어 한 번 읽기</span></div><ol class="ls">${facts.map(([f]) => `<li>${full(f)}</li>`).join('')}</ol><div class="lbt"><button class="pri">다음 챕터로</button></div>`;
     b.querySelector('.pri').onclick = () => { closeLesson(); res(); }; });
 }
+export function meet(list) { return new Promise(res => { const b = lessonBox(); let i = 0; const one = () => { if (i >= list.length) { closeLesson(); res(); return; } const [k, t] = list[i], C = CAST[k];
+  b.innerHTML = `<div class="lh"><span>친구 소개</span><span>${i + 1} / ${list.length}</span></div><div class="sp1">${face(k, 72)}<div class="bub" style="--c:${C.c}"><i>${C.n} <small>${C.who}</small></i><p class="lw2">${chemHTML(t)}</p></div></div><div class="lbt"><button class="pri">${i + 1 < list.length ? '다음 친구' : '출발'}</button></div>`;
+  b.querySelector('.pri').onclick = () => { sfx('pick'); i++; one(); }; }; one(); }); }
 export function notice(title, html, btn = '시작') { return new Promise(res => { const b = lessonBox(); b.innerHTML = `<div class="lh"><span>${title}</span></div><div class="ln">${chemHTML(html)}</div><div class="lbt"><button class="pri">${btn}</button></div>`; b.querySelector('.pri').onclick = () => { closeLesson(); res(); }; }); }
 
 /* ── 목표 위치 표시 (화면 가장자리 화살표) ── */
