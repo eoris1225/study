@@ -1,5 +1,5 @@
 /* 미토: 화면 UI — HUD, 대사창, 퀴즈 관문(문제은행), 알림, 목표 표시 */
-import { IN, sfx } from './engine.js?v=202611231059';
+import { IN, sfx } from './engine.js?v=202611231105';
 const $ = s =>document.querySelector(s);
 const esc = s =>String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function chem(s) { return String(s).replace(/NAD\+/g, 'NAD<sup>+</sup>').replace(/H\+/g, 'H<sup>+</sup>').replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>'); }
@@ -121,7 +121,7 @@ export function quiz(qs, title = '지식 관문') {
         requestAnimationFrame(fit); addEventListener('resize', fit);
         const s = document.createElement('button'); s.className = 'pri'; s.textContent = '다 썼어요 → 모범 답안 보기'; qb.appendChild(s);
         s.onclick = () => { locked = true; ta.disabled = true; sheet.classList.add('done'); keep();
-          const pts = String(q.ans).split(/(?<=[.다])\s+|\s*(?=\(\d\)|[①-⑤])/).map(x => x.trim()).filter(x => x.length > 1);
+          let pts = String(q.ans).split(/(?<=[.다])\s+|\s*(?=\(\d\)|[①-⑤])/).map(x => x.trim()).filter(x => x.length > 1); for (let k = pts.length - 1; k > 0; k--) if (/^[—\-–(·]/.test(pts[k]) && !/^\(\d\)/.test(pts[k])) { pts[k - 1] += ' ' + pts[k]; pts.splice(k, 1); }
           qx.hidden = false; qx.className = 'qx wans'; qx.innerHTML = `<b>모범 답안</b><div class="wpts">${pts.map((t, k) => `<label><input type="checkbox"> <span>${chemHTML(t)}</span></label>`).join('')}</div>${q.exp ? `<div class="dim">${chemHTML(q.exp)}</div>` : ''}<div class="self">내 답안지와 비교해서, 내가 쓴 내용에 들어 있는 줄을 체크하세요.</div>`;
           qb.innerHTML = ''; const cnt = document.createElement('span'); cnt.className = 'wcnt'; qb.appendChild(cnt);
           const boxes = [...qx.querySelectorAll('.wpts input')]; const upd = () => { const n = boxes.filter(b => b.checked).length; cnt.textContent = `${n} / ${boxes.length} 포함`; }; boxes.forEach(b => b.onchange = upd); upd();
