@@ -131,8 +131,15 @@ let SPEAK = 'mito'; export function speaker(k) { SPEAK = k || 'mito'; }
 const full = f => chemHTML(f.replace(/\[([^\]]+)\]/g, '<b>$1</b>'));
 const blankOf = f => chemHTML(f.replace(/\[([^\]]+)\]/g, '<span class="lb">( ? )</span>'));
 const ansOf = f => (f.match(/\[([^\]]+)\]/) || [])[1];
-function lessonBox() { IN.locked = true; const b = $('#lesson'); b.hidden = false; return b; }
-function closeLesson() { $('#lesson').hidden = true; IN.locked = false; }
+const sideMode = () => innerWidth >= 760 && innerWidth / innerHeight > 1.15;
+function layoutLesson() { const b = $('#lesson'); const side = sideMode() && !b.hidden; b.classList.toggle('side', side); document.body.classList.toggle('lesson-on', !b.hidden);
+  if (window.__viewShift) window.__viewShift(side && !b.classList.contains('mini') ? Math.round(b.offsetWidth / 2 + 8) : 0); }
+addEventListener('resize', layoutLesson);
+let LMINI = false;
+function lessonBox() { IN.locked = true; const b = $('#lesson'); b.hidden = false; b.classList.toggle('mini', LMINI); setTimeout(layoutLesson, 0); return b; }
+function closeLesson() { $('#lesson').hidden = true; IN.locked = false; layoutLesson(); }
+/* 접기/펼치기: 내용이 바뀌어도 유지 */
+new MutationObserver(() => { const b = $('#lesson'); if (!b || b.hidden || b.querySelector('.lmin')) return; const t = document.createElement('button'); t.className = 'lmin'; t.textContent = LMINI ? '펼치기 ▴' : '접기 ▾'; t.onclick = e => { e.stopPropagation(); LMINI = !LMINI; b.classList.toggle('mini', LMINI); t.textContent = LMINI ? '펼치기 ▴' : '접기 ▾'; layoutLesson(); }; b.prepend(t); }).observe(document.getElementById('lesson') || document.body, { childList: true });
 /* 카드 보여주기: cards = [[fact, why], ...] */
 export function teach(cards, head, from, total) {
   return new Promise(res => { const b = lessonBox(); let i = 0;

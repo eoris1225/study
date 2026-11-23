@@ -57,7 +57,7 @@ const ringOf = ring =>ring.position.clone().add(V(0, 3, 0));
 /* ── 카메라 ── */
 const camT = V(), camP = V(); let camOverride = null;
 function stepCam(dt) {
-  if (camOverride) { E.cam.position.lerp(camOverride.pos, 1 - Math.exp(-dt * 2.5)); camT.lerp(camOverride.look, 1 - Math.exp(-dt * 3)); E.cam.lookAt(camT); return; }
+  if (camOverride) { const cp = camOverride.pos; if (cp.distanceTo(CELL.c) > CELL.r - 10) cp.sub(CELL.c).setLength(CELL.r - 10).add(CELL.c); E.cam.position.lerp(cp, 1 - Math.exp(-dt * 2.5)); camT.lerp(camOverride.look, 1 - Math.exp(-dt * 3)); E.cam.lookAt(camT); return; }
   const tgt = P.g.position.clone().add(V(0, 1.4, 0)); const dist = 9.5;
   const off = V(Math.sin(IN.yaw) * Math.cos(IN.pitch), Math.sin(IN.pitch), Math.cos(IN.yaw) * Math.cos(IN.pitch)).multiplyScalar(-dist);
   const want = tgt.clone().add(off);
@@ -462,7 +462,7 @@ async function mCalvin() {
 }
 /* ════════ 흐름형 학습: 떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리 ════════ */
 const LCAM = {
-  enz: () => [ENZ.hill.clone().add(V(0, 10, 38)), ENZ.hill.clone()], intro: () => [V(60, 18, -45), V(0, 0, -85)], gly: () => [POS.factory.clone().add(V(4, 16, 26)), POS.factory.clone()],
+  enz: () => [ENZ.hill.clone().add(V(14, 16, -34)), ENZ.hill.clone().add(V(0, 2, 0))], intro: () => [V(60, 18, -45), V(0, 0, -85)], gly: () => [POS.factory.clone().add(V(4, 16, 26)), POS.factory.clone()],
   pyr: () => [POS.pdh.clone().add(V(16, 6, 14)), POS.pdh.clone()], tca: () => [POS.tca.clone().add(V(22, 4, 6)), POS.tca.clone()], etc: () => [V(-12, 6, -72), V(POS.etcX, 0, -85)],
   poison: () => [V(-12, 8, -70), V(POS.etcX, 0, -85)], ferm: () => [POS.ldh.clone().add(V(14, 10, 18)), POS.ldh.clone()], light: () => [V(W.thyX - 16, 4, CHL.c.z - 18), V(W.thyX, 0, CHL.c.z)],
   calvin: () => [W.calvin.position.clone().add(V(-20, 4, 4)), W.calvin.position.clone()], boss: () => [POS.arena.clone().add(V(16, 10, 26)), POS.arena.clone()] };

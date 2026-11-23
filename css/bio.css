@@ -158,3 +158,13 @@ sub,sup{font-size:.7em}
 .bub .lf{margin:2px 0 4px!important}.bub .lw{background:none!important;padding:0!important;margin:0 0 4px!important}.lw2{font-size:16px;line-height:1.65;margin:4px 0}
 .sp2{display:flex;align-items:center;gap:8px;font-size:13px;color:#cfe;margin-bottom:2px}
 .face.cast{background:none!important;box-shadow:none!important;width:58px;height:58px}
+
+/* 설명 창: 가로 화면은 오른쪽 옆 패널, 세로는 아래 시트 */
+#lesson{max-height:58vh}
+#lesson.side{left:auto;right:12px;top:66px;bottom:12px;transform:none;width:min(560px,44vw);max-height:none}
+#lesson .lmin{position:sticky;top:-14px;float:right;margin:-6px -8px 0 8px;background:#0e2b3a;border:1.5px solid #9fe6;border-radius:10px;padding:4px 10px;font-size:13px;color:#9fe;z-index:2}
+#lesson.mini{max-height:none!important;bottom:12px!important;top:auto!important;height:auto;overflow:hidden}
+#lesson.mini>*:not(.lmin):not(.lh){display:none!important}#lesson.mini .lh{margin:0;padding-right:90px}
+body.lesson-on #joy,body.lesson-on #btns,body.lesson-on #guide{display:none}
+body.lesson-on #inv{opacity:.5}
+#lesson .lf{font-size:18px}
