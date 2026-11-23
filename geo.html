@@ -50,13 +50,18 @@ v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::
 #pad .pt button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:5px 10px;font-size:14px;box-shadow:2px 2px 0 var(--ink)}
 #pad .pt button.on{background:var(--ink);color:var(--paper)}#pad .pt [data-c="#c8392b"]{color:var(--red)}#pad .pt [data-c="#1f4fb8"]{color:var(--blue)}#pad .pt [data-c].on{color:var(--paper)}
 @media (max-aspect-ratio:1/1){#app{flex-direction:column}#side{width:auto;height:58vh;border-left:0;border-top:2px solid var(--ink)}}
+.fig{background:#fffdf6;border:1.5px solid #d8cfb8;border-radius:10px;margin:6px 0 8px;padding:2px 4px}
+.hints .hint{background:#fff7d8;border-left:4px solid #e0a020;border-radius:8px;padding:7px 10px;margin:6px 0;line-height:1.6}.hints .hint.k{background:#e8f0ff;border-color:#1f4fb8}.hints .hint b{display:block;font-size:13px;color:#8a5a00}.hints .hint.k b{color:#1f4fb8}
+.ans .h b{display:block;margin-top:6px}
 </style>
 <script type="importmap">{ "imports": { "three": "./js/vendor/three.module.min.js" } }</script>
 </head>
 <body>
 <div id="app"><div id="view"></div><div id="side"><div id="hd"></div><div id="body"></div><div id="ft"></div></div></div>
 <div id="menu" hidden></div>
-<script src="js/geo/data.js?v=2"></script>
-<script type="module" src="js/geo/main.js?v=3"></script>
+<script src="js/geo/data.js?v=3"></script>
+<script src="js/geo/figs.js?v=2"></script>
+<script src="js/geo/hints.js?v=1"></script>
+<script type="module" src="js/geo/main.js?v=5"></script>
 </body>
 </html>

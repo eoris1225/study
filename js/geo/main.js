@@ -152,16 +152,24 @@ function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); 
     const els = setScene(c.scene, next); body.append(...els); foot([['건너뛰기', () => { S.step++; show(); }], ['문제 풀기 ▶', () => { S.step++; show(); }, 'pri']]); const nb = ft.lastChild; nb.disabled = true; return; }
   const k = S.step - L - 1; if (k >= n) { S.right[c.id] = 1; S.ch++; S.step = 0; save(); return show(); }
   const q = c.probs[k]; padOn(c.id + ':' + k);
-  body.innerHTML = `<span class="tag">교과서 문제 ${k + 1} / ${n}</span><div class="prog">${c.probs.map((_, i) => `<i class="${i <= k ? 'on' : ''}"></i>`).join('')}</div><div class="card"><div class="src">${q.s}</div><div class="q">${q.q}</div></div><p class="paper">왼쪽 연습장에 펜으로 풀고 답을 확인하세요. (필기는 문제마다 저장돼요)</p><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h">풀이: ${q.h}</div>` : ''}</div>`;
+  body.innerHTML = probHTML(c, k, q, `<span class="tag">교과서 문제 ${k + 1} / ${n}</span><div class="prog">${c.probs.map((_, i) => `<i class="${i <= k ? 'on' : ''}"></i>`).join('')}</div>`) + `<p class="paper">왼쪽 연습장에 펜으로 풀어 보세요. 막히면 힌트를 하나씩. (필기는 문제마다 저장돼요)</p>`;
   const key = c.id + ':' + k;
-  foot([['답 확인', () => { body.querySelector('.ans').hidden = false; body.scrollTop = 1e5;
-    foot([['✗ 틀림', () => { if (!S.wrong.includes(key)) S.wrong.push(key); S.step++; show(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== key); S.step++; show(); }, 'pri']]); }, 'pri']]); }
+  hintButtons(c, q, null, () => foot([['✗ 틀림', () => { if (!S.wrong.includes(key)) S.wrong.push(key); S.step++; show(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== key); S.step++; show(); }, 'pri']]), key); }
 
+
+/* ── 문제 화면: 그림 + 단계별 힌트 → 풀이 ── */
+const KEYTIP = { c1: '두 점 사이의 거리 √{(Δx)² + (Δy)² + (Δz)²} · 축 위면 나머지 좌표 0, 좌표평면 위면 그 평면에 없는 좌표 0', c2: '내분점 ((mx₂+nx₁)/(m+n), …) · 중점은 평균 · 무게중심은 세 점 좌표의 평균', c3: '(x−a)² + (y−b)² + (z−c)² = r² · 일반형은 완전제곱식으로 바꿔 중심·반지름 찾기', c4: '크기와 방향이 모두 같아야 같은 벡터 · 시점 위치는 상관없음', c5: '꼬리-머리 잇기: AB + BC = AC · 뺄셈 AB − AC = CB · −AB = BA', c6: '평행 ⇔ 한쪽이 다른 쪽의 실수배 · 세 점 한 직선 ⇔ AC = k·AB', c7: '위치벡터: AB = b − a · m:n 내분점 (mb + na)/(m + n)', c8: '성분끼리 계산 · 크기 √(x² + y² + z²) · AB = (B 성분 − A 성분)', c9: 'a·b = |a||b|cosθ = x₁x₂ + y₁y₂ + z₁z₂ · 수직 ⇔ a·b = 0 · |a|² = a·a', c10: '(x−x₁)/a = (y−y₁)/b = (z−z₁)/c, 방향벡터 (a, b, c) · 두 직선의 각은 방향벡터의 각 (cos는 절댓값)' };
+function hintSteps(q, id) { if (window.GEOHS && window.GEOHS[id]) return window.GEOHS[id]; if (q.hs) return q.hs; const h = (q.h || '').replace(/<br>/g, ' '); let parts = h.split(/\s*(?=\(\d\))|(?<=[.:])\s+(?=[^\d\s])|\s→\s/).map(x => x.trim()).filter(x => x.length > 1); if (parts.length < 2 && h.includes('→')) parts = h.split('→').map(x => x.trim()); return parts; }
+function probHTML(c, k, q, tag) { const fig = window.GEOFIG && window.GEOFIG[c.id + ':' + k]; return `${tag}<div class="card"><div class="src">${q.s}</div>${fig ? `<div class="fig">${fig()}</div>` : ''}<div class="q">${q.q}</div></div><div class="hints"></div><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h"><b>전체 풀이</b> ${q.h}</div>` : ''}</div>`; }
+function hintButtons(c, q, onDone, finish, id) { const steps = hintSteps(q, id), box = body.querySelector('.hints'); let n = 0;
+  const showHint = () => { if (n === 0) box.innerHTML += `<div class="hint k"><b>핵심 개념</b> ${KEYTIP[c.id] || ''}</div>`; else box.innerHTML += `<div class="hint"><b>힌트 ${n}</b> ${steps[n - 1]}</div>`; n++; render(); body.scrollTop = 1e5; };
+  const render = () => { const left = steps.length + 1 - n; foot([...(left > 0 ? [[n === 0 ? '💡 힌트' : `💡 다음 힌트 (${left})`, showHint]] : []), ['답·풀이 보기', () => { body.querySelector('.ans').hidden = false; finish(); body.scrollTop = 1e5; }, 'pri']]); };
+  render(); }
 let wq = null;
 function wrongMode() { $('#menu').hidden = true; wq = S.wrong.slice(); nextWrong(); }
 function nextWrong() { if (!wq.length) { wq = null; return menu(); } const [id, k] = wq[0].split(':'); const c = CH.find(x => x.id === id), q = c.probs[+k]; header(c); setScene(c.scene, null); padOff(); padOn(wq[0]);
-  body.innerHTML = `<span class="tag">오답 다시 — 남은 ${wq.length}</span><div class="card"><div class="src">${q.s}</div><div class="q">${q.q}</div></div><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h">풀이: ${q.h}</div>` : ''}</div>`;
-  foot([['답 확인', () => { body.querySelector('.ans').hidden = false; foot([['✗ 또 틀림', () => { wq.shift(); nextWrong(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== wq[0]); save(); wq.shift(); nextWrong(); }, 'pri']]); }, 'pri']]); }
+  body.innerHTML = probHTML(c, +k, q, `<span class="tag">오답 다시 — 남은 ${wq.length}</span>`);
+  hintButtons(c, q, null, () => foot([['✗ 또 틀림', () => { wq.shift(); nextWrong(); }], ['✓ 맞음', () => { S.wrong = S.wrong.filter(x => x !== wq[0]); save(); wq.shift(); nextWrong(); }, 'pri']]), id + ':' + k); }
 
 function menu() { padOff(); const m = $('#menu'); m.hidden = false;
   m.innerHTML = `<div class="mc"><h1>기하 — 공간좌표와 벡터</h1><p>범위 p80~152, p160~166 (p153~158 평면과 구의 방정식 제외). 설명 → 직접 해 보기 → 교과서 문제 순서로 자동 진행돼요.</p>
