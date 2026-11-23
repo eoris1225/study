@@ -494,23 +494,28 @@ async function studyFlow(k, run) {
   const M = MISSIONS[k], L = (window.BLESSON || {})[M.id] || { facts: [], check: {} }, title = M.t.replace(/^\d+\.\s*/, '');
   banner(M.t, '실험실에서 직접 조작 → 3D 현장 → 테스트(선택)', '#7fffe0'); await wait(1.2);
   /* 1. 개념 실험실: 3D 세포 속 해당 장소를 배경으로, 챕터 친구가 함께 */
+  const n = Math.max(1, (LABS_OF[M.id] || []).length);
   { const C = CAST[SPK[M.id]] || CAST.mito; window.LAB_FRIEND = { html: face(SPK[M.id], 44), name: C.n, col: C.c };
     const cam = LCAM[M.id] && LCAM[M.id](); if (cam) camOverride = { pos: cam[0], look: cam[1] };
     /* 설명 조금 → 실험으로 확인 → 문제 몇 개, 를 실험 수만큼 반복 */
     if (M.id === 'enz') L.check = { ids: [...(L.check.ids || []), ...(window.BQ || []).filter(q => q.ch === 'te').map(q => q.id)], ch: L.check.ch, n: L.check.n };
     const bq = window.BQ || []; let qs = ((L.check && L.check.ids) || []).map(id => bq.find(q => q.id === id)).filter(Boolean);
     if (L.check && L.check.ch) qs = qs.concat(pickQs(L.check.ch, L.check.n || 3).filter(q => !qs.includes(q)));
-    const labs = LABS_OF[M.id] || [], n = Math.max(1, labs.length), fs = L.facts;
-    for (let i = 0; i < n; i++) {
+    const labs = LABS_OF[M.id] || [], fs = L.facts;
+    const sv = SAVE.pos && SAVE.pos.k === k ? SAVE.pos : { i: 0, s: 0 }, start = Math.min(sv.i, n);
+    for (let i = start; i < n; i++) { prog(`${M.t} · ${i + 1} / ${n + 1}단계`);
       const f = fs.slice(Math.floor(i * fs.length / n), Math.floor((i + 1) * fs.length / n));
-      if (f.length) await teach(f, '개념 설명 — ' + title, Math.floor(i * fs.length / n), fs.length);
-      if (labs[i]) await window.LAB.open(labs[i], { quick: 2 });
+      const sub = i === start ? (sv.s || 0) : 0, mark = st => { SAVE.pos = { k, i, s: st }; save(); };
+      if (f.length && sub < 1) await teach(f, '개념 설명 — ' + title, Math.floor(i * fs.length / n), fs.length);
+      mark(1); if (labs[i] && sub < 2) await window.LAB.open(labs[i], { quick: 2 }); mark(2);
       const part = qs.slice(Math.floor(i * qs.length / n), Math.floor((i + 1) * qs.length / n));
-      if (part.length) { const r = await quiz(part, `확인 문제 · ${title}`); banner(`${r.right} / ${r.total}`, '틀린 문제는 메뉴의 「오답 다시 풀기」에', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(.8); } }
+      if (part.length) { const r = await quiz(part, `확인 문제 · ${title}`); banner(`${r.right} / ${r.total}`, '틀린 문제는 메뉴의 「오답 다시 풀기」에', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(.8); }
+      SAVE.pos = { k, i: i + 1, s: 0 }; save(); }
     camOverride = null; }
   /* 2. 3D 현장 체험 */
+  prog(`${M.t} · ${n + 1} / ${n + 1}단계 (3D 현장)`);
   await run(); HUD.obj(''); target(null); stepMission = () => { };
-  SAVE.reached = Math.max(SAVE.reached, k + 1); save();
+  SAVE.reached = Math.max(SAVE.reached, k + 1); SAVE.pos = null; save();
 }
 const shuffleA = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 function ensureCarry(type, n) { const have = carrying(type).length; for (let i = have; i < n; i++) { const it = spawn(type, P.g.position.clone().add(V(2, 2, 0))); it.mode = 'carry'; P.carry.push(it); } }
@@ -534,7 +539,7 @@ function menu() {
   const m = $('#menu'); m.hidden = false; $('#hud').hidden = true; IN.locked = false;
   const last = Math.min(SAVE.reached, MISSIONS.length - 1);
   const tb = (window.TBSEC || []).map(([c, t]) => { const L = (window.BQ || []).filter(q =>q.ch === c); const done = L.filter(q =>SAVE.right[q.id]).length; return `<button data-tb="${c}"><b>${t}</b><small>${L.length}문제 · 맞힘 ${done}</small></button>`; }).join('');
-  m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><h3>개념 실험실 — 직접 만지며 배우기</h3>${labMenu()}<h3>3D로 과정 체험하기</h3><div class="mb"><button class="pri" data-a="go">${SAVE.reached ? `이어하기 — ${MISSIONS[last].t}` : '처음부터 시작'}</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><h3>테스트 (교과서 문제)</h3><div class="mb"><button class="pri" data-a="tball">교과서 문제 전체</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="notes">개념 정리 노트</button><button data-a="cards">암기 카드</button></div><h3>단원별 테스트</h3><div class="chs">${tb}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
+  m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><h3>개념 실험실 — 직접 만지며 배우기</h3>${labMenu()}<h3>3D로 과정 체험하기</h3><div class="mb"><button class="pri" data-a="go">${SAVE.reached || SAVE.pos ? `이어하기 — ${MISSIONS[last].t}${SAVE.pos && SAVE.pos.k === last ? ` (${SAVE.pos.i + 1}단계 ${['설명', '실험', '문제'][SAVE.pos.s || 0]}부터)` : ''}` : '처음부터 시작'} · 완료 ${SAVE.reached} / ${MISSIONS.length}챕터</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><h3>테스트 (교과서 문제)</h3><div class="mb"><button class="pri" data-a="tball">교과서 문제 전체</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="notes">개념 정리 노트</button><button data-a="cards">암기 카드</button></div><h3>단원별 테스트</h3><div class="chs">${tb}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
   const runQ = async (qs, title) => { if (!qs.length) { toast('문제가 없어요'); return; } m.hidden = true; const r = await quiz(qs, title); toast(`${title}: ${r.right} / ${r.total}`, '#ffd23f'); menu(); };
   m.onclick = async e => { const b = e.target.closest('button'); if (!b) return; sfx('pick');
     if (b.dataset.tb) { const t = (window.TBSEC.find(x =>x[0] === b.dataset.tb) || [])[1]; return runQ((window.BQ || []).filter(q =>q.ch === b.dataset.tb), t); }
@@ -556,12 +561,16 @@ function notes(k) { const N = window.BNOTES || []; const c = $('#notes'); c.hidd
     if (b.dataset.q !== undefined) { const qs = (window.BQ || []).filter(q =>map[k] ? q.ch === map[k] : q.ch === 'e1'); c.hidden = true; const r = await quiz(qs, N[k][0]); toast(`${r.right} / ${r.total}`, '#ffd23f'); notes(k); } }; }
 function cards() { const c = $('#cards'); c.hidden = false; c.innerHTML = `<div class="ch"><b>암기 카드 — 눌러서 뒤집기</b><button>닫기</button></div><div class="cg">${(window.BCARDS || []).map(([f, b]) => `<div class="cd"><div class="f">${chem(f)}</div><div class="b">${b.split(/(<[^>]+>)/).map(p =>p.startsWith('<') ? p : chem(p)).join('')}</div></div>`).join('')}</div>`; c.querySelector('button').onclick = () =>c.hidden = true; c.querySelectorAll('.cd').forEach(d =>d.onclick = () => { d.classList.toggle('on'); sfx('pick'); }); }
 
-$('#bMenu').onclick = () => { if (confirm('메뉴로 나갈까요? (진행 중인 챕터는 처음부터 다시 시작해요)')) location.reload(); };
+const TOP = document.createElement('div'); TOP.id = 'topbar'; TOP.hidden = true; TOP.innerHTML = '<button>☰ 메뉴</button><span></span>'; document.body.appendChild(TOP);
+function prog(t) { TOP.hidden = false; TOP.querySelector('span').textContent = t; }
+const toMenu = () => { if (confirm('메뉴로 나갈까요? 지금까지 끝낸 단계는 저장돼서 이어하기로 돌아올 수 있어요.')) { try { sessionStorage.setItem('bio_menu', '1'); } catch (e) { } location.reload(); } };
+TOP.querySelector('button').onclick = toMenu; $('#bMenu').onclick = toMenu;
 /* 테스트용 (주소 끝에 #dev) */
 if (location.hash === '#dev') window.BIO = { P, IN, ITEMS, target: () =>TARGET, tp(v) { const ab = MITO.b.clone().sub(MITO.a); const t = Math.max(0, Math.min(1, v.clone().sub(MITO.a).dot(ab) / ab.lengthSq())); P.inMito = v.distanceTo(MITO.a.clone().addScaledVector(ab, t)) < MITO.r; const d = v.clone().sub(CHL.c); P.inChl = Math.hypot(d.x / CHL.r.x, d.y / CHL.r.y, d.z / CHL.r.z) < 1; P.g.position.copy(v); }, rings: () =>W };
 menu(); requestAnimationFrame(loop);
 /* 켜면 바로 이어서 진행 (메뉴는 오른쪽 위 버튼) */
-if (!location.hash) setTimeout(() => play(Math.min(SAVE.reached, MISSIONS.length - 1)), 600);
+{ let stay = false; try { stay = sessionStorage.getItem('bio_menu') === '1'; sessionStorage.removeItem('bio_menu'); } catch (e) { }
+  if (!location.hash && !stay) setTimeout(() => play(Math.min(SAVE.reached, MISSIONS.length - 1)), 600); }
 /* 메뉴 뒤 배경: 천천히 도는 카메라 */
 camOverride = { pos: V(70, 30, 90), look: V(0, 0, -40) };
 const _play = play; play = async (k) => { camOverride = null; IN.yaw = Math.PI; IN.pitch = -.18; return _play(k); };
