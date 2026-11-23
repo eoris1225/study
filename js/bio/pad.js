@@ -45,10 +45,13 @@
     if (b.dataset.x !== undefined && cv) { g.clearRect(0, 0, cv.width, cv.height); store(); }
     if (b.dataset.a !== undefined) { all = !all; b.classList.toggle('on', all); try { localStorage.setItem('bio_inkall', all ? '1' : '0'); } catch (e) { } } };
   /* 문제가 바뀌면 그 문제의 필기로 */
-  const sync = () => { if (quiz.hidden) { if (key) store(); bar.hidden = true; key = null; cv = null; quiz.classList.remove('inkon'); return; }
-    bar.hidden = false; quiz.classList.add('inkon');
+  let on = false;
+  const sync = () => { if (quiz.hidden) { if (!on) return; on = false; if (key) store(); key = null; cv = null; quiz.classList.remove('inkon'); if (!bar.hidden) bar.hidden = true; return; }
+    on = true; if (bar.hidden) bar.hidden = false; quiz.classList.add('inkon');
     const q = quiz.querySelector('.qq'), src = quiz.querySelector('.src'); const k = 'q:' + ((src ? src.textContent : '') + '|' + (q ? q.textContent : '')).slice(0, 90);
     if (k !== key) { if (key && cv) store(); key = k; cv = null; }
     requestAnimationFrame(attach); };
-  new MutationObserver(sync).observe(quiz, { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });
+  /* 연습장 자신(막대·캔버스)의 변화는 무시 — 안 그러면 무한 반복 */
+  new MutationObserver(recs => { if (recs.some(r => !(r.target === bar || bar.contains(r.target) || (r.target.classList && r.target.classList.contains('inkcv')) || [...r.addedNodes, ...r.removedNodes].every(n => n === bar || n === cv || (n.classList && n.classList.contains('inkcv')))))) sync(); })
+    .observe(quiz, { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true });
 })();
