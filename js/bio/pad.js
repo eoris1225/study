@@ -31,6 +31,20 @@
     justDrew = Date.now(); const el = document.elementFromPoint(e.clientX, e.clientY); if (!el) return;
     const t = el.closest('button, input, textarea, label, a') || el; if (t.matches('input, textarea')) t.focus(); else setTimeout(() => { justDrew = 0; t.click(); }, 0); };
   quiz.addEventListener('pointerup', up, true); quiz.addEventListener('pointercancel', up, true);
+  /* 손바닥 무시: 펜을 대고 있거나 방금 쓴 동안엔 손가락·손바닥 터치를 무시하고, 아닐 때만 손가락으로 스크롤 */
+  let penT = 0, palm = new Set(), fs = null;
+  const penNow = () => Date.now() - penT < 1500 || !!cur;
+  ['pointerdown', 'pointermove', 'pointerup', 'pointerover'].forEach(t => window.addEventListener(t, e => { if (e.pointerType === 'pen') penT = Date.now(); }, true));
+  quiz.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || all || bar.hidden) return;
+    if (penNow()) { palm.add(e.pointerId); e.preventDefault(); e.stopPropagation(); return; }
+    let el = e.target; while (el && el !== quiz) { const o = getComputedStyle(el).overflowY; if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight + 1) break; el = el.parentElement; }
+    fs = { id: e.pointerId, y: e.clientY, moved: 0, el: el || quiz }; }, true);
+  quiz.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') return;
+    if (palm.has(e.pointerId)) { e.preventDefault(); e.stopPropagation(); return; }
+    if (fs && fs.id === e.pointerId) { if (penNow()) { fs = null; return; } const dy = e.clientY - fs.y; fs.y = e.clientY; fs.moved += Math.abs(dy); fs.el.scrollTop -= dy; } }, true);
+  const tend = e => { if (palm.delete(e.pointerId)) { e.preventDefault(); e.stopPropagation(); justDrew = Date.now(); return; } if (fs && fs.id === e.pointerId) { if (fs.moved > 8) justDrew = Date.now(); fs = null; } };
+  quiz.addEventListener('pointerup', tend, true); quiz.addEventListener('pointercancel', tend, true);
+  quiz.addEventListener('touchmove', e => { if (!bar.hidden) e.preventDefault(); }, { passive: false, capture: true });
   /* 펜으로 쓴 직후의 클릭은 버튼을 누르지 않게 */
   quiz.addEventListener('click', e => { if (Date.now() - justDrew < 350) { e.preventDefault(); e.stopPropagation(); } }, true);
   bar.onclick = e => { const b = e.target.closest('button'); if (!b) return;
