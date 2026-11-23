@@ -1,5 +1,5 @@
 /* 미토: 화면 UI — HUD, 대사창, 퀴즈 관문(문제은행), 알림, 목표 표시 */
-import { IN, sfx } from './engine.js?v=202611231451';
+import { IN, sfx } from './engine.js?v=202611231432';
 const $ = s =>document.querySelector(s);
 const esc = s =>String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function chem(s) { return String(s).replace(/NAD\+/g, 'NAD<sup>+</sup>').replace(/H\+/g, 'H<sup>+</sup>').replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>'); }
@@ -79,9 +79,9 @@ export function quiz(qs, title = '지식 관문') {
     const qsave = () => { try { if (i >= qs.length) delete QP[qkey]; else QP[qkey] = { i, r: right, ids: qs.map(q => q.id) }; const ks = Object.keys(QP); if (ks.length > 30) delete QP[ks[0]]; localStorage.setItem(QK, JSON.stringify(QP)); } catch (e) { } };
     const one = () => { qsave();
       if (i >= qs.length) { ov.hidden = true; IN.locked = false; save(); res({ right, total: qs.length }); return; }
-      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.img ? `<div class="qimg"><img src="${q.img}" alt="교과서 문제"><small>사진을 누르면 크게 · 교과서 원본</small></div>` : q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}${q.img && q.type === 'fill' ? '<div class="qtag">답 쓰기</div>' : ''}<div class="qq${q.img && q.type !== 'fill' ? ' qhide' : ''}"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
+      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.img ? `<div class="qimg"><img src="${q.img}" alt="교과서 문제"><small>교과서 원본 <button class="zbtn" type="button">🔍 크게 보기</button></small></div>` : q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}${q.img && q.type === 'fill' ? '<div class="qtag">답 쓰기</div>' : ''}<div class="qq${q.img && q.type !== 'fill' ? ' qhide' : ''}"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
       const qq = ov.querySelector('.qq'), qa = ov.querySelector('.qa'), qx = ov.querySelector('.qx'), qb = ov.querySelector('.qb');
-      const qi = ov.querySelector('.qimg'); if (qi) qi.onclick = () => qi.classList.toggle('big');
+      const qi = ov.querySelector('.qimg'); if (qi) qi.querySelector('.zbtn').onclick = e => { e.stopPropagation(); window.__zoomfig && window.__zoomfig(qi.querySelector('img')); };
       const finish = (ok, detail) => { if (ok) { right++; SAVE.right[q.id] = (SAVE.right[q.id] || 0) + 1; SAVE.wrong = SAVE.wrong.filter(x =>x !== q.id); } else if (!SAVE.wrong.includes(q.id)) SAVE.wrong.push(q.id); sfx(ok ? 'ok' : 'bad');
         qx.hidden = false; qx.className = 'qx ' + (ok ? 'ok' : 'no'); qx.innerHTML = `<b>${ok ? '정답' : '오답'}</b>${detail ? '<div>' + chemHTML(detail) + '</div>' : ''}<div>${chemHTML(q.exp || '')}</div>`;
         qb.innerHTML = ''; const n = document.createElement('button'); n.className = 'pri'; n.textContent = i + 1 < qs.length ? '다음 ▶' : '관문 통과 ▶'; n.onclick = () => { i++; one(); }; qb.appendChild(n); n.focus(); };
@@ -145,7 +145,7 @@ export function quiz(qs, title = '지식 관문') {
 }
 
 /* ── 친구들 ── */
-const eyes = (x1, x2, y) => `<circle cx="${x1}" cy="${y}" r="5" fill="#fff"/><circle cx="${x2}" cy="${y}" r="5" fill="#fff"/><circle cx="${x1 + 1}" cy="${y + 1}" r="2.6" fill="#061018"/><circle cx="${x2 + 1}" cy="${y + 1}" r="2.6" fill="#061018"/>`;
+const eyes = (x1, x2, y) => `<g class="eye" style="transform-origin:32px ${y}px"><circle cx="${x1}" cy="${y}" r="5" fill="#fff"/><circle cx="${x2}" cy="${y}" r="5" fill="#fff"/><circle cx="${x1 + 1}" cy="${y + 1}" r="2.6" fill="#061018"/><circle cx="${x2 + 1}" cy="${y + 1}" r="2.6" fill="#061018"/></g>`;
 export const CAST = {
   mito: { n: '미토', who: '마이토콘드리아 · 나', c: '#5af0ff', svg: `<ellipse cx="32" cy="34" rx="22" ry="20" fill="#5af0ff"/><ellipse cx="32" cy="34" rx="28" ry="7" fill="none" stroke="#ffe27a" stroke-width="3"/>${eyes(25, 39, 30)}<path d="M26 41 Q32 45 38 41" stroke="#06303a" stroke-width="2" fill="none"/>` },
   enzy: { n: '엔지', who: '효소 · 반응 도우미', c: '#5aff9a', svg: `<path d="M8 20 Q8 54 32 56 Q56 54 56 20 L42 20 L38 30 L26 30 L22 20 Z" fill="#3fd88a"/>${eyes(22, 42, 40)}<path d="M27 48 Q32 51 37 48" stroke="#08301a" stroke-width="2" fill="none"/><text x="32" y="17" text-anchor="middle" font-size="8" fill="#bfffd8">활성 부위</text>` },
@@ -154,7 +154,7 @@ export const CAST = {
   oxy: { n: '옥시', who: '산소 · 마지막 전자 받는 친구', c: '#ff6a7a', svg: `<circle cx="22" cy="34" r="16" fill="#ff5a5a"/><circle cx="42" cy="34" r="16" fill="#ff7a7a"/>${eyes(26, 38, 31)}<path d="M27 40 Q32 44 37 40" stroke="#4a0a10" stroke-width="2" fill="none"/>` },
   chloe: { n: '클로이', who: '엽록체 · 햇빛 요리사', c: '#8aff6a', svg: `<ellipse cx="32" cy="34" rx="26" ry="20" fill="#3fdc5a"/><rect x="14" y="40" width="10" height="3" fill="#1a8a30"/><rect x="14" y="44" width="10" height="3" fill="#1a8a30"/><rect x="40" y="40" width="10" height="3" fill="#1a8a30"/><rect x="40" y="44" width="10" height="3" fill="#1a8a30"/>${eyes(25, 39, 30)}<path d="M27 38 Q32 42 37 38" stroke="#0a3010" stroke-width="2" fill="none"/>` }
 };
-export const face = (k, sz = 56) => { const C = CAST[k] || CAST.mito; return `<svg class="pf" width="${sz}" height="${sz}" viewBox="0 0 64 64" style="--c:${C.c}">${C.svg}</svg>`; };
+export const face = (k, sz = 56) => { const C = CAST[k] || CAST.mito; return `<svg class="pf say" width="${sz}" height="${sz}" viewBox="-8 -6 80 76" style="--c:${C.c}"><g class="pfb"><path class="arm l" d="M8 40 Q-2 34 -4 24" stroke="${C.c}" stroke-width="5" stroke-linecap="round" fill="none"/><path class="arm r" d="M56 40 Q66 34 68 24" stroke="${C.c}" stroke-width="5" stroke-linecap="round" fill="none"/>${C.svg}</g></svg>`; };
 let SPEAK = 'mito'; export function speaker(k) { SPEAK = k || 'mito'; }
 
 /* ── 흐름형 학습: 개념 카드 → 바로 빈칸 확인 ── */
@@ -167,7 +167,7 @@ function layoutLesson() { const b = $('#lesson'); const side = sideMode() && !b.
 addEventListener('resize', layoutLesson);
 let LMINI = false;
 function lessonBox() { IN.locked = true; const b = $('#lesson'); b.hidden = false; b.classList.toggle('mini', LMINI); setTimeout(layoutLesson, 0); return b; }
-function closeLesson() { if (window.ANIM) window.ANIM.stop(); $('#lesson').hidden = true; IN.locked = false; layoutLesson(); }
+function closeLesson() { if (window.__stage) window.__stage(null); $('#lesson').hidden = true; IN.locked = false; layoutLesson(); }
 /* 접기/펼치기: 내용이 바뀌어도 유지 */
 new MutationObserver(() => { const b = $('#lesson'); if (!b || b.hidden || b.querySelector('.lmin')) return; const t = document.createElement('button'); t.className = 'lmin'; t.textContent = LMINI ? '펼치기 ▴' : '접기 ▾'; t.onclick = e => { e.stopPropagation(); LMINI = !LMINI; b.classList.toggle('mini', LMINI); t.textContent = LMINI ? '펼치기 ▴' : '접기 ▾'; layoutLesson(); }; b.prepend(t); }).observe(document.getElementById('lesson') || document.body, { childList: true });
 /* 카드 보여주기: cards = [[fact, why], ...] */
@@ -177,8 +177,9 @@ export function teach(cards, head, from, total) {
     const TK = 'bio_teachpos', tkey = head + '|' + from + '|' + cards.length; let TP = {}; try { TP = JSON.parse(localStorage.getItem(TK)) || {}; } catch (e) { }
     if (TP[tkey] && TP[tkey] < cards.length) i = TP[tkey];
     const tsave = () => { try { if (i >= cards.length) delete TP[tkey]; else TP[tkey] = i; localStorage.setItem(TK, JSON.stringify(TP)); } catch (e) { } };
-    const one = () => { tsave(); if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito; if (window.ANIM) window.ANIM.play(dg, sp || SPEAK);
-      b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div><div class="sp1">${face(sp || SPEAK)}<div class="bub" style="--c:${C.c}"><i>${C.n}</i><p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}</div></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
+    const one = () => { tsave(); if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito;
+      b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div><div class="sp1">${face(sp || SPEAK)}<div class="bub" style="--c:${C.c}"><i>${C.n}</i><p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}</div></div>${dg && window.BDIAG && !(window.__stageHas && window.__stageHas(dg)) ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
+      if (window.__stage) window.__stage(dg, C.c, String(f + (why || '')).length / 3);
       b.querySelector('.pri').onclick = () => { sfx('pick'); i++; one(); }; };
     one(); });
 }

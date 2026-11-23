@@ -9,18 +9,22 @@
   const poly = (ps, o = {}) => `<polygon points="${ps.map(p => p.join(',')).join(' ')}" fill="${o.f || 'none'}" stroke="${o.c || INK}" stroke-width="${o.w || 1.8}"/>`;
   const mid = (a, b, t = .5) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   const away = (p, c, k = 14) => { const dx = p[0] - c[0], dy = p[1] - c[1], l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * k, p[1] + dy / l * k + 5]; };
+  /* 돌려 보기: 그림을 끌면 VIEW가 바뀌고 다시 그림. 회전 중심은 PIV */
+  const VIEW = window.GEOVIEW = { yaw: 0, pitch: 0 }; let PIV = [0, 0, 0], USED = false;
+  const ROT = P => { if (!VIEW.yaw && !VIEW.pitch) return P; let x = P[0] - PIV[0], y = P[1] - PIV[1], z = P[2] - PIV[2]; const cy = Math.cos(VIEW.yaw), sy = Math.sin(VIEW.yaw), cp = Math.cos(VIEW.pitch), sp = Math.sin(VIEW.pitch);
+    [x, y] = [x * cy - y * sy, x * sy + y * cy]; [x, z] = [x * cp - z * sp, x * sp + z * cp]; return [x + PIV[0], y + PIV[1], z + PIV[2]]; };
   /* 3D 사영: x 오른쪽, y 안쪽(비스듬히), z 위 */
-  const pj = (o, s) => ([x, y, z]) => [o[0] + s * (x + .5 * y), o[1] - s * (z + .32 * y)];
+  const pj = (o, s) => { USED = true; return P => { const [x, y, z] = ROT(P); return [o[0] + s * (x + .5 * y), o[1] - s * (z + .32 * y)]; }; };
   /* 직육면체 ABCD-EFGH: 아래 ABCD, 위 EFGH (E는 A 위) */
   function cuboid(a, b, c, s, o, extra = '') {
-    const p = pj(o, s), V = { A: [0, 0, 0], B: [a, 0, 0], C: [a, b, 0], D: [0, b, 0], E: [0, 0, c], F: [a, 0, c], G: [a, b, c], H: [0, b, c] };
+    PIV = [a / 2, b / 2, c / 2]; const p = pj(o, s), V = { A: [0, 0, 0], B: [a, 0, 0], C: [a, b, 0], D: [0, b, 0], E: [0, 0, c], F: [a, 0, c], G: [a, b, c], H: [0, b, c] };
     const P2 = {}; for (const k in V) P2[k] = p(V[k]);
     const hidden = [['A', 'D'], ['D', 'C'], ['D', 'H']], edges = [['A', 'B'], ['B', 'C'], ['E', 'F'], ['F', 'G'], ['G', 'H'], ['H', 'E'], ['A', 'E'], ['B', 'F'], ['C', 'G']];
     const ctr = p([a / 2, b / 2, c / 2]);
     return { P: P2, p, V, svg: edges.map(([u, v]) => L(P2[u], P2[v])).join('') + hidden.map(([u, v]) => L(P2[u], P2[v], { d: 1, c: P })).join('') + Object.keys(P2).map(k => T(away(P2[k], ctr, 14), k, { b: 1 })).join('') + extra };
   }
   /* 교과서식 좌표축: x축은 앞(왼쪽 아래), y축 오른쪽, z축 위 */
-  const pjA = (o, s) => ([x, y, z]) => [o[0] + s * (y - .6 * x), o[1] - s * (z - .4 * x)];
+  const pjA = (o, s) => { USED = true; return P => { const [x, y, z] = ROT(P); return [o[0] + s * (y - .6 * x), o[1] - s * (z - .4 * x)]; }; };
   function axes(o, s, n = 5) { const p = pjA(o, s); return { p, svg: L(p([0, 0, 0]), p([n, 0, 0]), { ar: 1 }) + L(p([0, 0, 0]), p([0, n, 0]), { ar: 1 }) + L(p([0, 0, 0]), p([0, 0, n]), { ar: 1 }) + T(p([n, 0, 0]), 'x', { dx: -10, dy: 10 }) + T(p([0, n, 0]), 'y', { dx: 10, dy: 5 }) + T(p([0, 0, n]), 'z', { dy: -6 }) + T(p([0, 0, 0]), 'O', { dx: -10, dy: 14 }) }; }
   const reg = (n, c, r, rot = -Math.PI / 2) => Array.from({ length: n }, (_, k) => [c[0] + r * Math.cos(rot + k * 2 * Math.PI / n), c[1] + r * Math.sin(rot + k * 2 * Math.PI / n)]);
   function hexagon(extra = '', withO = true) { const c = [170, 120], V = reg(6, c, 90, Math.PI); const N = 'ABCDEF'; /* A 왼쪽부터 시계 반대 */
@@ -31,7 +35,7 @@
     return box(360, 300, a.svg + poly([p([-1, -3, 0]), p([7, -3, 0]), p([7, 5, 0]), p([-1, 5, 0])], { c: '#9aa', f: 'rgba(31,79,184,.06)' }) + D(A, R) + T(A, 'A(4, −1, 3)', { dx: -10, dy: -8, a: 'end', c: R }) + D(Bp, B) + T(Bp, 'B(2, 1, 5)', { dx: 8, dy: -6, a: 'start', c: B }) + D(A2, P) + T(A2, 'A′ (?)', { dx: -8, dy: 16, a: 'end', c: P }) + L(A, A2, { c: P, d: 1 }) + T(p([6.5, 4.5, 0]), 'xy평면', { c: '#557', s: 13, dy: 18 })).replace('viewBox="0 0 360 300"', 'viewBox="0 0 360 330"'); };
   F['c1:7'] = () => { const a = axes([120, 175], 26, 6); const p = a.p, Pt = p([4, 3, 5]), H = p([4, 3, 0]), l1 = p([10, 2, 0]), l2 = p([5.2, 6.4, 0]), Q = p([4 + 3.6, 3 + 1.2, 0]);
     return box(380, 300, a.svg + L(l1, l2, { c: G, w: 2.4 }) + T(l1, 'l', { dx: -10, c: G, b: 1 }) + D(Pt, R) + T(Pt, 'P(4, 3, 5)', { dx: 8, dy: -6, a: 'start', c: R }) + D(H) + T(H, 'H', { dx: 10, dy: 14 }) + L(Pt, H, { d: 1 }) + L(H, Q, { c: B, d: 1 }) + T(mid(H, Q), '6', { dx: 10, c: B, b: 1 }) + L(Pt, Q, { c: R, d: 1 }) + T(mid(Pt, Q), '?', { dx: -10, c: R, b: 1 })); };
-  F['c1:9'] = () => { const a = axes([160, 190], 34, 4.5); const p = a.p, X = p([2, 3, 1]), A = p([2, 0, 0]), Bp = p([0, 3, 0]), C = p([0, 0, 1]);
+  F['c2:8'] = () => { const a = axes([160, 190], 34, 4.5); const p = a.p, X = p([2, 3, 1]), A = p([2, 0, 0]), Bp = p([0, 3, 0]), C = p([0, 0, 1]);
     return box(360, 300, a.svg + D(X, R) + T(X, '(2, 3, 1)', { dx: 8, dy: -6, a: 'start', c: R }) + [A, Bp, C].map(q => L(X, q, { c: P, d: 1 })).join('') + D(A, B) + T(A, 'A', { dx: -6, dy: 18, c: B, b: 1 }) + D(Bp, B) + T(Bp, 'B', { dy: 18, c: B, b: 1 }) + D(C, B) + T(C, 'C', { dx: -14, c: B, b: 1 }) + L(A, Bp, { c: B }) + L(Bp, C, { c: B }) + T(p([2, 3.6, 2.2]), 'D = ?', { c: G, b: 1 })); };
   /* ── c2 ── */
   F['c2:5'] = () => { const O = [60, 210], A = [300, 150], Bp = [130, 40];
@@ -59,12 +63,12 @@
     return box(320, 260, L(A, Bp) + L(Bp, C) + L(A, Dd, { d: 1, c: P }) + L(Dd, C, { d: 1, c: P }) + L(O, Dd, { d: 1, c: P }) + L(O, A, { c: R, w: 2.4, ar: 1 }) + L(O, Bp, { c: B, w: 2.4, ar: 1 }) + L(O, C, { c: G, w: 2.4, ar: 1 }) + L(Bp, Dd, { c: '#a07020', d: 1 }) + T(mid(O, A), 'a', { dx: -10, c: R, b: 1 }) + T(mid(O, Bp), 'b', { dx: 10, c: B, b: 1 }) + T(mid(O, C), 'c', { dx: 10, c: G, b: 1 }) + [[O, 'O', 0, -10], [A, 'A', -10, 14], [Bp, 'B', 6, 18], [C, 'C', 12, 6], [Dd, 'D', -12, -2]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('')); };
   F['c5:8'] = () => { const A = [60, 40], Bp = [60, 220], C = [240, 220], Dd = [240, 40], M = mid(A, Bp), N = mid(A, Dd);
     return box(300, 250, poly([A, Bp, C, Dd]) + D(M, R) + D(N, R) + T(M, 'M', { dx: -14, c: R, b: 1 }) + T(N, 'N', { dy: -8, c: R, b: 1 }) + L(M, N, { c: R, d: 1 }) + L(M, Bp, { c: B, d: 1 }) + [[A, 'A', -10, -4], [Bp, 'B', -10, 14], [C, 'C', 10, 14], [Dd, 'D', 10, -4]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('')); };
-  F['c5:9'] = () => { const A = [70, 50], Bp = [40, 210], C = [300, 220], Dd = [250, 40], M = mid(A, Bp), N = mid(C, Dd);
+  F['c6:13'] = () => { const A = [70, 50], Bp = [40, 210], C = [300, 220], Dd = [250, 40], M = mid(A, Bp), N = mid(C, Dd);
     return box(340, 250, poly([A, Bp, C, Dd]) + D(M, R) + D(N, R) + T(M, 'M', { dx: -14, c: R, b: 1 }) + T(N, 'N', { dx: 14, c: R, b: 1 }) + L(M, N, { c: R, d: 1 }) + [[A, 'A', -8, -6], [Bp, 'B', -10, 14], [C, 'C', 10, 14], [Dd, 'D', 8, -6]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('')); };
-  F['c5:10'] = () => box(340, 270, cuboid(7, 4, 4, 26, [50, 230]).svg);
-  F['c5:11'] = () => { const A = [40, 30], Bp = [40, 190], C = [300, 190], Dd = [300, 30], O = mid(A, C);
+  F['c6:14'] = () => box(340, 270, cuboid(7, 4, 4, 26, [50, 230]).svg);
+  F['c5:9'] = () => { const A = [40, 30], Bp = [40, 190], C = [300, 190], Dd = [300, 30], O = mid(A, C);
     return box(340, 220, poly([A, Bp, C, Dd]) + L(A, C, { c: P, d: 1 }) + L(Bp, Dd, { c: P, d: 1 }) + D(O, R) + T(O, 'O', { dy: 20, c: R }) + T(mid(A, Dd), '8', { dy: -6 }) + T(mid(A, Bp), '6', { dx: -12 }) + [[A, 'A', -10, 0], [Bp, 'B', -10, 12], [C, 'C', 10, 12], [Dd, 'D', 10, 0]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('')); };
-  F['c5:12'] = () => { const c = cuboid(4, 6, 2, 26, [60, 200]); return box(340, 250, c.svg + T(mid(c.P.A, c.P.B), '2', { dy: 18, c: R, b: 1 }) + T(mid(c.P.B, c.P.C), '3', { dx: 12, c: R, b: 1 }) + T(mid(c.P.B, c.P.F), '1', { dx: 10, c: R, b: 1 })); };
+  F['c5:10'] = () => { const c = cuboid(4, 6, 2, 26, [60, 200]); return box(340, 250, c.svg + T(mid(c.P.A, c.P.B), '2', { dy: 18, c: R, b: 1 }) + T(mid(c.P.B, c.P.C), '3', { dx: 12, c: R, b: 1 }) + T(mid(c.P.B, c.P.F), '1', { dx: 10, c: R, b: 1 })); };
   /* ── c6 ── */
   F['c6:5'] = () => { const O = [60, 230], r = 180, A = [O[0] + r, O[1]], Bp = [O[0], O[1] - r], C = [O[0] + r * .5, O[1] - r * .866];
     return box(300, 270, `<path d="M${A[0]} ${A[1]} A ${r} ${r} 0 0 0 ${Bp[0]} ${Bp[1]}" fill="none" stroke="${INK}" stroke-width="1.8"/>` + L(O, A, { c: R, w: 2.4, ar: 1 }) + L(O, Bp, { c: B, w: 2.4, ar: 1 }) + L(O, C, { c: G, w: 2.4, ar: 1 }) + `<path d="M${O[0] + 36} ${O[1]} A 36 36 0 0 0 ${O[0] + 18} ${O[1] - 31}" fill="none" stroke="${G}"/>` + T([O[0] + 44, O[1] - 18], '60°', { s: 13, c: G }) + T(mid(O, A), 'a', { dy: 18, c: R, b: 1 }) + T(mid(O, Bp), 'b', { dx: -12, c: B, b: 1 }) + T(away(C, O), 'C', { b: 1 }) + T(O, 'O', { dx: -12, dy: 8, b: 1 }) + T(A, 'A', { dy: 18, b: 1 }) + T(Bp, 'B', { dx: -12, b: 1 }) + T(mid(O, A, .8), '4', { dy: -6, s: 13 })); };
@@ -79,7 +83,7 @@
     return box(340, 250, poly([A, Bp, C]) + D(mid(A, Bp, 1 / 3), R) + T(mid(A, Bp, 1 / 3), 'P', { dx: -14, c: R, b: 1 }) + D(mid(Bp, C, 1 / 3), R) + T(mid(Bp, C, 1 / 3), 'Q', { dy: 20, c: R, b: 1 }) + L(mid(A, Bp, 1 / 3), mid(Bp, C, 1 / 3), { c: R, d: 1 }) + [[A, 'A', -10, -4], [Bp, 'B', -10, 14], [C, 'C', 10, 14]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('') + T([200, 240], 'AP : PB = 1 : 2,  BQ : QC = 1 : 2', { s: 13, c: P })); };
   F['c7:6'] = () => { const Bp = [70, 210], C = [70, 40], A = [168, 210];
     return box(340, 250, poly([A, Bp, C]) + `<path d="M70 192 L88 192 L88 210" fill="none" stroke="${INK}"/>` + T(mid(Bp, C), '2√3', { dx: -22 }) + T([A[0] - 30, 202], '60°', { s: 13, c: R }) + D(mid(Bp, C), R) + T(mid(Bp, C), 'P', { dx: 14, c: R, b: 1 }) + [[A, 'A', 10, 8], [Bp, 'B', -10, 14], [C, 'C', -10, -4]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('')); };
-  F['c7:7'] = () => { const A = [170, 30], Bp = [40, 230], C = [300, 230], Dd = mid(A, Bp, 2 / 3), E = mid(A, C, .75), Ff = mid(A, C, .25);
+  F['c9:16'] = () => { const A = [170, 30], Bp = [40, 230], C = [300, 230], Dd = mid(A, Bp, 2 / 3), E = mid(A, C, .75), Ff = mid(A, C, .25);
     return box(340, 260, poly([A, Bp, C]) + [[Dd, 'D'], [E, 'E'], [Ff, 'F']].map(([q, s]) => D(q, R) + T(q, s, { dx: s === 'D' ? -14 : 14, c: R, b: 1 })).join('') + [[A, 'A', 0, -8], [Bp, 'B', -10, 12], [C, 'C', 10, 12]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('') + T(mid(Bp, C), '3', { dy: 20 })); };
   /* ── c9 ── */
   F['c9:3'] = () => { const c = cuboid(6, 2, 4, 26, [50, 220]); return box(330, 260, c.svg + T(mid(c.P.A, c.P.B), '3', { dy: 18, c: R, b: 1 }) + T(mid(c.P.A, c.P.D), '1', { dx: -12, c: R, b: 1 }) + T(mid(c.P.A, c.P.E), '2', { dx: -12, c: R, b: 1 })); };
@@ -90,5 +94,6 @@
     return box(320, 270, L(O, A) + L(O, Bp) + L(A, Bp) + L(Bp, C) + L(O, C) + L(A, C, { d: 1, c: P }) + D(Gg, R) + T(Gg, 'G', { dx: -12, c: R, b: 1 }) + D(M, B) + T(M, 'M', { dx: 14, c: B, b: 1 }) + L(Bp, Gg, { c: R, d: 1 }) + L(Gg, M, { c: B, d: 1 }) + [[O, 'O', 0, -10], [A, 'A', -12, 8], [Bp, 'B', 12, 10], [C, 'C', 12, -2]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('') + T([160, 262], '모든 모서리의 길이 1', { s: 13, c: P })); };
   F['c3:5'] = () => { const a = axes([190, 175], 26, 6); const p = a.p, X = p([3, 1, 2]);
     return box(360, 280, a.svg + D(X, R) + T(X, '(3, 1, 2)', { dx: 8, dy: -6, a: 'start', c: R }) + T([180, 272], '세 좌표평면에 모두 접하는 구 → 중심 (r, r, r)', { s: 13, c: P })); };
+  for (const k in F) { const f = F[k]; F[k] = () => { PIV = [0, 0, 0]; USED = false; const out = f(); window.GEOFIG_3D = USED; return out; }; }
   window.GEOFIG = F;
 })();

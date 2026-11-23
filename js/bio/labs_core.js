@@ -67,6 +67,10 @@ window.LAB = (() => {
       c.wait = s => new Promise(r => c.tween(s, () => { }, r));
       c.fx = (x, y, col = '#ffd23f', n = 14, sp = 160) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = rnd(.3, 1) * sp; fxs.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(.4, .8), t: 0, col }); } };
       c.float = (txt, x, y, col = '#ffd23f') => floats.push({ txt, x, y, col, t: 0 });
+      let shk = 0, flashA = 0, flashC = '#fff'; const booms = [];
+      c.shake = (a = 10) => { shk = Math.max(shk, a); };
+      c.flash = (col = '#fff', a = .8) => { flashC = col; flashA = a; };
+      c.boom = (t, x, y, col = '#ffd23f', size = 64, life = 1.1, rot = -.12) => booms.push({ t, x, y, col, size, life, rot, k: 0 });
       let msg = null; c.flashMsg = (t, col = '#7fffe0') => { msg = { t, col, k: 0 }; };
       let tip = ''; c.tip = s => { tip = s || ''; };
       /* ── 입력: 끌기 ── */
@@ -111,7 +115,7 @@ window.LAB = (() => {
 
       /* ── 프레임 ── */
       function frame(now) { if (!alive) return; const dt = Math.min(.05, (now - last) / 1000); last = now; c.t += dt;
-        g.setTransform(c._dpr, 0, 0, c._dpr, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.translate(offX, offY); g.scale(scale, scale);
+        g.setTransform(c._dpr, 0, 0, c._dpr, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.translate(offX, offY); g.scale(scale, scale); if (shk > .2) { g.translate((Math.random() - .5) * shk, (Math.random() - .5) * shk); shk *= Math.pow(.02, dt); } else shk = 0;
         g.save(); g.beginPath(); g.rect(0, 0, VW, VH); g.clip(); const bgr = g.createLinearGradient(0, 0, 0, VH); bgr.addColorStop(0, 'rgba(38,28,18,.78)'); bgr.addColorStop(1, 'rgba(22,16,10,.86)'); g.fillStyle = bgr; g.fillRect(0, 0, VW, VH);
         for (let i = tweens.length - 1; i >= 0; i--) { const w = tweens[i]; w.t += dt; const k = Math.min(1, w.t / w.dur); w.fn(k); if (k >= 1) { tweens.splice(i, 1); w.done && w.done(); } }
         try { loops.forEach(f => f(dt, c.t)); } catch (e) { console.error('[lab ' + id + ']', e); c.err = e; }
@@ -119,6 +123,10 @@ window.LAB = (() => {
         for (let i = fxs.length - 1; i >= 0; i--) { const p = fxs[i]; p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .94; p.vy *= .94; if (p.t > p.life) { fxs.splice(i, 1); continue; } g.globalAlpha = 1 - p.t / p.life; c.circle(p.x, p.y, 3.5, p.col); g.globalAlpha = 1; }
         for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.t += dt; if (f.t > 1.4) { floats.splice(i, 1); continue; } g.globalAlpha = 1 - f.t / 1.4; c.txt(f.txt, f.x, f.y - f.t * 40, 20, f.col, 'center', 900); g.globalAlpha = 1; }
         if (tip) { g.font = `700 17px 'Noto Sans KR',sans-serif`; const w = Math.min(960, g.measureText(tip).width + 30); c.rr(VW / 2 - w / 2, 10, w, 34, 12, 'rgba(30,22,14,.88)', '#e8a33d88', 1.5); c.txt(tip, VW / 2, 27, 17, '#eafffb'); }
+        for (let i = booms.length - 1; i >= 0; i--) { const b = booms[i]; b.k += dt; if (b.k > b.life) { booms.splice(i, 1); continue; } const u = b.k / b.life, sc = u < .12 ? .3 + u / .12 * .9 : 1.2 - Math.min(.2, (u - .12) * .6);
+          g.save(); g.translate(b.x, b.y - u * 20); g.rotate(b.rot + Math.sin(b.k * 30) * .03 * (1 - u)); g.scale(sc, sc); g.globalAlpha = u > .75 ? (1 - u) / .25 : 1;
+          g.font = `900 ${b.size}px 'Noto Sans KR',sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = b.size / 6; g.strokeStyle = '#17110b'; g.strokeText(b.t, 0, 0); g.fillStyle = b.col; g.fillText(b.t, 0, 0); g.restore(); }
+        if (flashA > 0) { g.globalAlpha = flashA; g.fillStyle = flashC; g.fillRect(-50, -50, VW + 100, VH + 100); g.globalAlpha = 1; flashA = Math.max(0, flashA - dt * 3); }
         if (msg) { msg.k += dt; const a = msg.k < .2 ? msg.k / .2 : Math.max(0, 1 - (msg.k - .7) / .5); g.globalAlpha = a; c.txt(msg.t, VW / 2, VH / 2 - 20 - msg.k * 20, 54, msg.col, 'center', 900); g.globalAlpha = 1; if (msg.k > 1.3) msg = null; }
         g.restore();
         readouts.forEach(o => { const h = o.fn(); if (h !== o.last) { o.el.innerHTML = h; o.last = h; } });

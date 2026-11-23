@@ -1,14 +1,29 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
+import { runCourse, sectionList, loadPos } from './course.js?v=202611231432';
+import { movie } from './movie.js?v=202611231432';
 import * as THREE from 'three';
-import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231451';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231451';
-import { mol, NAME } from './mols.js?v=202611231451';
-import { ANIM } from './anim.js?v=202611231451';
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231451';
+import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231432';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231432';
+import { mol, NAME } from './mols.js?v=202611231432';
+import { stageShow, stageStep, stageHas, stageRender } from './stage3d.js?v=202611231432';
+window.__stage = stageShow; window.__stageHas = stageHas;
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231432';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
 const choose = async (t, opts, ans) => ans;
+const CHSUM = {
+  enz: [['효소 반응', '세포 속 어디서나 (분자 수준)', '체온에서도 반응이 빨리 일어나게', '활성화 에너지 ↓, 반응열 그대로'], ['기질 특이성', '효소의 활성 부위', '모양이 맞는 기질만 붙어서', '효소마다 하는 일이 정해짐'], ['온도·pH 영향', '효소(단백질)', '단백질 모양이 변해서', '최적 온도·pH에서 최대, 너무 뜨거우면 변성']],
+  intro: [['ATP ⇄ ADP + Pᵢ', '세포 전체', '포도당 에너지는 한 덩어리가 너무 커서, 세포가 바로 꺼내 쓰기 좋은 작은 단위(ATP)로 나눠 둬야 해서', '끝 인산이 떨어질 때 에너지 방출'], ['산화·환원', '세포 (주로 마이토콘드리아)', '포도당의 에너지는 <b>전자</b> 속에 들어 있음 → 에너지를 꺼내려면 전자를 에너지가 낮은 곳(최종: O₂)으로 옮겨야 함 → 그래서 전자를 떼어 냄 (= 산화)', 'NAD⁺ → NADH (환원)'], ['세포호흡', '세포질 → 마이토콘드리아', '전자를 O₂에 한 번에 주면 불(연소)처럼 열로 다 날아감 → 조금씩 나눠 옮기며 그때마다 ATP로 저장하려고', 'ATP 최대 32']],
+  gly: [['해당 과정', '세포질', '포도당을 반으로 쪼개 에너지를 조금 얻으려고 (O₂ 불필요)', '피루브산 2 + 2NADH + 순 2ATP']],
+  pyr: [['피루브산 산화', '마이토콘드리아 기질', 'TCA 회로에 넣을 아세틸 CoA를 만들려고', 'CO₂ 1 · NADH 1 (피루브산 1개당), ATP 0']],
+  tca: [['TCA 회로', '마이토콘드리아 기질', '탄소를 CO₂로 다 떼며 전자를 최대한 모으려고', '1바퀴: CO₂ 2 · NADH 3 · FADH₂ 1 · ATP 1']],
+  etc: [['전자전달계', '마이토콘드리아 내막', '전자의 에너지로 H⁺를 막사이공간에 퍼 올리려고', 'O₂ + e⁻ + H⁺ → H₂O'], ['화학 삼투 (ATP 합성)', '내막의 ATP 합성 효소', 'H⁺가 기질로 흘러 들어오는 힘을 쓰려고', 'ATP 대량 생산 (28)']],
+  poison: [['사이안화물', '복합체 Ⅳ', '전자가 O₂로 못 가게 막아서', 'O₂ 소비 ↓, ATP ↓'], ['올리고마이신', 'ATP 합성 효소', 'H⁺ 통로를 막아서', 'ATP ↓, O₂ 소비 ↓'], ['DNP', '내막', 'H⁺가 새서 기울기가 없어져서', 'ATP ↓, O₂ 소비 ↑, 열 ↑']],
+  ferm: [['젖산 발효', '세포질 (근육, 젖산균)', '산소 없을 때 NAD⁺를 재생하려고', '젖산, ATP 2 (CO₂ 없음)'], ['알코올 발효', '세포질 (효모)', '산소 없을 때 NAD⁺를 재생하려고', '에탄올 + CO₂, ATP 2']],
+  light: [['명반응', '엽록체 타이라코이드 막', '빛에너지를 화학 에너지로 바꾸려고', 'ATP · NADPH · O₂ (O₂는 물에서)'], ['광인산화', '타이라코이드 막의 ATP 합성 효소', '타이라코이드 내부에 쌓인 H⁺의 힘을 쓰려고', 'ATP']],
+  calvin: [['캘빈 회로 (탄소 고정)', '엽록체 스트로마', '명반응의 ATP·NADPH로 CO₂를 당으로 바꾸려고', '포도당 1 = CO₂ 6 · ATP 18 · NADPH 12'], ['세포호흡 vs 광합성', '마이토콘드리아 vs 엽록체', '서로의 재료를 만들어 주는 짝', '공통: 전자전달계 + ATP 합성 효소']],
+  boss: [['다른 영양소', '세포질 · 마이토콘드리아', '지방·단백질도 에너지원으로 쓰려고', '지방산 → 아세틸 CoA, 아미노산 → 탈아미노 후 TCA']] };
 const LABS_OF = { enz: ['ea', 'lock', 'cof', 'env', 'sat', 'cat'], intro: ['atp', 'redox', 'mito'], gly: ['gly'], pyr: ['pyr'], tca: ['tca'], etc: ['etc'], poison: ['poison'], ferm: ['ferm'], light: ['spec', 'chrom', 'zs'], calvin: ['calvin', 'cmp'], boss: ['subs'] };
 const V = (x, y, z) =>new THREE.Vector3(x, y, z);
 initEngine($('#game')); initInput({ joy: $('#joy'), knob: $('#joy i'), bUp: $('#bUp'), bDn: $('#bDn'), bAct: $('#bAct'), bDash: $('#bDash') });
@@ -102,9 +117,9 @@ function loop(now) {
     else if (d < 3.4 && P.carry.length < 10) { it.mode = 'carry'; P.carry.push(it); sfx('pick'); toast(`${NAME[it.type] || it.type} 획득`, '#7fffe0'); it.onGet && it.onGet(); } }
   for (let i = UNTIL.length - 1; i >= 0; i--) if (UNTIL[i].fn()) { const u = UNTIL.splice(i, 1)[0]; u.r(); }
   if (IN.actPress) IN.actPress = false;
-  stepTweens(dt); stepBursts(dt); ANIM.step(); stepPals(dt, T); stepWorld(dt, T); stepMission(dt); stepCam(dt);
+  stepTweens(dt); stageStep(dt); stepBursts(dt); stepPals(dt, T); stepWorld(dt, T); stepMission(dt); stepCam(dt);
   marker(E.cam, TARGET, THREE);
-  if (E.bloom.enabled) E.composer.render(); else E.R.render(E.scene, E.cam);
+  if (E.bloom.enabled) E.composer.render(); else E.R.render(E.scene, E.cam); stageRender();
   requestAnimationFrame(loop);
 }
 let stepMission = () => { };
@@ -521,6 +536,8 @@ async function studyFlow(k, run) {
       if (part.length) { const r = await quiz(part, `확인 문제 · ${title}`); banner(`${r.right} / ${r.total}`, '틀린 문제는 메뉴의 「오답 다시 풀기」에', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(.8); }
       SAVE.pos = { k, i: i + 1, s: 0 }; save(); }
     camOverride = null; }
+  /* 정리: 어디서 · 왜 · 결과 */
+  { const T = CHSUM[M.id]; if (T) await notice('📍 정리 — ' + title + ' (어디서 · 왜 · 결과)', `<table class="sumt"><tr><th>과정</th><th>📍 어디서</th><th>❓ 왜</th><th>결과</th></tr>${T.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>`, '다음 ▶'); }
   /* 2. 3D 현장 체험 */
   prog(`${M.t} · ${n + 1} / ${n + 1}단계 (3D 현장)`);
   await run(); HUD.obj(''); target(null); stepMission = () => { };
@@ -548,7 +565,7 @@ function menu() {
   const m = $('#menu'); m.hidden = false; $('#hud').hidden = true; IN.locked = false;
   const last = SAVE.pos && SAVE.pos.k != null ? SAVE.pos.k : Math.min(SAVE.reached, MISSIONS.length - 1);
   const tb = (window.TBSEC || []).map(([c, t]) => { const L = (window.BQ || []).filter(q =>q.ch === c); const done = L.filter(q =>SAVE.right[q.id]).length; return `<button data-tb="${c}"><b>${t}</b><small>${L.length}문제 · 맞힘 ${done}</small></button>`; }).join('');
-  m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><h3>개념 실험실 — 직접 만지며 배우기</h3>${labMenu()}<h3>3D로 과정 체험하기</h3><div class="jump"><b>단계로 바로 가기</b><select data-j="k">${MISSIONS.map((x, i) => `<option value="${i}" ${i === last ? 'selected' : ''}>${x.t}</option>`).join('')}</select><select data-j="i"></select><button data-a="jump">여기서 시작</button></div><div class="mb"><button class="pri" data-a="go">${SAVE.reached || SAVE.pos ? `이어하기 — ${MISSIONS[last].t}${SAVE.pos && SAVE.pos.k === last ? ` (${SAVE.pos.i + 1}단계 ${['설명', '실험', '문제'][SAVE.pos.s || 0]}부터)` : ''}` : '처음부터 시작'} · 완료 ${SAVE.reached} / ${MISSIONS.length}챕터</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><h3>테스트 (교과서 문제)</h3><div class="mb"><button class="pri" data-a="tball">교과서 문제 전체</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="notes">개념 정리 노트</button><button data-a="cards">암기 카드</button></div><h3>단원별 테스트</h3><div class="chs">${tb}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
+  m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><div class="cmenu"><h3>📘 개념 강의 <small>교과서 순서 · 그림 + 설명 + 3D → 확인 → 교과서 문제</small></h3>${(() => { const P = loadPos(), L = sectionList(), cur = P ? L.findIndex(x => x.ci === P.ci && x.si === P.si) : 0; return `<button class="pri big" data-a="course">${P && (P.ci || P.si || P.st) ? '▶ 이어서 하기 — ' + (L[cur] || L[0]).label : '▶ 처음부터 시작'}</button><div class="jump"><select data-j="cs">${L.map((x, i) => `<option value="${i}" ${i === Math.max(0, cur) ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button data-a="csgo">여기부터</button></div>`; })()}</div><button class="movieb" data-a="movie">🎬 전체 과정 영화로 보기<small>효소 → 세포호흡 → 발효 → 광합성을 3D로 쭉 · 누를 것 없음 (약 10분)</small></button><h3>개념 실험실 — 직접 만지며 배우기</h3>${labMenu()}<h3>3D로 과정 체험하기</h3><div class="jump"><b>단계로 바로 가기</b><select data-j="k">${MISSIONS.map((x, i) => `<option value="${i}" ${i === last ? 'selected' : ''}>${x.t}</option>`).join('')}</select><select data-j="i"></select><button data-a="jump">여기서 시작</button></div><div class="mb"><button class="pri" data-a="go">${SAVE.reached || SAVE.pos ? `이어하기 — ${MISSIONS[last].t}${SAVE.pos && SAVE.pos.k === last ? ` (${SAVE.pos.i + 1}단계 ${['설명', '실험', '문제'][SAVE.pos.s || 0]}부터)` : ''}` : '처음부터 시작'} · 완료 ${SAVE.reached} / ${MISSIONS.length}챕터</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><h3>테스트 (교과서 문제)</h3><div class="mb"><button class="pri" data-a="tball">교과서 문제 전체</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="notes">개념 정리 노트</button><button data-a="cards">암기 카드</button></div><h3>단원별 테스트</h3><div class="chs">${tb}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
   { const sk = m.querySelector('[data-j=k]'), si = m.querySelector('[data-j=i]'); const fill = () => { const n = Math.max(1, (LABS_OF[MISSIONS[+sk.value].id] || []).length); si.innerHTML = Array.from({ length: n + 1 }, (_, i) => `<option value="${i}">${i + 1}단계${i === n ? ' (3D 현장)' : ''}</option>`).join(''); if (SAVE.pos && SAVE.pos.k === +sk.value) si.value = Math.min(SAVE.pos.i, n); }; sk.onchange = fill; fill(); sk.onclick = si.onclick = e => e.stopPropagation(); }
   const runQ = async (qs, title) => { if (!qs.length) { toast('문제가 없어요'); return; } m.hidden = true; const r = await quiz(qs, title); toast(`${title}: ${r.right} / ${r.total}`, '#ffd23f'); menu(); };
   m.onclick = async e => { const b = e.target.closest('button'); if (!b) return; sfx('pick');
@@ -559,10 +576,14 @@ function menu() {
     if (a === 'go') return play(last); if (a === 'new') return play(0);
     if (a === 'q') return setQuality(({ low: 'mid', mid: 'high', high: 'low' })[E.quality]); if (a === 'home') location.href = 'index.html';
     if (a === 'notes') return notes(0);
+    if (a === 'course') return startCourse();
+    if (a === 'csgo') { const x = sectionList()[+m.querySelector('[data-j=cs]').value]; return startCourse({ ci: x.ci, si: x.si, st: 0 }); }
+    if (a === 'movie') { m.hidden = true; IN.locked = true; await movie(); return menu(); }
     if (a === 'tball') return runQ((window.BQ || []).filter(q => /^t/.test(q.ch)), '교과서 문제 전체');
     if (a === 'wrong') { const qs = (window.BQ || []).filter(q =>SAVE.wrong.includes(q.id)); return runQ(qs, '오답 다시 풀기'); }
     if (a === 'cards') cards(); };
 }
+async function startCourse(pos) { $('#menu').hidden = true; $('#hud').hidden = true; IN.locked = true; await runCourse(pos, { prog, done: () => { TOP.hidden = true; menu(); } }); }
 function labMenu() { const L = window.LAB; if (!L) return '';
   return `<div class="chs labs">${L.ORDER.map(id => { const x = L.REG[id]; return `<button data-lab="${id}" class="${L.done(id) ? 'cl' : ''}"><b>${L.done(id) ? '✓ ' : ''}${x.t}</b><small>${x.ch} · ${x.sub || ''}</small></button>`; }).join('')}</div>`; }
 function notes(k) { const N = window.BNOTES || []; const c = $('#notes'); c.hidden = false; $('#menu').hidden = true;
@@ -581,7 +602,7 @@ if (location.hash === '#dev') window.BIO = { P, IN, ITEMS, target: () =>TARGET, 
 menu(); requestAnimationFrame(loop);
 /* 켜면 바로 이어서 진행 (메뉴는 오른쪽 위 버튼) */
 { let stay = false; try { stay = sessionStorage.getItem('bio_menu') === '1'; sessionStorage.removeItem('bio_menu'); } catch (e) { }
-  if (!location.hash && !stay) setTimeout(() => play(SAVE.pos && SAVE.pos.k != null ? SAVE.pos.k : Math.min(SAVE.reached, MISSIONS.length - 1)), 600); }
+  if (!location.hash && !stay) setTimeout(() => startCourse(), 600); }
 /* 메뉴 뒤 배경: 천천히 도는 카메라 */
 camOverride = { pos: V(70, 30, 90), look: V(0, 0, -40) };
 const _play = play; play = async (k) => { camOverride = null; IN.yaw = Math.PI; IN.pitch = -.18; return _play(k); };

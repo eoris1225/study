@@ -49,6 +49,25 @@ v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::
 #pad .pt{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
 #pad .pt button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:5px 10px;font-size:14px;box-shadow:2px 2px 0 var(--ink)}
 #pad .pt button.on{background:var(--ink);color:var(--paper)}#pad .pt [data-c="#c8392b"]{color:var(--red)}#pad .pt [data-c="#1f4fb8"]{color:var(--blue)}#pad .pt [data-c].on{color:var(--paper)}
+#plotBtn{position:absolute;right:10px;top:10px;z-index:8;background:var(--ink);color:var(--paper);border:2px solid var(--ink);border-radius:4px;padding:7px 12px;font-weight:700;box-shadow:3px 3px 0 #22201c55}
+#plot{position:absolute;left:10px;top:10px;bottom:10px;width:min(330px,60%);z-index:9;background:#fffdf7ee;border:2px solid var(--ink);border-radius:4px;padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:4px 4px 0 #22201c33;overflow:auto}
+#plot .ph{display:flex;gap:6px;align-items:center}#plot .ph b{margin-right:auto}#plot.fold{bottom:auto;width:auto}#plot.fold>*:not(.ph){display:none}#plot .ph b{font-family:'Nanum Pen Script',cursive;font-size:26px;font-weight:400}
+#plot button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:3px 8px;font-size:13px}#plot .pri{background:var(--ink);color:var(--paper);width:100%;padding:7px;font-weight:700}
+#plot textarea{min-height:110px;font:15px/1.5 ui-monospace,monospace;border:1.5px solid var(--pencil);background:#fff;padding:6px;resize:vertical;touch-action:auto}
+#plot .ex{display:flex;flex-wrap:wrap;gap:4px}#plot .ex button{font-size:12px;padding:2px 6px;box-shadow:none;border-width:1.5px}
+#plot .out{font-size:14.5px;line-height:1.7}#plot .out b{color:var(--red)}#plot .out .bad{color:var(--pencil)}
+body.plotting #pad{display:none!important}
+#nav3d{position:absolute;right:10px;bottom:10px;z-index:7;display:flex;gap:5px}#nav3d button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:6px 10px;font-size:15px;font-weight:700;box-shadow:2px 2px 0 var(--ink)}#nav3d button.on{background:var(--ink);color:var(--paper)}
+#body .gq{margin-top:12px}.bub2{display:flex;gap:8px;align-items:flex-start}.bub2 .pf{width:38px;height:38px;flex:none}.bub2 p{margin:0;background:#fffdf7;border:2px solid var(--ink);border-radius:3px 14px 14px 14px;padding:8px 11px;font-size:16px;line-height:1.7}
+.bub2 .no{font-family:'Nanum Pen Script',cursive;color:var(--red);font-size:20px}
+#body .opts{display:flex;flex-direction:column;gap:6px;margin:8px 0 0 46px}#body .opts button{text-align:left;background:#fff;border:2px solid var(--ink);border-radius:3px;padding:8px 10px;font-size:15.5px;box-shadow:2px 2px 0 #22201c44}
+#body .opts button.ok{background:#e4f6e6;border-color:#1f8a5a}#body .opts button.no{background:#fbe8e4;border-color:var(--red);text-decoration:line-through;opacity:.7}
+#body .why{margin:8px 0 0 46px;padding:8px 10px;font-size:15px;line-height:1.7;border-left:4px solid}#body .why.good{border-color:#1f8a5a;background:#eef8ef}#body .why.bad{border-color:var(--red);background:#fdf1ee}
+#body .gnext{margin:8px 0 0 46px;background:var(--ink);color:var(--paper);border:0;border-radius:3px;padding:8px 14px;font-weight:700}
+#menu h3{font-family:'Nanum Pen Script',cursive;font-weight:400;font-size:28px;margin:14px 0 6px}#menu .ch button.here{outline:3px solid var(--red)}#menu .ch button.seen{background:#f0ece0}
+#body .idk{margin:8px 0 0 46px;background:none;border:1.5px dashed var(--pencil);border-radius:3px;padding:6px 10px;font-size:14px;color:var(--pencil)}#body .gl{margin:8px 0 0 46px;display:flex;flex-direction:column;gap:6px}#body .gle{background:#fff8e6;border:2px solid #e8b84a;border-radius:3px;padding:8px 10px;font-size:15px;line-height:1.7}#body .gle>b{color:var(--red);font-size:16px}#body .gle b{color:var(--red)}#body .gle button{margin-top:6px;background:var(--ink);color:var(--paper);border:0;border-radius:3px;padding:6px 10px;font-weight:700}
+.figbar{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin:4px 0 2px}.figbar button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:6px 10px;font-size:14px;font-weight:700;box-shadow:2px 2px 0 #22201c55;touch-action:manipulation}
+.fighint{text-align:center;font-size:12px;color:var(--pencil);margin-top:-2px}.fig[data-fk]{cursor:grab;overflow:hidden;user-select:none;-webkit-user-select:none}.fig[data-fk] svg{overflow:hidden}
 @media (max-aspect-ratio:1/1){#app{flex-direction:column}#side{width:auto;height:58vh;border-left:0;border-top:2px solid var(--ink)}}
 .fig{background:#fffdf6;border:1.5px solid #d8cfb8;border-radius:10px;margin:6px 0 8px;padding:2px 4px}
 .hints .hint{background:#fff7d8;border-left:4px solid #e0a020;border-radius:8px;padding:7px 10px;margin:6px 0;line-height:1.6}.hints .hint.k{background:#e8f0ff;border-color:#1f4fb8}.hints .hint b{display:block;font-size:13px;color:#8a5a00}.hints .hint.k b{color:#1f4fb8}
@@ -59,9 +78,12 @@ v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::
 <body>
 <div id="app"><div id="view"></div><div id="side"><div id="hd"></div><div id="body"></div><div id="ft"></div></div></div>
 <div id="menu" hidden></div>
-<script src="js/geo/data.js?v=3"></script>
-<script src="js/geo/figs.js?v=2"></script>
-<script src="js/geo/hints.js?v=1"></script>
-<script type="module" src="js/geo/main.js?v=5"></script>
+<script src="js/zoomfig.js?v=3"></script>
+<script src="js/geo/gloss.js?v=4"></script>
+<script src="js/geo/guide.js?v=6"></script>
+<script src="js/geo/data.js?v=5"></script>
+<script src="js/geo/figs.js?v=5"></script>
+<script src="js/geo/hints.js?v=3"></script>
+<script type="module" src="js/geo/main.js?v=108"></script>
 </body>
 </html>
