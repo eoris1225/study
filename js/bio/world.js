@@ -69,7 +69,7 @@ function buildMito(S) {
   /* 크리스타: 내막이 안으로 접힌 주름 (가장자리에서만 → 가운데는 비행 공간) */
   const crMat = std('#ff9f5a', '#c4500c', 1.1, { transparent: true, opacity: .28, depthWrite: false, side: THREE.DoubleSide });
   for (let i = 0; i < 7; i++) { const x = -6 + i * 6.5; if (x > 30) break; for (const s of [1, -1]) { const cr = new THREE.Mesh(new THREE.CapsuleGeometry(1.1, 5.5, 6, 12), crMat); cr.scale.set(1, 1, 6); cr.position.set(x, s * 15.2, (i % 2 ? 1 : -1) * 2); g.add(cr); const cr2 = cr.clone(); cr2.position.set(x + 3, 0, s * 15.2); cr2.rotation.x = Math.PI / 2; g.add(cr2); } }
-  /* 바탕질 반짝이 */
+  /* 기질 반짝이 */
   const n = 900, pg = new THREE.BufferGeometry(), pa = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * len * .95, a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (MITO.r - 3); pa.set([x, Math.cos(a) * r, Math.sin(a) * r], i * 3); }
   pg.setAttribute('position', new THREE.BufferAttribute(pa, 3)); g.add(new THREE.Points(pg, new THREE.PointsMaterial({ color: '#ffb070', size: .5, map: dotTex(), transparent: true, opacity: .7, depthWrite: false, blending: THREE.AdditiveBlending })));
@@ -79,7 +79,7 @@ function buildMito(S) {
   const gl = label('마이토콘드리아 입구\n(외막·내막 통과)', { scale: 1, border: '#ffb000' }); gl.position.set(4, 10, 0); gate.add(gl);
   const ml = label('마이토콘드리아', { scale: 2, border: '#ff9a4a' }); ml.position.copy(c).add(V(0, MITO.r + 7, 0)); S.add(ml);
   const zone = (t, x, y, col) => { const l = label(t, { scale: .9, border: col }); l.position.set(c.x + x, y, c.z); S.add(l); };
-  zone('바탕질 (기질)', 22, 13, '#ffb070');
+  zone('기질', 22, 13, '#ffb070');
 }
 /* 캡슐 충돌: 안/밖을 막고 입구로만 드나들게 */
 export function mitoConstrain(p, wasInside) {
@@ -113,7 +113,7 @@ function ring(S, p, col, text) {
 }
 export function makeRing(p, col, text) { return ring(E.scene, p, col, text); }
 
-/* ── 피루브산 탈수소 효소 복합체 (바탕질 입구 쪽) ── */
+/* ── 피루브산 탈수소 효소 복합체 (기질 입구 쪽) ── */
 function buildPDH(S) {
   const g = new THREE.Group(); g.position.copy(POS.pdh).add(V(-4, 0, 0)); S.add(g); W.pdh = g;
   const ico = new THREE.IcosahedronGeometry(1, 0); const vs = ico.attributes.position;
@@ -137,7 +137,7 @@ function buildTCA(S) {
   W.tcaNodes = [];
   const N = 8; const stIdx = [0, 1, 2, 3, 4, 5]; /* 6개 정거장 + 2개 장식 */
   for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const st = TCA_ST[i]; const n = new THREE.Group(); n.position.set(Math.sin(a) * 9, Math.cos(a) * 9, 0); const b = new THREE.Mesh(new THREE.SphereGeometry(1.5, 18, 12), std(st.col, st.col, 1.4)); n.add(b); const l = label(st.name, { scale: .55, border: st.col }); l.position.y = 2.6; n.add(l); wheel.add(n); W.tcaNodes.push(n); }
-  const l = label('TCA 회로\n(바탕질)', { scale: 1.2, border: '#ffd23f' }); l.position.set(0, 15, 0); g.add(l);
+  const l = label('TCA 회로\n(기질)', { scale: 1.2, border: '#ffd23f' }); l.position.set(0, 15, 0); g.add(l);
   W.tcaIn = ring(S, POS.tca.clone().add(V(6, -9, 9)), '#ffd23f', '아세틸 CoA 투입');
 }
 
@@ -148,7 +148,7 @@ function buildETC(S) {
   const mem = new THREE.Mesh(new THREE.CircleGeometry(MITO.r - 1.7, 64), new THREE.MeshStandardMaterial({ map: memTex, emissive: '#5a1d00', emissiveIntensity: .6, transparent: true, opacity: .78, side: THREE.DoubleSide, roughness: .7 }));
   mem.position.copy(c); mem.rotation.y = Math.PI / 2; S.add(mem); W.etcMem = mem;
   const lm = label('내막 (크리스타) — 전자 전달계', { scale: 1, border: '#ff8a3d' }); lm.position.copy(c).add(V(1, 15, 0)); S.add(lm);
-  const ls = label('막 사이 공간 →', { scale: .8, border: '#ff4a7a' }); ls.position.copy(c).add(V(-6, -14, 0)); S.add(ls);
+  const ls = label('막사이공간 →', { scale: .8, border: '#ff4a7a' }); ls.position.copy(c).add(V(-6, -14, 0)); S.add(ls);
   const g = new THREE.Group(); S.add(g); W.etc = g; const at = (z, y = 0) =>V(x + 1.6, c.y + y, c.z + z);
   const comp = (name, z, col, sz, y = 0) => { const o = new THREE.Group(); o.position.copy(at(z, y)); const b = new THREE.Mesh(new THREE.CapsuleGeometry(sz * .6, sz, 8, 16), std(col, col, .8, { roughness: .5 })); b.rotation.z = Math.PI / 2; b.rotation.y = Math.PI / 2; o.add(b); const l = label(name, { scale: .55, border: col }); l.position.set(1.5, sz + 1.2, 0); o.add(l); g.add(o); o.userData.body = b; return o; };
   W.cI = comp('복합체 Ⅰ\n(NADH)', -12, '#4aa8ff', 3.4, 1); W.cII = comp('복합체 Ⅱ\n(FADH₂)', -6.5, '#47e38a', 2.2, -4); W.cIII = comp('복합체 Ⅲ', -1, '#c48bff', 3);
@@ -163,7 +163,7 @@ function buildETC(S) {
   /* 이동성 운반체 (조효소 Q, 사이토크롬 c) */
   W.Q = new THREE.Mesh(new THREE.SphereGeometry(.6, 12, 8), std('#ffe27a', '#ffcc00', 2.5)); W.Q.position.copy(at(-4, -2)); g.add(W.Q);
   W.cytc = new THREE.Mesh(new THREE.SphereGeometry(.6, 12, 8), std('#ff9a9a', '#ff3030', 2.5)); W.cytc.position.copy(at(2, 2)); g.add(W.cytc);
-  /* 막 사이 공간의 H+ */
+  /* 막사이공간의 H+ */
   const n = 1400, pg = new THREE.BufferGeometry(), pa = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 15; pa.set([x - 1.5 - Math.random() * 16, c.y + Math.cos(a) * r, c.z + Math.sin(a) * r], i * 3); }
   pg.setAttribute('position', new THREE.BufferAttribute(pa, 3)); pg.setDrawRange(0, 0);

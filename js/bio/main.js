@@ -83,7 +83,7 @@ function loop(now) {
   /* 경계: 세포막, 핵, 미토콘드리아 */
   const p = P.g.position; const dc = p.distanceTo(CELL.c); if (dc >CELL.r - 4) p.sub(CELL.c).setLength(CELL.r - 4).add(CELL.c);
   const dn = p.distanceTo(NUC.c); if (dn < NUC.r + 2) p.sub(NUC.c).setLength(NUC.r + 2).add(NUC.c);
-  P.inMito = mitoConstrain(p, was); if (P.inMito !== was) { toast(P.inMito ? '마이토콘드리아 <b>바탕질</b>진입' : '<b>세포질</b>로 나옴', P.inMito ? '#ff9a3c' : '#5af0ff'); sfx('whoosh'); }
+  P.inMito = mitoConstrain(p, was); if (P.inMito !== was) { toast(P.inMito ? '마이토콘드리아 <b>기질</b>진입' : '<b>세포질</b>로 나옴', P.inMito ? '#ff9a3c' : '#5af0ff'); sfx('whoosh'); }
   const wc = P.inChl; P.inChl = chloroConstrain(p, wc); if (P.inChl !== wc) { toast(P.inChl ? '<b>엽록체 스트로마</b>진입' : '<b>세포질</b>로 나옴', P.inChl ? '#5aff7a' : '#5af0ff'); sfx('whoosh'); }
   /* 몸 방향·흔들림 */
   const hv = Math.hypot(P.vel.x, P.vel.z); if (hv > .5) P.face = Math.atan2(P.vel.x, P.vel.z); P.g.rotation.y += ((P.face - P.g.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 8);
@@ -134,14 +134,14 @@ async function mIntro() {
   stepMission = () => { const n = L.find(x =>x.mode === 'free'); target(n ? n.o.position : null); HUD.obj(`<b>ATP</b>모으기 ${got} / 5`); };
   await until(() =>got >= 5); stepMission = () => { }; target(null); banner('ATP 5개!', '해당 과정의 밑천 확보');
   await showcase(V(60, 18, -45), V(0, 0, -85), 2.8);
-  await say(['저기 주황색 거대한 게 <b>마이토콘드리아</b>. 세포의 발전소야.', '<b>외막</b>과 <b>내막</b>두 겹의 막. 내막이 안쪽으로 접힌 주름이 <b>크리스타</b> → 반응 장소(면적)를 넓혀 줘.', '안쪽 액체는 <b>바탕질(기질)</b>. 자기만의 <b>DNA, 라이보솜</b>, 호흡 효소가 있어. 그래서 원래 독립된 세균이었다는 <b>세포내 공생설</b>의 증거가 돼.', '근육·간·신경 세포처럼 에너지를 많이 쓰는 세포에 특히 많아.']);
+  await say(['저기 주황색 거대한 게 <b>마이토콘드리아</b>. 세포의 발전소야.', '<b>외막</b>과 <b>내막</b>두 겹의 막. 내막이 안쪽으로 접힌 주름이 <b>크리스타</b> → 반응 장소(면적)를 넓혀 줘.', '안쪽 액체는 <b>기질</b>. 자기만의 <b>DNA, 라이보솜</b>, 호흡 효소가 있어. 그래서 원래 독립된 세균이었다는 <b>세포내 공생설</b>의 증거가 돼.', '근육·간·신경 세포처럼 에너지를 많이 쓰는 세포에 특히 많아.']);
   await gate(['s1'], 3, '세포 속으로 관문'); done(0);
 }
 /* 2. 해당 과정 */
 async function mGly() {
   HUD.mission('해당 과정', '세포질 · 산소 없어도 OK'); B.ATP = 0; B.NADH = 0; B.FADH2 = 0; B.CO2 = 0; B.H2O = 0; board();
   if ((HUD.inv.ATP || 0) < 2) { HUD.set('ATP', 5); }
-  await say(['산소 호흡은 3단계: <b>해당 과정</b>(세포질) → <b>피루브산 산화·TCA 회로</b>(바탕질) → <b>산화적 인산화</b>(내막).', '첫 단계 해당 과정은 <b>세포질</b>에서, <b>산소 없이도</b>일어나. 포도당(C6) 1개를 피루브산(C3) 2개로 쪼개는 거야.', '세포막의 <b>포도당 수송체</b>로 가서 포도당을 받아 와!']);
+  await say(['산소 호흡은 3단계: <b>해당 과정</b>(세포질) → <b>피루브산 산화·TCA 회로</b>(기질) → <b>산화적 인산화</b>(내막).', '첫 단계 해당 과정은 <b>세포질</b>에서, <b>산소 없이도</b>일어나. 포도당(C6) 1개를 피루브산(C3) 2개로 쪼개는 거야.', '세포막의 <b>포도당 수송체</b>로 가서 포도당을 받아 와!']);
   const glu = spawn('glucose', POS.glutOut.clone().add(V(0, 0, 6)), { collect: false }); fly(glu.o, POS.glutOut, 1.2, 0, () =>glu.collect = true);
   guide('resp', 0, '세포막 통로에서 포도당을 받아 옴', '혈액의 포도당이 세포막의 <b>포도당 수송체</b>를 통해 세포질로 들어와. 세포호흡의 연료!');
   HUD.obj('포도당 수송체에서 <b>포도당</b>받기'); target(POS.glutOut); await until(() =>glu.mode === 'carry');
@@ -179,11 +179,11 @@ async function mGly() {
 }
 /* 3. 피루브산의 산화 */
 async function mPyr() {
-  HUD.mission('피루브산의 산화', '바탕질 · CO₂가 처음 나온다'); ensureCarry('pyruvate', 2);
+  HUD.mission('피루브산의 산화', '기질 · CO₂가 처음 나온다'); ensureCarry('pyruvate', 2);
   await say(['<b>산소가 있으면</b>피루브산은 마이토콘드리아 안으로 들어가. 입구까지 날아가자! ( 버튼 = 대시)']);
   guide('resp', 2, '피루브산을 들고 마이토콘드리아로', '산소가 있으면 피루브산은 마이토콘드리아 <b>기질</b>로 들어가 완전 분해돼.');
   HUD.obj('<b>마이토콘드리아 입구</b>로'); target(MITO.gate.clone().add(V(-10, 0, 0))); await until(() =>P.inMito); target(null);
-  await say(['여기가 <b>바탕질</b>. 피루브산을 <b>피루브산 산화 장치</b>에 넣어.']);
+  await say(['여기가 <b>기질</b>. 피루브산을 <b>피루브산 산화 장치</b>에 넣어.']);
   guide('resp', 2, '피루브산을 산화 장치에 넣기', '피루브산(C₃) → 탄소 1개가 <b>CO₂</b>로 빠지고(탈탄산) 수소는 NAD⁺에 실려 <b>NADH</b> → 남은 C₂가 조효소 A와 붙어 <b>아세틸 CoA</b>. ATP는 안 생김!');
   HUD.obj('피루브산 2개를 <b>산화 장치</b>에 투입'); target(ringOf(W.pdhIn)); await until(() =>inRing(W.pdhIn) && carrying('pyruvate').length);
   target(null); const core = W.pdh.position.clone(); const acs = [];
@@ -201,7 +201,7 @@ async function mPyr() {
 }
 /* 4. TCA 회로 */
 async function mTCA() {
-  HUD.mission('TCA 회로', '바탕질 · 한 바퀴 = 아세틸 CoA 1개'); ensureCarry('acetyl', 2); if (!P.inMito) { P.g.position.copy(POS.pdh).add(V(4, 4, 6)); P.inMito = true; }
+  HUD.mission('TCA 회로', '기질 · 한 바퀴 = 아세틸 CoA 1개'); ensureCarry('acetyl', 2); if (!P.inMito) { P.g.position.copy(POS.pdh).add(V(4, 4, 6)); P.inMito = true; }
   await say(['<b>TCA 회로</b>! 아세틸 CoA(C2)가 <b>옥살아세트산(C4)</b>과 합쳐져 <b>시트르산(C6)</b>이 되고, 바퀴를 돌며 다시 옥살아세트산으로 돌아와.', '돌면서 <b>CO₂ 2개</b>가 빠지고, 수소는 <b>NADH 3 · FADH₂ 1</b>에 실리고, <b>ATP 1</b>이 생겨. 바퀴 옆 노란 링에 아세틸 CoA를 넣어!']);
   guide('resp', 3, '아세틸 CoA를 바퀴에 넣고 한 바퀴 돌리기', '<b>TCA 회로</b>: C₂ + 옥살아세트산(C₄) → 시트르산(C₆) → 돌면서 탄소 2개가 CO₂로 빠지고 → 다시 C₄. 수소는 NADH·FADH₂로, ATP 1개.');
   HUD.obj('<b>아세틸 CoA</b>를 TCA 회로 투입구에'); target(ringOf(W.tcaIn)); await until(() =>inRing(W.tcaIn) && carrying('acetyl').length); target(null);
@@ -239,12 +239,12 @@ async function mETC() {
   if (B.NADH < 10) { B.ATP = 4; B.NADH = 10; B.FADH2 = 2; B.CO2 = 6; board(); }
   HUD.set('NADH', 10); HUD.set('FADH2', 2); setHplus(0);
   await showcase(V(-12, 6, -72), V(POS.etcX, 0, -85), 2.4);
-  await say(['여기가 <b>내막(크리스타)</b>의 전자 전달계. NADH와 FADH₂가 <b>고에너지 전자</b>를 내려놓는 곳이야.', '전자가 복합체 Ⅰ → Q → Ⅲ → 사이토크롬 c → Ⅳ로 흐르면서 나온 에너지로 <b>H⁺를 막 사이 공간으로 퍼 올려</b>. (능동 수송)', '전자의 <b>최종 수용체는 O₂</b>! 전자 + H⁺ + O₂ → <b>H₂O</b>.']);
+  await say(['여기가 <b>내막(크리스타)</b>의 전자 전달계. NADH와 FADH₂가 <b>고에너지 전자</b>를 내려놓는 곳이야.', '전자가 복합체 Ⅰ → Q → Ⅲ → 사이토크롬 c → Ⅳ로 흐르면서 나온 에너지로 <b>H⁺를 막사이공간으로 퍼 올려</b>. (능동 수송)', '전자의 <b>최종 수용체는 O₂</b>! 전자 + H⁺ + O₂ → <b>H₂O</b>.']);
   let nadh = 0, fad = 0, o2n = 0; const O2s = [];
   for (let i = 0; i < 6; i++) O2s.push(spawn('O2', V(-8 + Math.random() * 14, (Math.random() - .5) * 18, -85 + (Math.random() - .5) * 22), { vel: V(0, 0, 0) }));
   const chain = () => { const pts = [W.cI, W.Q, W.cIII, W.cytc, W.cIV].map(o =>o.getWorldPosition ? o.getWorldPosition(V()) : o.position.clone()); return pts; };
   const runE = (fromII) => { const pts = chain(); if (fromII) pts[0] = W.cII.getWorldPosition(V()); const e = mol('e'); e.scale.setScalar(1.6); e.position.copy(pts[0]); E.scene.add(e); let k = 0; const step = () => { if (k >= pts.length - 1) { E.scene.remove(e); return; } fly(e, pts[k + 1], .35, .5, () => { k++; step(); }); }; step(); };
-  guide('resp', 4, 'NADH·FADH₂를 막의 단백질에 배달 + O₂ 잡아 오기', 'NADH·FADH₂가 내막의 전자 전달계에 <b>전자</b>를 넘기면, 전자가 단백질을 따라 흐르며 그 에너지로 <b>H⁺를 막 사이 공간으로 퍼 올려</b>. 전자의 마지막 도착지는 <b>O₂</b> → 물이 됨.');
+  guide('resp', 4, 'NADH·FADH₂를 막의 단백질에 배달 + O₂ 잡아 오기', 'NADH·FADH₂가 내막의 전자 전달계에 <b>전자</b>를 넘기면, 전자가 단백질을 따라 흐르며 그 에너지로 <b>H⁺를 막사이공간으로 퍼 올려</b>. 전자의 마지막 도착지는 <b>O₂</b> → 물이 됨.');
   stepMission = () => { HUD.obj(`NADH → 복합체 Ⅰ <b>${nadh}/10</b> ·  FADH₂ → 복합체 Ⅱ <b>${fad}/2</b> ·  O₂ 잡아서 복합체 Ⅳ <b>${o2n}/6</b>`);
     if (nadh < 10 && inRing(W.inI)) { nadh = 10; HUD.set('NADH', 0); for (let i = 0; i < 10; i++) setTimeout(() => { runE(false); sfx('pick'); setHplus(.06 * (i + 1)); }, i * 180); toast('NADH 1개당 H⁺를 많이 퍼 올림 (≈2.5 ATP)', '#4aa8ff'); }
     if (fad < 2 && inRing(W.inII)) { fad = 2; HUD.set('FADH2', 0); for (let i = 0; i < 2; i++) setTimeout(() => { runE(true); sfx('pick'); setHplus(.6 + .1 * (i + 1)); }, i * 250); toast('FADH₂는 복합체 Ⅱ로 → Ⅰ을 건너뛰어 H⁺를 덜 퍼 올림 (≈1.5 ATP)', '#47e38a'); }
@@ -253,9 +253,9 @@ async function mETC() {
     if ((nadh || fad) && o2n === 0 && Math.random() < .02) W.cIV.userData.body.material.emissiveIntensity = 2.5 + Math.random();
   };
   await until(() =>nadh >= 10 && fad >= 2 && o2n >= 6); stepMission = () => { }; target(null); setHplus(1);
-  await say(['막 사이 공간에 <b>H⁺가 가득</b>! 안팎의 농도 차 = 물이 가득 찬 댐이야. (막 사이 공간 pH ↓)', '이제 H⁺가 <b>ATP 합성 효소</b>를 통해 바탕질로 흘러 내려오면서 터빈을 돌려 → ADP + Pi → <b>ATP</b>. 이게 <b>화학 삼투</b>, <b>산화적 인산화</b>야.', '터빈 링 안에 들어가서 <b>버튼(또는 E)을 꾹 누르고</b>있어!']);
+  await say(['막사이공간에 <b>H⁺가 가득</b>! 안팎의 농도 차 = 물이 가득 찬 댐이야. (막사이공간 pH ↓)', '이제 H⁺가 <b>ATP 합성 효소</b>를 통해 기질로 흘러 내려오면서 터빈을 돌려 → ADP + Pi → <b>ATP</b>. 이게 <b>화학 삼투</b>, <b>산화적 인산화</b>야.', '터빈 링 안에 들어가서 <b>버튼(또는 E)을 꾹 누르고</b>있어!']);
   target(ringOf(W.inSyn)); let made = 0, spin = 0; const goal = 28;
-  guide('resp', 5, '꾹 = H⁺가 터빈을 통과하게 하기', '막 사이 공간에 쌓인 H⁺(빨간 점)가 <b>ATP 합성 효소</b>를 통해 기질로 흘러내리며 터빈처럼 돌려 ADP + Pi → ATP. 댐의 물이 발전기를 돌리는 것과 같아 (<b>화학 삼투</b>).');
+  guide('resp', 5, '꾹 = H⁺가 터빈을 통과하게 하기', '막사이공간에 쌓인 H⁺(빨간 점)가 <b>ATP 합성 효소</b>를 통해 기질로 흘러내리며 터빈처럼 돌려 ADP + Pi → ATP. 댐의 물이 발전기를 돌리는 것과 같아 (<b>화학 삼투</b>).');
   stepMission = dt => { const on = inRing(W.inSyn) && (IN.act || IN.keys.KeyE); HUD.obj(`ATP 합성 효소 터빈 돌리기 — <b>${made.toFixed(1)}</b> / 28 ATP ${on ? '' : '(링 안에서  꾹)'}`);
     spin += ((on ? 14 : 0) - spin) * Math.min(1, dt * 3); W.synRotor.rotation.x += spin * dt; W.synHead.rotation.x += spin * dt * .3;
     if (on) { const before = Math.floor(made); made = Math.min(goal, made + dt * 5.5); setHplus(1 - made / goal * .85); if (Math.floor(made) >before) { const a = spawn('ATP', W.synHead.getWorldPosition(V()).add(V(1, 0, 0)), { vel: V(6, (Math.random() - .5) * 6, (Math.random() - .5) * 6), magnet: 40 }); bAdd('ATP', 1); if (Math.random() < .3) shake(.15); } } };
@@ -345,7 +345,7 @@ async function mBoss() {
   stepMission = () => { };
   if (hp <= 0 || hearts > 0) { tween(1.2, k => { boss.scale.setScalar(1 - k); boss.rotation.y += .3; }, () =>E.scene.remove(boss)); for (let i = 0; i < 6; i++) setTimeout(() =>burst(POS.arena.clone().add(V(0, 12, -24)), ['#ffd23f', '#ff2a8a', '#7ff8ff'][i % 3], 90, 20, 1.6, .6), i * 200); sfx('win');
     banner('클리어!', '세포 호흡 마스터 — 미토의 발전소를 지켜 냈다', '#ffd23f'); SAVE.best = Math.max(SAVE.best, hearts); done(7);
-    await say(['해냈어! 정리 한 번 더:', '해당 과정(세포질) 2ATP · 피루브산 산화(바탕질) ATP 0 · TCA(바탕질) 2ATP · 산화적 인산화(내막) 28ATP = <b>32 ATP</b>.', '지방은 글리세롤·지방산 → 아세틸 CoA(β 산화), 단백질은 아미노산 → 탈아미노 → 암모니아는 요소로. 호흡률은 탄수화물 1, 단백질 0.8, 지방 0.7!', '메뉴에서 챕터를 골라 다시 하거나, <b>오답 다시 풀기</b>로 틀린 문제를 복습해 봐.']); }
+    await say(['해냈어! 정리 한 번 더:', '해당 과정(세포질) 2ATP · 피루브산 산화(기질) ATP 0 · TCA(기질) 2ATP · 산화적 인산화(내막) 28ATP = <b>32 ATP</b>.', '지방은 글리세롤·지방산 → 아세틸 CoA(β 산화), 단백질은 아미노산 → 탈아미노 → 암모니아는 요소로. 호흡률은 탄수화물 1, 단백질 0.8, 지방 0.7!', '메뉴에서 챕터를 골라 다시 하거나, <b>오답 다시 풀기</b>로 틀린 문제를 복습해 봐.']); }
   else { E.scene.remove(boss); banner('패배…', '하트가 다 떨어졌어요. 메뉴에서 다시 도전!', '#ff5a8a'); }
 }
 /* 0. 효소 공방 */
@@ -456,8 +456,8 @@ async function mCalvin() {
   await say(['빛을 끄면 → ATP·NADPH 부족 → 3PG 환원이 멈춰서 <b>3PG ↑, RuBP ↓</b>. CO₂를 끊으면 → RuBP가 안 쓰여서 <b>RuBP ↑, 3PG ↓</b>.', '명반응과 탄소 고정 반응은 서로의 산물(ATP·NADPH  ADP·NADP⁺)이 필요해서 <b>함께</b>일어나야 계속돼.']);
   await choose('빛을 끊으면 잠시 동안 <b>증가</b>하는 물질은?', ['3PG', 'RuBP'], 0);
   await gate(['p3'], 3, '탄소 고정 관문');
-  await say(['마지막으로 <b>세포호흡 vs 광합성</b>정리!', '공통: <b>전자전달계 + ATP 합성 효소 (화학 삼투)</b>, 탄소 수가 변하는 회로(TCA  캘빈)와 효소 조절.', '차이: 장소(세포질·마이토콘드리아  엽록체), 이화  동화, 조효소 NAD⁺·FAD  <b>NADP⁺</b>, 최종 전자 수용체 <b>O₂  NADP⁺</b>, 전자 공여체 NADH·FADH₂  <b>H₂O</b>, H⁺ 쌓이는 곳 <b>막 사이 공간  타이라코이드 내부</b>, 기질 수준 인산화는 세포호흡에만.']);
-  await choose('H⁺가 능동 수송되어 쌓이는 곳을 바르게 짝지은 것은? (마이토콘드리아 · 엽록체)', ['막 사이 공간 · 타이라코이드 내부', '기질 · 스트로마', '막 사이 공간 · 스트로마'], 0);
+  await say(['마지막으로 <b>세포호흡 vs 광합성</b>정리!', '공통: <b>전자전달계 + ATP 합성 효소 (화학 삼투)</b>, 탄소 수가 변하는 회로(TCA  캘빈)와 효소 조절.', '차이: 장소(세포질·마이토콘드리아  엽록체), 이화  동화, 조효소 NAD⁺·FAD  <b>NADP⁺</b>, 최종 전자 수용체 <b>O₂  NADP⁺</b>, 전자 공여체 NADH·FADH₂  <b>H₂O</b>, H⁺ 쌓이는 곳 <b>막사이공간  타이라코이드 내부</b>, 기질 수준 인산화는 세포호흡에만.']);
+  await choose('H⁺가 능동 수송되어 쌓이는 곳을 바르게 짝지은 것은? (마이토콘드리아 · 엽록체)', ['막사이공간 · 타이라코이드 내부', '기질 · 스트로마', '막사이공간 · 스트로마'], 0);
   await gate(['p4'], 3, '세포호흡 vs 광합성 관문'); HUD.show('NADPH', false); ['NAD', 'NADH', 'FADH2'].forEach(k =>HUD.show(k, true)); done();
 }
 /* ════════ 흐름형 학습: 떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리 ════════ */
