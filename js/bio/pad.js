@@ -33,11 +33,11 @@
   quiz.addEventListener('pointerup', up, true); quiz.addEventListener('pointercancel', up, true);
   /* 손바닥 무시: 펜을 대고 있거나 방금 쓴 동안엔 손가락·손바닥 터치를 무시하고, 아닐 때만 손가락으로 스크롤 */
   let penT = 0, palm = new Set(), fs = null;
-  const penNow = () => !!cur || penDown || Date.now() - penT < 500; let penDown = false;
+  const penNow = () => !!cur || penDown || Date.now() - penT < 300; let penDown = false;
   /* 떠 있는(호버) 펜은 무시 — 실제로 닿았을 때만 */
   window.addEventListener('pointerdown', e => { if (e.pointerType === 'pen') penDown = true; }, true);
   ['pointerup', 'pointercancel'].forEach(t => window.addEventListener(t, e => { if (e.pointerType === 'pen') { penDown = false; penT = Date.now(); } }, true));
-  const isPalm = e => (e.width || 0) >= 40 || (e.height || 0) >= 40;
+  const isPalm = e => (e.width || 0) >= 120 && (e.height || 0) >= 120; /* 손가락은 절대 안 걸리게 아주 큰 접촉만 */
   quiz.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || all || bar.hidden) return;
     if (penNow() || isPalm(e)) { palm.add(e.pointerId); e.preventDefault(); e.stopPropagation(); return; }
     let el = e.target; while (el && el !== quiz) { const o = getComputedStyle(el).overflowY; if ((o === 'auto' || o === 'scroll') && el.scrollHeight > el.clientHeight + 1) break; el = el.parentElement; }
