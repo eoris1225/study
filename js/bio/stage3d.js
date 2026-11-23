@@ -1,6 +1,6 @@
 /* 개념 설명용 3D 무대: 카드가 오른쪽에 있을 때 왼쪽 빈 공간(카메라 앞)에 개념별 3D 애니메이션 + 3D 친구 */
 import * as THREE from 'three';
-import { E, shake, sfx } from './engine.js?v=202611231415';
+import { E, shake, sfx } from './engine.js?v=202611231432';
 
 const ROOT = new THREE.Group(); ROOT.visible = false;
 const STS = new THREE.Scene(); STS.add(new THREE.AmbientLight('#ffffff', 1.1)); { const d = new THREE.DirectionalLight('#ffffff', 1.6); d.position.set(3, 5, 8); STS.add(d); }
