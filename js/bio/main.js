@@ -1,9 +1,9 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
 import * as THREE from 'three';
-import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231105';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231105';
-import { mol, NAME } from './mols.js?v=202611231105';
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231105';
+import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231106';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231106';
+import { mol, NAME } from './mols.js?v=202611231106';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231106';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
@@ -545,7 +545,7 @@ async function play(from) {
 }
 function menu() {
   const m = $('#menu'); m.hidden = false; $('#hud').hidden = true; IN.locked = false;
-  const last = Math.min(SAVE.reached, MISSIONS.length - 1);
+  const last = SAVE.pos && SAVE.pos.k != null ? SAVE.pos.k : Math.min(SAVE.reached, MISSIONS.length - 1);
   const tb = (window.TBSEC || []).map(([c, t]) => { const L = (window.BQ || []).filter(q =>q.ch === c); const done = L.filter(q =>SAVE.right[q.id]).length; return `<button data-tb="${c}"><b>${t}</b><small>${L.length}문제 · 맞힘 ${done}</small></button>`; }).join('');
   m.innerHTML = `<div class="mc"><h1>MITO<small>세포호흡과 광합성</small></h1><h3>개념 실험실 — 직접 만지며 배우기</h3>${labMenu()}<h3>3D로 과정 체험하기</h3><div class="jump"><b>단계로 바로 가기</b><select data-j="k">${MISSIONS.map((x, i) => `<option value="${i}" ${i === last ? 'selected' : ''}>${x.t}</option>`).join('')}</select><select data-j="i"></select><button data-a="jump">여기서 시작</button></div><div class="mb"><button class="pri" data-a="go">${SAVE.reached || SAVE.pos ? `이어하기 — ${MISSIONS[last].t}${SAVE.pos && SAVE.pos.k === last ? ` (${SAVE.pos.i + 1}단계 ${['설명', '실험', '문제'][SAVE.pos.s || 0]}부터)` : ''}` : '처음부터 시작'} · 완료 ${SAVE.reached} / ${MISSIONS.length}챕터</button><button data-a="new">처음부터</button></div><div class="chs">${MISSIONS.map((x, i) => `<button data-c="${i}" class="${i < SAVE.reached ? 'cl' : ''}"><b>${x.t}</b><small>${chem(x.d)}</small></button>`).join('')}</div><h3>테스트 (교과서 문제)</h3><div class="mb"><button class="pri" data-a="tball">교과서 문제 전체</button><button data-a="wrong">오답 다시 풀기 (${SAVE.wrong.length})</button><button data-a="notes">개념 정리 노트</button><button data-a="cards">암기 카드</button></div><h3>단원별 테스트</h3><div class="chs">${tb}</div><div class="mb"><button data-a="q">화질: ${({ low: '낮음', mid: '보통', high: '높음' })[E.quality]}</button><button data-a="home">과목 선택</button></div><p class="help">3D 조작 — 왼쪽 화면 끌기: 이동 · 오른쪽 화면 끌기: 시점 · ▲▼ 위아래 · 대시 · 행동(꾹 누르기)<br>키보드 — WASD 이동 · 마우스 드래그 시점 · Space/C 위아래 · Shift 대시 · E 행동</p></div>`;
   { const sk = m.querySelector('[data-j=k]'), si = m.querySelector('[data-j=i]'); const fill = () => { const n = Math.max(1, (LABS_OF[MISSIONS[+sk.value].id] || []).length); si.innerHTML = Array.from({ length: n + 1 }, (_, i) => `<option value="${i}">${i + 1}단계${i === n ? ' (3D 현장)' : ''}</option>`).join(''); if (SAVE.pos && SAVE.pos.k === +sk.value) si.value = Math.min(SAVE.pos.i, n); }; sk.onchange = fill; fill(); sk.onclick = si.onclick = e => e.stopPropagation(); }
@@ -580,7 +580,7 @@ if (location.hash === '#dev') window.BIO = { P, IN, ITEMS, target: () =>TARGET, 
 menu(); requestAnimationFrame(loop);
 /* 켜면 바로 이어서 진행 (메뉴는 오른쪽 위 버튼) */
 { let stay = false; try { stay = sessionStorage.getItem('bio_menu') === '1'; sessionStorage.removeItem('bio_menu'); } catch (e) { }
-  if (!location.hash && !stay) setTimeout(() => play(Math.min(SAVE.reached, MISSIONS.length - 1)), 600); }
+  if (!location.hash && !stay) setTimeout(() => play(SAVE.pos && SAVE.pos.k != null ? SAVE.pos.k : Math.min(SAVE.reached, MISSIONS.length - 1)), 600); }
 /* 메뉴 뒤 배경: 천천히 도는 카메라 */
 camOverride = { pos: V(70, 30, 90), look: V(0, 0, -40) };
 const _play = play; play = async (k) => { camOverride = null; IN.yaw = Math.PI; IN.pitch = -.18; return _play(k); };
