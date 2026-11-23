@@ -213,3 +213,8 @@ body.lesson-on #inv{opacity:.5}
 #topbar button{pointer-events:auto;background:rgba(30,22,14,.92);color:#f6ead6;border:1.5px solid #e8a33d;border-radius:10px;padding:6px 12px;font-weight:700;font-size:14px}
 #topbar span{background:rgba(30,22,14,.8);color:#f0c27a;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700}
 #mt{top:52px!important}
+
+.qimg{margin:4px 0 10px;cursor:zoom-in;text-align:center}.qimg img{max-width:100%;max-height:58vh;border-radius:10px;background:#fff;display:block;margin:0 auto}
+.qimg small{display:block;font-size:11px;opacity:.55;margin-top:3px}
+.qimg.big{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0;cursor:zoom-out;padding:10px}.qimg.big img{max-height:92vh;max-width:96vw}
+.qhide{display:none!important}.qtag{font-size:12px;font-weight:900;color:#ffd23f;margin:2px 0}

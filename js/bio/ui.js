@@ -74,8 +74,9 @@ export function quiz(qs, title = '지식 관문') {
     IN.locked = true; const ov = $('#quiz'); ov.hidden = false; let i = 0, right = 0;
     const one = () => {
       if (i >= qs.length) { ov.hidden = true; IN.locked = false; save(); res({ right, total: qs.length }); return; }
-      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}<div class="qq"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
+      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.img ? `<div class="qimg"><img src="${q.img}" alt="교과서 문제"><small>사진을 누르면 크게 · 교과서 원본</small></div>` : q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}${q.img && q.type === 'fill' ? '<div class="qtag">답 쓰기</div>' : ''}<div class="qq${q.img && q.type !== 'fill' ? ' qhide' : ''}"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
       const qq = ov.querySelector('.qq'), qa = ov.querySelector('.qa'), qx = ov.querySelector('.qx'), qb = ov.querySelector('.qb');
+      const qi = ov.querySelector('.qimg'); if (qi) qi.onclick = () => qi.classList.toggle('big');
       const finish = (ok, detail) => { if (ok) { right++; SAVE.right[q.id] = (SAVE.right[q.id] || 0) + 1; SAVE.wrong = SAVE.wrong.filter(x =>x !== q.id); } else if (!SAVE.wrong.includes(q.id)) SAVE.wrong.push(q.id); sfx(ok ? 'ok' : 'bad');
         qx.hidden = false; qx.className = 'qx ' + (ok ? 'ok' : 'no'); qx.innerHTML = `<b>${ok ? '정답' : '오답'}</b>${detail ? '<div>' + chemHTML(detail) + '</div>' : ''}<div>${chemHTML(q.exp || '')}</div>`;
         qb.innerHTML = ''; const n = document.createElement('button'); n.className = 'pri'; n.textContent = i + 1 < qs.length ? '다음 ▶' : '관문 통과 ▶'; n.onclick = () => { i++; one(); }; qb.appendChild(n); n.focus(); };
