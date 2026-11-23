@@ -233,3 +233,4 @@ body.lesson-on #inv{opacity:.5}
 #quiz.inkon{position:fixed}#quiz .inkcv{z-index:5}
 #quiz .qc{position:relative;z-index:auto}
 #quiz .qc button,#quiz .qc .opt,#quiz .qc .oxr,#quiz .qc .wsheet,#quiz .qc input,#quiz .qc textarea,#quiz .qc .qx,#quiz #inkbar,#quiz .qc .seg{position:relative;z-index:6}
+.jump{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin:6px 0 10px;font-size:14px}.jump select{background:#0e2b3a;color:#fff;border:1.5px solid #5af0ff66;border-radius:10px;padding:8px}.jump button{background:#0e2b3a;border:1.5px solid #ffd23f;border-radius:10px;padding:8px 14px;font-weight:700}
