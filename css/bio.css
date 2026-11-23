@@ -169,7 +169,7 @@ body.lesson-on #joy,body.lesson-on #btns,body.lesson-on #guide{display:none}
 body.lesson-on #inv{opacity:.5}
 #lesson .lf{font-size:18px}
 /* 개념 실험실 */
-#lab{position:fixed;inset:0;z-index:45;display:flex;background:#04101a;user-select:none;-webkit-user-select:none}
+#lab{position:fixed;inset:0;z-index:45;display:flex;background:transparent;user-select:none;-webkit-user-select:none}
 #lab .lstage{flex:1;min-width:0;position:relative;touch-action:none}#lab canvas{display:block;touch-action:none}
 #lab .lside{width:310px;flex:none;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:#071c28;border-left:1.5px solid #5af0ff44;overflow:auto}
 #lab .lhd small{display:block;font-size:11px;color:#7fffe0;font-weight:700}#lab .lhd b{display:block;font-size:19px;font-weight:900}#lab .lhd span{font-size:12px;color:#9bc}
@@ -197,3 +197,5 @@ body.lesson-on #inv{opacity:.5}
 #lab .lask button{border-radius:12px;padding:11px 18px;font-weight:900;font-size:15px;background:#0e2b3a;border:1.5px solid #ffffff44}#lab .lask .pri{background:#0d5a4a;border-color:#5affd0}
 @media (max-aspect-ratio:1/1){#lab{flex-direction:column}#lab .lside{width:auto;max-height:46vh;border-left:0;border-top:1.5px solid #5af0ff44}}
 @media (max-height:430px) and (min-aspect-ratio:1/1){#lab .lside{width:270px;padding:6px 8px;gap:5px}#lab .lhd b{font-size:16px}#lab .lgo{font-size:12.5px}#lab .lfind{font-size:12.5px;padding:6px 8px}#lab .lb{padding:6px 8px;font-size:13px}}
+#lab .lfr{display:flex;align-items:center;gap:6px;margin-bottom:2px}#lab .lfr b{color:var(--c);font-size:13px}#lab .lfr svg{width:34px;height:34px}
+#lab .lask{background:#071c28ee}

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js';
 import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js';
 import { mol, NAME } from './mols.js';
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST } from './ui.js';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
@@ -74,7 +74,6 @@ async function showcase(pos, look, sec = 2.6) { camOverride = { pos, look }; awa
 /* ── 루프 ── */
 let last = performance.now(), T = 0; const tmp = V();
 function loop(now) {
-  if (window.LAB_OPEN) { last = now; requestAnimationFrame(loop); return; }
   const dt = Math.min(.05, (now - last) / 1000); last = now; T += dt;
   const mv = IN.locked ? { x: 0, y: 0, u: 0, act: false } : readMove();
   /* 이동 (카메라 기준) */
@@ -494,14 +493,17 @@ async function studyFlow(k, run) {
     ['mito', '챕터마다 먼저 <b>개념 실험실</b>에서 직접 끌고 돌리고 조절하면서 원리를 발견해. 그다음 3D 세포 속 현장으로! 문제 풀이는 챕터 끝 <b>테스트</b>에서 원할 때만.']]); SAVE.met = 1; save(); }
   const M = MISSIONS[k], L = (window.BLESSON || {})[M.id] || { facts: [], check: {} }, title = M.t.replace(/^\d+\.\s*/, '');
   banner(M.t, '실험실에서 직접 조작 → 3D 현장 → 테스트(선택)', '#7fffe0'); await wait(1.2);
-  /* 1. 개념 실험실: 개념마다 직접 만지며 발견 */
-  for (const id of (LABS_OF[M.id] || [])) await window.LAB.open(id);
+  /* 1. 개념 실험실: 3D 세포 속 해당 장소를 배경으로, 챕터 친구가 함께 */
+  { const C = CAST[SPK[M.id]] || CAST.mito; window.LAB_FRIEND = { html: face(SPK[M.id], 44), name: C.n, col: C.c };
+    const cam = LCAM[M.id] && LCAM[M.id](); if (cam) camOverride = { pos: cam[0], look: cam[1] };
+    for (const id of (LABS_OF[M.id] || [])) await window.LAB.open(id);
+    camOverride = null; }
   /* 2. 3D 현장 체험 */
   await run(); HUD.obj(''); target(null); stepMission = () => { };
   /* 3. 테스트 (원할 때만) */
   if (L.check && (L.check.ids || L.check.ch)) { const n = (L.check.ids || []).length + (L.check.ch ? (L.check.n || 3) : 0);
-    const a = await window.LAB.ask('테스트 — ' + title, `방금 실험한 내용으로 교과서 문제 <b>약 ${n}개</b>를 풀어 볼까요?<br><small>건너뛰어도 메뉴의 「테스트」에서 언제든 풀 수 있어요.</small>`, ['테스트 풀기', '다음 챕터로']);
-    if (a === 0) await checkpoint(L, title); }
+    if (M.id === 'enz') L.check = { ids: [...(L.check.ids || []), ...(window.BQ || []).filter(q => q.ch === 'te').map(q => q.id)] };
+    await checkpoint(L, title); }
   SAVE.reached = Math.max(SAVE.reached, k + 1); save();
 }
 const shuffleA = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -552,6 +554,8 @@ $('#bMenu').onclick = () => { if (confirm('메뉴로 나갈까요? (진행 중�
 /* 테스트용 (주소 끝에 #dev) */
 if (location.hash === '#dev') window.BIO = { P, IN, ITEMS, target: () =>TARGET, tp(v) { const ab = MITO.b.clone().sub(MITO.a); const t = Math.max(0, Math.min(1, v.clone().sub(MITO.a).dot(ab) / ab.lengthSq())); P.inMito = v.distanceTo(MITO.a.clone().addScaledVector(ab, t)) < MITO.r; const d = v.clone().sub(CHL.c); P.inChl = Math.hypot(d.x / CHL.r.x, d.y / CHL.r.y, d.z / CHL.r.z) < 1; P.g.position.copy(v); }, rings: () =>W };
 menu(); requestAnimationFrame(loop);
+/* 켜면 바로 이어서 진행 (메뉴는 오른쪽 위 버튼) */
+if (!location.hash) setTimeout(() => play(Math.min(SAVE.reached, MISSIONS.length - 1)), 600);
 /* 메뉴 뒤 배경: 천천히 도는 카메라 */
 camOverride = { pos: V(70, 30, 90), look: V(0, 0, -40) };
 const _play = play; play = async (k) => { camOverride = null; IN.yaw = Math.PI; IN.pitch = -.18; return _play(k); };

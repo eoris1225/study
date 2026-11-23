@@ -44,7 +44,7 @@ window.LAB = (() => {
       c.active = () => (goals.find(x => !x.done) || {}).id;
       c.setHint = (id, h) => { const x = goals.find(q => q.id === id); if (x) { x.hint = h; drawGoals(); } };
       c.hit = (id, insight) => { const x = goals.find(q => q.id === id); if (!x || x.done) return false; x.done = true; drawGoals(); beep('good');
-        if (insight) { insights.push(insight); const card = el('div', 'lfind', `<i>발견 ${insights.length}</i>${insight}`); lin.prepend(card); requestAnimationFrame(() => card.classList.add('on')); lin.scrollTop = 0; }
+        if (insight) { insights.push(insight); const F = window.LAB_FRIEND; const card = el('div', 'lfind', `${F ? `<div class="lfr" style="--c:${F.col}">${F.html}<b>${F.name}</b></div>` : ''}<i>발견 ${insights.length}</i>${insight}`); lin.prepend(card); requestAnimationFrame(() => card.classList.add('on')); lin.scrollTop = 0; }
         c.flashMsg('발견!', '#ffd23f');
         if (goals.every(q => q.done)) { nextB.disabled = false; nextB.classList.add('glow'); DONE[L.id] = 1; saveDone(); }
         return true; };
@@ -112,7 +112,7 @@ window.LAB = (() => {
       /* ── 프레임 ── */
       function frame(now) { if (!alive) return; const dt = Math.min(.05, (now - last) / 1000); last = now; c.t += dt;
         g.setTransform(c._dpr, 0, 0, c._dpr, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.translate(offX, offY); g.scale(scale, scale);
-        g.save(); g.beginPath(); g.rect(0, 0, VW, VH); g.clip(); const bgr = g.createLinearGradient(0, 0, 0, VH); bgr.addColorStop(0, '#0a2433'); bgr.addColorStop(1, '#061520'); g.fillStyle = bgr; g.fillRect(0, 0, VW, VH);
+        g.save(); g.beginPath(); g.rect(0, 0, VW, VH); g.clip(); const bgr = g.createLinearGradient(0, 0, 0, VH); bgr.addColorStop(0, 'rgba(10,36,51,.72)'); bgr.addColorStop(1, 'rgba(6,21,32,.8)'); g.fillStyle = bgr; g.fillRect(0, 0, VW, VH);
         for (let i = tweens.length - 1; i >= 0; i--) { const w = tweens[i]; w.t += dt; const k = Math.min(1, w.t / w.dur); w.fn(k); if (k >= 1) { tweens.splice(i, 1); w.done && w.done(); } }
         try { loops.forEach(f => f(dt, c.t)); } catch (e) { console.error('[lab ' + id + ']', e); c.err = e; }
         drags.forEach(o => { if (!o.off && o.draw) o.draw(o.x, o.y, o); });
