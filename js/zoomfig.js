@@ -27,6 +27,6 @@
   addEventListener('keydown', e => { if (e.key === 'Escape') ov.hidden = true; });
   /* 그림 누르면 열기 (버튼·입력칸은 제외) */
   document.addEventListener('click', e => { if (!ov.hidden) return; const t = e.target; if (!t.closest || t.closest('button, input, textarea, .zf-bar, #lab, #pad')) return;
-    const box = t.closest('.fig, .qimg'); let el = null; if (box) el = box.querySelector('img, svg'); else if (t.tagName === 'IMG' && t.closest('#quiz, #body, .card')) el = t;
+    const box = t.closest('.fig, .qimg'); if (box && box.dataset.drag) return; if (t.closest('.fig[data-fk]')) return; let el = null; if (box) el = box.querySelector('img, svg'); else if (t.tagName === 'IMG' && t.closest('#quiz, #body, .card')) el = t;
     if (!el) return; e.preventDefault(); e.stopPropagation(); open(el); }, true);
 })();

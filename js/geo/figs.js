@@ -9,18 +9,22 @@
   const poly = (ps, o = {}) => `<polygon points="${ps.map(p => p.join(',')).join(' ')}" fill="${o.f || 'none'}" stroke="${o.c || INK}" stroke-width="${o.w || 1.8}"/>`;
   const mid = (a, b, t = .5) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   const away = (p, c, k = 14) => { const dx = p[0] - c[0], dy = p[1] - c[1], l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * k, p[1] + dy / l * k + 5]; };
+  /* 돌려 보기: 그림을 끌면 VIEW가 바뀌고 다시 그림. 회전 중심은 PIV */
+  const VIEW = window.GEOVIEW = { yaw: 0, pitch: 0 }; let PIV = [0, 0, 0], USED = false;
+  const ROT = P => { if (!VIEW.yaw && !VIEW.pitch) return P; let x = P[0] - PIV[0], y = P[1] - PIV[1], z = P[2] - PIV[2]; const cy = Math.cos(VIEW.yaw), sy = Math.sin(VIEW.yaw), cp = Math.cos(VIEW.pitch), sp = Math.sin(VIEW.pitch);
+    [x, y] = [x * cy - y * sy, x * sy + y * cy]; [x, z] = [x * cp - z * sp, x * sp + z * cp]; return [x + PIV[0], y + PIV[1], z + PIV[2]]; };
   /* 3D 사영: x 오른쪽, y 안쪽(비스듬히), z 위 */
-  const pj = (o, s) => ([x, y, z]) => [o[0] + s * (x + .5 * y), o[1] - s * (z + .32 * y)];
+  const pj = (o, s) => { USED = true; return P => { const [x, y, z] = ROT(P); return [o[0] + s * (x + .5 * y), o[1] - s * (z + .32 * y)]; }; };
   /* 직육면체 ABCD-EFGH: 아래 ABCD, 위 EFGH (E는 A 위) */
   function cuboid(a, b, c, s, o, extra = '') {
-    const p = pj(o, s), V = { A: [0, 0, 0], B: [a, 0, 0], C: [a, b, 0], D: [0, b, 0], E: [0, 0, c], F: [a, 0, c], G: [a, b, c], H: [0, b, c] };
+    PIV = [a / 2, b / 2, c / 2]; const p = pj(o, s), V = { A: [0, 0, 0], B: [a, 0, 0], C: [a, b, 0], D: [0, b, 0], E: [0, 0, c], F: [a, 0, c], G: [a, b, c], H: [0, b, c] };
     const P2 = {}; for (const k in V) P2[k] = p(V[k]);
     const hidden = [['A', 'D'], ['D', 'C'], ['D', 'H']], edges = [['A', 'B'], ['B', 'C'], ['E', 'F'], ['F', 'G'], ['G', 'H'], ['H', 'E'], ['A', 'E'], ['B', 'F'], ['C', 'G']];
     const ctr = p([a / 2, b / 2, c / 2]);
     return { P: P2, p, V, svg: edges.map(([u, v]) => L(P2[u], P2[v])).join('') + hidden.map(([u, v]) => L(P2[u], P2[v], { d: 1, c: P })).join('') + Object.keys(P2).map(k => T(away(P2[k], ctr, 14), k, { b: 1 })).join('') + extra };
   }
   /* 교과서식 좌표축: x축은 앞(왼쪽 아래), y축 오른쪽, z축 위 */
-  const pjA = (o, s) => ([x, y, z]) => [o[0] + s * (y - .6 * x), o[1] - s * (z - .4 * x)];
+  const pjA = (o, s) => { USED = true; return P => { const [x, y, z] = ROT(P); return [o[0] + s * (y - .6 * x), o[1] - s * (z - .4 * x)]; }; };
   function axes(o, s, n = 5) { const p = pjA(o, s); return { p, svg: L(p([0, 0, 0]), p([n, 0, 0]), { ar: 1 }) + L(p([0, 0, 0]), p([0, n, 0]), { ar: 1 }) + L(p([0, 0, 0]), p([0, 0, n]), { ar: 1 }) + T(p([n, 0, 0]), 'x', { dx: -10, dy: 10 }) + T(p([0, n, 0]), 'y', { dx: 10, dy: 5 }) + T(p([0, 0, n]), 'z', { dy: -6 }) + T(p([0, 0, 0]), 'O', { dx: -10, dy: 14 }) }; }
   const reg = (n, c, r, rot = -Math.PI / 2) => Array.from({ length: n }, (_, k) => [c[0] + r * Math.cos(rot + k * 2 * Math.PI / n), c[1] + r * Math.sin(rot + k * 2 * Math.PI / n)]);
   function hexagon(extra = '', withO = true) { const c = [170, 120], V = reg(6, c, 90, Math.PI); const N = 'ABCDEF'; /* A 왼쪽부터 시계 반대 */
@@ -90,5 +94,6 @@
     return box(320, 270, L(O, A) + L(O, Bp) + L(A, Bp) + L(Bp, C) + L(O, C) + L(A, C, { d: 1, c: P }) + D(Gg, R) + T(Gg, 'G', { dx: -12, c: R, b: 1 }) + D(M, B) + T(M, 'M', { dx: 14, c: B, b: 1 }) + L(Bp, Gg, { c: R, d: 1 }) + L(Gg, M, { c: B, d: 1 }) + [[O, 'O', 0, -10], [A, 'A', -12, 8], [Bp, 'B', 12, 10], [C, 'C', 12, -2]].map(([q, s, dx, dy]) => T(q, s, { dx, dy, b: 1 })).join('') + T([160, 262], '모든 모서리의 길이 1', { s: 13, c: P })); };
   F['c3:5'] = () => { const a = axes([190, 175], 26, 6); const p = a.p, X = p([3, 1, 2]);
     return box(360, 280, a.svg + D(X, R) + T(X, '(3, 1, 2)', { dx: 8, dy: -6, a: 'start', c: R }) + T([180, 272], '세 좌표평면에 모두 접하는 구 → 중심 (r, r, r)', { s: 13, c: P })); };
+  for (const k in F) { const f = F[k]; F[k] = () => { PIV = [0, 0, 0]; USED = false; const out = f(); window.GEOFIG_3D = USED; return out; }; }
   window.GEOFIG = F;
 })();
