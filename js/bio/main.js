@@ -1,9 +1,10 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
 import * as THREE from 'three';
-import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231106';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231106';
-import { mol, NAME } from './mols.js?v=202611231106';
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231106';
+import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231451';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231451';
+import { mol, NAME } from './mols.js?v=202611231451';
+import { ANIM } from './anim.js?v=202611231451';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231451';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
@@ -101,7 +102,7 @@ function loop(now) {
     else if (d < 3.4 && P.carry.length < 10) { it.mode = 'carry'; P.carry.push(it); sfx('pick'); toast(`${NAME[it.type] || it.type} 획득`, '#7fffe0'); it.onGet && it.onGet(); } }
   for (let i = UNTIL.length - 1; i >= 0; i--) if (UNTIL[i].fn()) { const u = UNTIL.splice(i, 1)[0]; u.r(); }
   if (IN.actPress) IN.actPress = false;
-  stepTweens(dt); stepBursts(dt); stepPals(dt, T); stepWorld(dt, T); stepMission(dt); stepCam(dt);
+  stepTweens(dt); stepBursts(dt); ANIM.step(); stepPals(dt, T); stepWorld(dt, T); stepMission(dt); stepCam(dt);
   marker(E.cam, TARGET, THREE);
   if (E.bloom.enabled) E.composer.render(); else E.R.render(E.scene, E.cam);
   requestAnimationFrame(loop);

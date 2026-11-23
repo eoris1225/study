@@ -1,5 +1,5 @@
 /* 미토: 화면 UI — HUD, 대사창, 퀴즈 관문(문제은행), 알림, 목표 표시 */
-import { IN, sfx } from './engine.js?v=202611231106';
+import { IN, sfx } from './engine.js?v=202611231451';
 const $ = s =>document.querySelector(s);
 const esc = s =>String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function chem(s) { return String(s).replace(/NAD\+/g, 'NAD<sup>+</sup>').replace(/H\+/g, 'H<sup>+</sup>').replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>'); }
@@ -167,7 +167,7 @@ function layoutLesson() { const b = $('#lesson'); const side = sideMode() && !b.
 addEventListener('resize', layoutLesson);
 let LMINI = false;
 function lessonBox() { IN.locked = true; const b = $('#lesson'); b.hidden = false; b.classList.toggle('mini', LMINI); setTimeout(layoutLesson, 0); return b; }
-function closeLesson() { $('#lesson').hidden = true; IN.locked = false; layoutLesson(); }
+function closeLesson() { if (window.ANIM) window.ANIM.stop(); $('#lesson').hidden = true; IN.locked = false; layoutLesson(); }
 /* 접기/펼치기: 내용이 바뀌어도 유지 */
 new MutationObserver(() => { const b = $('#lesson'); if (!b || b.hidden || b.querySelector('.lmin')) return; const t = document.createElement('button'); t.className = 'lmin'; t.textContent = LMINI ? '펼치기 ▴' : '접기 ▾'; t.onclick = e => { e.stopPropagation(); LMINI = !LMINI; b.classList.toggle('mini', LMINI); t.textContent = LMINI ? '펼치기 ▴' : '접기 ▾'; layoutLesson(); }; b.prepend(t); }).observe(document.getElementById('lesson') || document.body, { childList: true });
 /* 카드 보여주기: cards = [[fact, why], ...] */
@@ -177,7 +177,7 @@ export function teach(cards, head, from, total) {
     const TK = 'bio_teachpos', tkey = head + '|' + from + '|' + cards.length; let TP = {}; try { TP = JSON.parse(localStorage.getItem(TK)) || {}; } catch (e) { }
     if (TP[tkey] && TP[tkey] < cards.length) i = TP[tkey];
     const tsave = () => { try { if (i >= cards.length) delete TP[tkey]; else TP[tkey] = i; localStorage.setItem(TK, JSON.stringify(TP)); } catch (e) { } };
-    const one = () => { tsave(); if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito;
+    const one = () => { tsave(); if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg, sp] = cards[i]; const C = CAST[sp || SPEAK] || CAST.mito; if (window.ANIM) window.ANIM.play(dg, sp || SPEAK);
       b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div><div class="sp1">${face(sp || SPEAK)}<div class="bub" style="--c:${C.c}"><i>${C.n}</i><p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}</div></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
       b.querySelector('.pri').onclick = () => { sfx('pick'); i++; one(); }; };
     one(); });
