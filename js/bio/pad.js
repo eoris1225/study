@@ -20,7 +20,7 @@
   function draw(src) { const im = new Image(), c0 = cv; im.onload = () => { if (cv === c0) c0.getContext('2d').drawImage(im, 0, 0); }; im.src = src; }
   function store() { if (!key || !cv) return; ink[key] = cv.toDataURL('image/png'); const ks = Object.keys(ink); if (ks.length > 60) delete ink[ks[0]]; try { localStorage.setItem(KEY, JSON.stringify(ink)); } catch (e) { delete ink[ks[0]]; } }
   const pos = e => { const r = cv.getBoundingClientRect(), s = d(); return [(e.clientX - r.left) * s, (e.clientY - r.top) * s]; };
-  const wants = e => cv && !bar.hidden && (e.pointerType === 'pen' || all) && !(e.target.closest && e.target.closest('#inkbar'));
+  const wants = e => cv && !bar.hidden && (e.pointerType === 'pen' || all) && !(e.target.closest && e.target.closest('#inkbar, .wsheet'));
   quiz.addEventListener('pointerdown', e => { if (!wants(e)) return; e.preventDefault(); e.stopPropagation(); try { quiz.setPointerCapture(e.pointerId); } catch (_) { } cur = { p: pos(e), id: e.pointerId, x0: e.clientY === undefined ? 0 : e.clientX, y0: e.clientY, drew: false }; }, true);
   quiz.addEventListener('pointermove', e => { if (!cur || e.pointerId !== cur.id) return; e.preventDefault(); e.stopPropagation(); if (!cur.drew && Math.hypot(e.clientX - cur.x0, e.clientY - cur.y0) < 6) return; cur.drew = true; const p = pos(e), s = d();
     g.globalCompositeOperation = erase ? 'destination-out' : 'source-over'; g.strokeStyle = col; g.lineCap = g.lineJoin = 'round'; g.lineWidth = (erase ? 24 : (e.pointerType === 'pen' && e.pressure > 0 ? 1.2 + e.pressure * 2.4 : 2.6)) * s;
@@ -36,7 +36,7 @@
   const penMode = on => quiz.classList.toggle('penmode', on);
   ['pointerover', 'pointermove', 'pointerdown', 'pointerup'].forEach(t => window.addEventListener(t, e => { if (e.pointerType !== 'pen') return; penT = Date.now(); penMode(true);
     clearTimeout(offT); offT = setTimeout(() => { if (!cur) penMode(false); }, 1200); }, true));
-  quiz.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || all || !quiz.classList.contains('penmode')) return; palm.add(e.pointerId); e.preventDefault(); e.stopPropagation(); }, true);
+  quiz.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || all || !quiz.classList.contains('penmode') || (e.target.closest && e.target.closest('.wsheet'))) return; palm.add(e.pointerId); e.preventDefault(); e.stopPropagation(); }, true);
   ['pointermove', 'pointerup', 'pointercancel'].forEach(t => quiz.addEventListener(t, e => { if (!palm.has(e.pointerId)) return; e.preventDefault(); e.stopPropagation(); if (t !== 'pointermove') { palm.delete(e.pointerId); justDrew = Date.now(); } }, true));
   /* 펜으로 쓴 직후의 클릭은 버튼을 누르지 않게 */
   quiz.addEventListener('click', e => { if (Date.now() - justDrew < 350) { e.preventDefault(); e.stopPropagation(); } }, true);

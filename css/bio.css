@@ -222,9 +222,9 @@ body.lesson-on #inv{opacity:.5}
 .wsheet{border-radius:12px;overflow:hidden;border:1.5px solid #5af0ff66}
 .wtool{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:#0e2b3a;padding:6px 8px;font-size:13px}.wtool b{color:#ffd23f}.wtool span{opacity:.7;margin-right:auto}
 .wtool button{background:#06161f;border:1.5px solid #5af0ff55;border-radius:8px;padding:4px 10px;font-size:13px}
-.wpad{height:260px;background:#fdfbf4;background-image:repeating-linear-gradient(#fdfbf4 0 39px,#c9d8e6 39px 40px);touch-action:none;cursor:crosshair}
+.wpad{height:max(360px,55vh);background:#fdfbf4;background-image:repeating-linear-gradient(#fdfbf4 0 39px,#c9d8e6 39px 40px);touch-action:none;cursor:crosshair}
 .wpad canvas{display:block;touch-action:none}
 .wsheet textarea{display:block;width:100%;min-height:90px;border:0;border-top:1px solid #5af0ff44;border-radius:0}.wsheet textarea[hidden]{display:none}
-.wsheet.done .wpad{height:200px;cursor:default}.wsheet.done .wtool button{opacity:.35}
+.wsheet.done .wpad{height:max(240px,30vh);cursor:default}.wsheet.done .wtool button{opacity:.35}
 .wpts{display:grid;gap:6px;margin:6px 0}.wpts label{display:flex;gap:8px;align-items:flex-start;background:#06161f;border-radius:8px;padding:6px 8px;line-height:1.55;cursor:pointer}.wpts input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:#5aff9a}
 .qb .wcnt{margin-right:auto;align-self:center;font-weight:900;color:#9fe}.qb{flex-wrap:wrap}

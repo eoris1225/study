@@ -1,5 +1,5 @@
 /* 미토: 화면 UI — HUD, 대사창, 퀴즈 관문(문제은행), 알림, 목표 표시 */
-import { IN, sfx } from './engine.js?v=202611231047';
+import { IN, sfx } from './engine.js?v=202611231053';
 const $ = s =>document.querySelector(s);
 const esc = s =>String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function chem(s) { return String(s).replace(/NAD\+/g, 'NAD<sup>+</sup>').replace(/H\+/g, 'H<sup>+</sup>').replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>'); }
@@ -72,7 +72,11 @@ export function quiz(qs, title = '지식 관문') {
   return new Promise(res => {
     if (!qs.length) return res({ right: 0, total: 0 });
     IN.locked = true; const ov = $('#quiz'); ov.hidden = false; let i = 0, right = 0;
-    const one = () => {
+    /* 푼 위치 저장: 새로고침·업데이트 후에도 그 문제부터 이어서 */
+    const QK = 'bio_quizpos', qkey = title + '|' + qs.map(q => q.id).join(','); let QP = {}; try { QP = JSON.parse(localStorage.getItem(QK)) || {}; } catch (e) { }
+    if (QP[qkey] && QP[qkey].i < qs.length) { i = QP[qkey].i; right = QP[qkey].r || 0; }
+    const qsave = () => { try { if (i >= qs.length) delete QP[qkey]; else QP[qkey] = { i, r: right }; const ks = Object.keys(QP); if (ks.length > 30) delete QP[ks[0]]; localStorage.setItem(QK, JSON.stringify(QP)); } catch (e) { } };
+    const one = () => { qsave();
       if (i >= qs.length) { ov.hidden = true; IN.locked = false; save(); res({ right, total: qs.length }); return; }
       const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.img ? `<div class="qimg"><img src="${q.img}" alt="교과서 문제"><small>사진을 누르면 크게 · 교과서 원본</small></div>` : q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}${q.img && q.type === 'fill' ? '<div class="qtag">답 쓰기</div>' : ''}<div class="qq${q.img && q.type !== 'fill' ? ' qhide' : ''}"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
       const qq = ov.querySelector('.qq'), qa = ov.querySelector('.qa'), qx = ov.querySelector('.qx'), qb = ov.querySelector('.qb');
