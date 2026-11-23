@@ -34,12 +34,12 @@ small{font-size:8.5pt}.dim{color:#555}
 .ch2{display:flex;flex-wrap:wrap;align-items:center;row-gap:1.5mm;margin:1mm 0 1.5mm}.ch2 .nd{border:1.6px solid #111;border-radius:2mm;padding:.6mm 2.2mm;font-weight:800;text-align:center;background:#fafafa;line-height:1.25}.ch2 .nd small{display:block;font-weight:400;font-size:7.6pt;color:#444}
 .ch2 .ar{display:inline-flex;flex-direction:column;align-items:center;margin:0 1mm;min-width:9mm}.ch2 .ar i{font-style:normal;font-size:7.4pt;color:#b91c1c;line-height:1.15;text-align:center;font-weight:700}.ch2 .ar b{font-size:12pt;line-height:1}
 .stp{display:grid;grid-template-columns:repeat(4,1fr);gap:3.5mm;margin:1mm 0 1.5mm}.stp>div{border:1.5px solid #111;border-radius:2mm;padding:1mm 1.8mm;font-size:8.6pt;position:relative;line-height:1.35}.stp>div>b:first-child{display:inline-block;background:#111;color:#fff;border-radius:50%;width:4.4mm;height:4.4mm;text-align:center;line-height:4.4mm;font-size:7.6pt;margin-right:1mm}.stp>div:not(:last-child)::after{content:'➜';position:absolute;right:-3.4mm;top:38%;font-size:9.5pt}
-.chap{break-inside:auto;margin-bottom:3mm}.chap+.chap{break-before:page}
+.chap{margin-bottom:4mm}.chap h2{break-after:avoid}.nt{break-inside:avoid}.nt td,.nt th{font-size:8.8pt;padding:.8mm 1.6mm;line-height:1.4}.chap .fig svg{max-width:48mm!important}.st{font-size:8.8pt!important;margin-top:.8mm!important}.chap .box{padding:1.5mm 2.5mm}.ex{break-inside:avoid}.pr{break-inside:avoid}
 .rc{margin:.6mm 0 0 2mm}.ex{border:1.5px solid #1f4fb8;border-radius:2mm;padding:2mm 3mm;margin:2mm 0}.st,.copy,.fig{break-inside:avoid}.exh{font-weight:900;color:#1f4fb8;margin-bottom:1mm}
 .st{margin:1.2mm 0 0 1mm;padding-left:2mm;border-left:3px solid #1f4fb855;font-size:9.4pt}.ea{margin-top:1.5mm;font-size:10pt}.pr{border-top:1.5px dashed #111;padding-top:2mm;margin-top:3mm}
 .memo{background:repeating-linear-gradient(#fff 0 6.6mm,#d4d4d4 6.6mm 6.9mm)}
-.copy{margin-top:2mm;height:30mm;border:1px solid #bbb;border-radius:1.5mm;font-size:8pt;color:#888;padding:1mm 2mm;background-image:linear-gradient(#e6e6e6 1px,transparent 1px),linear-gradient(90deg,#e6e6e6 1px,transparent 1px);background-size:5mm 5mm}
-.pr .work{height:48mm;border:1px solid #bbb;border-radius:1.5mm;background-image:linear-gradient(#e6e6e6 1px,transparent 1px),linear-gradient(90deg,#e6e6e6 1px,transparent 1px);background-size:5mm 5mm}
+.copy{margin-top:2mm;height:20mm;border:1px solid #bbb;border-radius:1.5mm;font-size:8pt;color:#888;padding:1mm 2mm;background-image:linear-gradient(#e6e6e6 1px,transparent 1px),linear-gradient(90deg,#e6e6e6 1px,transparent 1px);background-size:5mm 5mm}
+.pr .work{height:30mm;border:1px solid #bbb;border-radius:1.5mm;background-image:linear-gradient(#e6e6e6 1px,transparent 1px),linear-gradient(90deg,#e6e6e6 1px,transparent 1px);background-size:5mm 5mm}
 .ph{display:flex;gap:3mm;margin:1.5mm 0 2.5mm;break-inside:avoid}.ph figure{flex:1;margin:0;border:1px solid #999;border-radius:1.5mm;padding:1mm;text-align:center}.ph img{max-width:100%;max-height:44mm}.ph figcaption{font-size:8pt;color:#444}
 .tb{columns:3;column-gap:4mm}.tb .tq{break-inside:avoid;margin:0 0 2.5mm;border-top:1.5px solid #111;padding-top:1mm}.tb .tq img{width:100%;max-height:105mm;object-fit:contain;display:block}.tb .tq .n{font-weight:900}.tb .lines{height:16mm;background:repeating-linear-gradient(#fff 0 7.5mm,#bbb 7.5mm 7.8mm)}
 .vec{position:relative;display:inline-block;padding-top:.5em;line-height:1}.vec::before{content:'→';position:absolute;top:-.15em;left:0;right:0;text-align:center;font-size:.85em}`;
@@ -122,7 +122,7 @@ ${ph(['p_z', '명반응 전자 흐름'], ['p_calvin', '캘빈 회로'])}
 <div class="warn"><b class="t">헷갈리는 것</b> ① 빛을 끊으면 3PG ↑, RuBP ↓ (ATP·NADPH가 없어 3PG를 못 바꿈). CO₂를 끊으면 RuBP ↑, 3PG ↓. ② H⁺ 방향: 광합성은 스트로마 → 틸라코이드 내부, 호흡은 기질 → 막 사이 공간. ③ 최종 전자 수용체: 광합성 NADP⁺, 호흡 O₂ / 전자 공여체: 광합성 H₂O, 호흡 NADH·FADH₂.</div>`;
 
 const BIO_BLANK = `
-<h2 style="margin-top:4mm">② 흐름 빈칸 테스트 <small>· 20~27분 · 앞 장을 덮고</small></h2>
+<div style="break-inside:avoid"><h2 style="margin-top:4mm">② 흐름 빈칸 테스트 <small>· 20~27분 · 앞 장을 덮고</small></h2>
 <table><tr><th>단계</th><th>장소</th><th>탄소 변화</th><th>CO₂</th><th>NADH</th><th>FADH₂</th><th>ATP</th></tr>
 ${['해당 과정', '피루브산 산화', 'TCA 회로', '산화적 인산화', '합계'].map(s => `<tr><td><b>${s}</b></td><td></td><td></td><td></td><td></td><td></td><td style="height:7mm"></td></tr>`).join('')}</table>
 <div class="two">
@@ -141,7 +141,7 @@ ${['해당 과정', '피루브산 산화', 'TCA 회로', '산화적 인산화', 
 <p>13. 캘빈 회로: CO₂ + <span class="bl"></span>(C₅) → <span class="bl"></span>(C₃), 포도당 1개에 ATP <span class="bl"></span>, NADPH <span class="bl"></span></p>
 <p>14. 빛을 끊으면 3PG <span class="bl"></span>, RuBP <span class="bl"></span></p>
 </div>
-<p class="dim"><small>정답: 표는 앞 장 표 그대로. 1) 2, 4, 6, 5, 4 · 2) 탈탄산, 줄어드 · 3) 2.5, 1.5 · 4) 기질, 막 사이 공간, ATP 합성 효소, 화학 삼투 · 5) O₂, 피루브산, 아세트알데하이드 · 6) NAD⁺ · 7) 계속(증가), 감소 · 8) 활성화 에너지, 반응열 · 9) 줄어듦 · 10) 틸라코이드 막(그라나), 스트로마 · 11) 물, 루벤 · 12) ATP · 13) RuBP, 3PG, 18, 12 · 14) 증가, 감소</small></p>`;
+<p class="dim"><small>정답: 표는 앞 장 표 그대로. 1) 2, 4, 6, 5, 4 · 2) 탈탄산, 줄어드 · 3) 2.5, 1.5 · 4) 기질, 막 사이 공간, ATP 합성 효소, 화학 삼투 · 5) O₂, 피루브산, 아세트알데하이드 · 6) NAD⁺ · 7) 계속(증가), 감소 · 8) 활성화 에너지, 반응열 · 9) 줄어듦 · 10) 틸라코이드 막(그라나), 스트로마 · 11) 물, 루벤 · 12) ATP · 13) RuBP, 3PG, 18, 12 · 14) 증가, 감소</small></p></div>`;
 
 function bioQs() {
   const ok = q => (q.type === 'choice' || q.type === 'fill') && !q.img && !q.figf && !q.dg && !(/그림|그래프|표는|표에|표의/.test(q.q) && !q.fig);
@@ -168,7 +168,7 @@ const bio = page('생명과학 자습 프린트', `<h1>생명과학 1시간 자�
 <tr><th>27~55분</th><td><b>③ 교과서 문제 ${TBQ.length}문항 (원본 사진)</b>: 서술형은 사진 아래 줄에 직접 쓰기. 빈칸은 사진 속 빈칸에. 막히면 ☆.</td></tr>
 <tr><th>55~60분</th><td><b>채점</b> (맨 뒤 정답). 틀린 문제는 ① 해당 표를 다시 읽기.</td></tr></table>
 ${BIO_SUM}${BIO_BLANK}
-<h2 class="part">③ 교과서 문제 (원본 사진) <small>· 27~55분</small></h2><div class="tb">${TB}</div>
+<h2 style="margin-top:4mm">③ 교과서 문제 (원본 사진) <small>· 27~55분</small></h2><div class="tb">${TB}</div>
 <div class="part ans"><h2>정답 · 해설 — ③ 교과서 문제</h2>${TBA}</div>`);
 
 /* ───────── 기하 ───────── */
@@ -183,9 +183,9 @@ const geoCh = window.GEO.map(c => { const F = FR[c.id] || { k: c.learn, r: [] };
   let pr = ''; if (PR) { gn++; gAns.push(`<p><b>${gn}.</b> <b>${PR.a}</b> <span class="dim">— ${PR.h || ''}</span></p>`);
     pr = `<div class="q pr"><span class="n">직접 풀기 ${gn}.</span> <span class="src">[${PR.s}]</span><br>${PR.q}${figOf(c.id + ':' + prI)}<div class="work"></div></div>`; }
   return `<div class="chap"><h2>${c.t} <small>${c.p}</small></h2>
-<table class="nt"><tr><th style="width:18%">개념</th><th>쉬운 말 정리</th><th style="width:27%">내 필기</th></tr>${F.k.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td><td class="memo"></td></tr>`).join('')}</table>
+<table class="nt"><tr><th style="width:18%">개념</th><th>쉬운 말 정리</th><th style="width:24%">내 필기</th></tr>${F.k.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td><td class="memo"></td></tr>`).join('')}</table>
 ${F.r.length ? `<div class="box"><b>이런 문제는 이렇게</b>${F.r.map(([t, v]) => `<div class="rc"><b>${t}</b>: ${v}</div>`).join('')}</div>` : ''}
-${P ? `<div class="ex"><div class="exh">예제 따라 풀기 <span class="src">[${P.s}]</span></div>${P.q}${figOf(c.id + ':' + exI)}${steps}<div class="ea">답: <b>${P.a}</b></div><div class="copy">보지 않고 다시 풀어 보기</div></div>` : ''}
+${P ? `<div class="ex"><div class="exh">예제 따라 풀기 <span class="src">[${P.s}]</span></div>${P.q}${figOf(c.id + ':' + exI)}${steps}<div class="ea">답: <b>${P.a}</b></div></div>` : ''}
 ${pr}</div>`; }).join('');
 const geo = page('기하 자습 프린트', `<h1>기하 1시간 자습 프린트</h1>
 <p>범위: 교과서 p80~152, p160~166 — 좌표공간 · 벡터 · 내적 · 직선의 방정식</p>
@@ -193,7 +193,7 @@ const geo = page('기하 자습 프린트', `<h1>기하 1시간 자습 프린트
 <tr><th>마지막 5분</th><td>채점 (맨 뒤). 틀린 문제는 그 단원 "이런 문제는 이렇게"를 다시 읽기.</td></tr></table>
 <div class="box">자주 쓰는 공식: 거리 √(Δx² + Δy² + Δz²) · 내분점 (mB + nA)/(m + n) · 무게중심 = 세 점 평균 · 내적 a·b = a₁b₁ + a₂b₂ + a₃b₃ = |a||b|cos θ · 수직 ⇔ 내적 0 · 평행 ⇔ 실수배</div>
 ${geoCh}
-<div class="part ans"><h2>직접 풀기 정답 · 풀이</h2>${gAns.join('')}</div>`);
+<div class="ans" style="margin-top:4mm"><h2>직접 풀기 정답 · 풀이</h2>${gAns.join('')}</div>`);
 const MATH = require('./mathify.js');
 const fixV = h => h.replace(/<v>([^<]*)<\/v>/g, '<span class="vec">$1</span>');
 fs.writeFileSync(path.join(OUT, 'bio.html'), bio); fs.writeFileSync(path.join(OUT, 'geo.html'), MATH(fixV(geo)).replace('</style>', MATH.css + '</style>'));
