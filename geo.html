@@ -58,6 +58,12 @@ v{position:relative;display:inline-block;font-style:italic;padding-top:.15em}v::
 #plot .out{font-size:14.5px;line-height:1.7}#plot .out b{color:var(--red)}#plot .out .bad{color:var(--pencil)}
 body.plotting #pad{display:none!important}
 #nav3d{position:absolute;right:10px;bottom:10px;z-index:7;display:flex;gap:5px}#nav3d button{background:#fff;border:2px solid var(--ink);border-radius:3px;padding:6px 10px;font-size:15px;font-weight:700;box-shadow:2px 2px 0 var(--ink)}#nav3d button.on{background:var(--ink);color:var(--paper)}
+#body .gq{margin-top:12px}.bub2{display:flex;gap:8px;align-items:flex-start}.bub2 .pf{width:38px;height:38px;flex:none}.bub2 p{margin:0;background:#fffdf7;border:2px solid var(--ink);border-radius:3px 14px 14px 14px;padding:8px 11px;font-size:16px;line-height:1.7}
+.bub2 .no{font-family:'Nanum Pen Script',cursive;color:var(--red);font-size:20px}
+#body .opts{display:flex;flex-direction:column;gap:6px;margin:8px 0 0 46px}#body .opts button{text-align:left;background:#fff;border:2px solid var(--ink);border-radius:3px;padding:8px 10px;font-size:15.5px;box-shadow:2px 2px 0 #22201c44}
+#body .opts button.ok{background:#e4f6e6;border-color:#1f8a5a}#body .opts button.no{background:#fbe8e4;border-color:var(--red);text-decoration:line-through;opacity:.7}
+#body .why{margin:8px 0 0 46px;padding:8px 10px;font-size:15px;line-height:1.7;border-left:4px solid}#body .why.good{border-color:#1f8a5a;background:#eef8ef}#body .why.bad{border-color:var(--red);background:#fdf1ee}
+#body .gnext{margin:8px 0 0 46px;background:var(--ink);color:var(--paper);border:0;border-radius:3px;padding:8px 14px;font-weight:700}
 @media (max-aspect-ratio:1/1){#app{flex-direction:column}#side{width:auto;height:58vh;border-left:0;border-top:2px solid var(--ink)}}
 .fig{background:#fffdf6;border:1.5px solid #d8cfb8;border-radius:10px;margin:6px 0 8px;padding:2px 4px}
 .hints .hint{background:#fff7d8;border-left:4px solid #e0a020;border-radius:8px;padding:7px 10px;margin:6px 0;line-height:1.6}.hints .hint.k{background:#e8f0ff;border-color:#1f4fb8}.hints .hint b{display:block;font-size:13px;color:#8a5a00}.hints .hint.k b{color:#1f4fb8}
@@ -69,9 +75,10 @@ body.plotting #pad{display:none!important}
 <div id="app"><div id="view"></div><div id="side"><div id="hd"></div><div id="body"></div><div id="ft"></div></div></div>
 <div id="menu" hidden></div>
 <script src="js/zoomfig.js?v=2"></script>
+<script src="js/geo/guide.js?v=1"></script>
 <script src="js/geo/data.js?v=3"></script>
 <script src="js/geo/figs.js?v=2"></script>
 <script src="js/geo/hints.js?v=1"></script>
-<script type="module" src="js/geo/main.js?v=97"></script>
+<script type="module" src="js/geo/main.js?v=98"></script>
 </body>
 </html>

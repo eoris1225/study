@@ -172,7 +172,23 @@ function show() { const c = CH[S.ch]; if (!c) return menu(); header(c); save(); 
 const KEYTIP = { c1: '두 점 사이의 거리 √{(Δx)² + (Δy)² + (Δz)²} · 축 위면 나머지 좌표 0, 좌표평면 위면 그 평면에 없는 좌표 0', c2: '내분점 ((mx₂+nx₁)/(m+n), …) · 중점은 평균 · 무게중심은 세 점 좌표의 평균', c3: '(x−a)² + (y−b)² + (z−c)² = r² · 일반형은 완전제곱식으로 바꿔 중심·반지름 찾기', c4: '크기와 방향이 모두 같아야 같은 벡터 · 시점 위치는 상관없음', c5: '꼬리-머리 잇기: AB + BC = AC · 뺄셈 AB − AC = CB · −AB = BA', c6: '평행 ⇔ 한쪽이 다른 쪽의 실수배 · 세 점 한 직선 ⇔ AC = k·AB', c7: '위치벡터: AB = b − a · m:n 내분점 (mb + na)/(m + n)', c8: '성분끼리 계산 · 크기 √(x² + y² + z²) · AB = (B 성분 − A 성분)', c9: 'a·b = |a||b|cosθ = x₁x₂ + y₁y₂ + z₁z₂ · 수직 ⇔ a·b = 0 · |a|² = a·a', c10: '(x−x₁)/a = (y−y₁)/b = (z−z₁)/c, 방향벡터 (a, b, c) · 두 직선의 각은 방향벡터의 각 (cos는 절댓값)' };
 function hintSteps(q, id) { if (window.GEOHS && window.GEOHS[id]) return window.GEOHS[id]; if (q.hs) return q.hs; const h = (q.h || '').replace(/<br>/g, ' '); let parts = h.split(/\s*(?=\(\d\))|(?<=[.:])\s+(?=[^\d\s])|\s→\s/).map(x => x.trim()).filter(x => x.length > 1); if (parts.length < 2 && h.includes('→')) parts = h.split('→').map(x => x.trim()); return parts; }
 function probHTML(c, k, q, tag) { const fig = window.GEOFIG && window.GEOFIG[c.id + ':' + k]; return `${tag}<div class="card"><div class="src">${q.s}</div>${fig ? `<div class="fig">${fig()}</div>` : ''}<div class="q">${q.q}</div></div><div class="hints"></div><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h"><b>전체 풀이</b> ${q.h}</div>` : ''}</div>`; }
-function hintButtons(c, q, onDone, finish, id) { const steps = hintSteps(q, id), box = body.querySelector('.hints'); let n = 0;
+function guideRun(id, box, done) { const G = window.GEOQA[id]; let i = 0;
+  const step = () => { if (i >= G.length) { box.insertAdjacentHTML('beforeend', `<div class="gq end"><div class="bub2">${face}<p>좋아, 길은 다 찾았어! 이제 <b>연습장에 직접 계산</b>해서 답을 써 보고, 답·풀이로 확인해.</p></div></div>`); done(); body.scrollTop = 1e5; return; }
+    const [qq, opts0, ans0, why] = G[i], d = document.createElement('div'); d.className = 'gq'; let tries = 0;
+    const ord = opts0.map((_, k) => k).sort(() => Math.random() - .5), opts = ord.map(k => opts0[k]), ans = ord.indexOf(ans0);
+    d.innerHTML = `<div class="bub2">${face}<p><span class="no">${i + 1}/${G.length}</span> ${qq}</p></div><div class="opts">${opts.map((o, k) => `<button data-k="${k}">${o}</button>`).join('')}</div><div class="why" hidden></div>`;
+    box.appendChild(d); body.scrollTop = 1e5;
+    d.querySelector('.opts').onclick = e => { const b = e.target.closest('button'); if (!b || d.dataset.ok) return; const k = +b.dataset.k;
+      if (k !== ans) { tries++; b.classList.add('no'); b.disabled = true; const w = d.querySelector('.why'); w.hidden = false; w.className = 'why bad';
+        w.innerHTML = tries >= 2 ? `괜찮아, 정답은 <b>${opts[ans]}</b>. ${why}` : '음… 다시 생각해 봐! 왜 그런지 한 번 더.'; if (tries >= 2) { d.dataset.ok = 1; d.querySelectorAll('.opts button')[ans].classList.add('ok'); next(d); } return; }
+      d.dataset.ok = 1; b.classList.add('ok'); const w = d.querySelector('.why'); w.hidden = false; w.className = 'why good'; w.innerHTML = `${tries ? '그렇지!' : '맞아! 👍'} ${why}`; next(d); };
+  };
+  const next = d => { const nb = document.createElement('button'); nb.className = 'gnext'; nb.textContent = i + 1 < G.length ? '다음 질문 ▶' : '정리 ▶'; nb.onclick = () => { nb.remove(); i++; step(); }; d.appendChild(nb); body.scrollTop = 1e5; };
+  step(); }
+function hintButtons(c, q, onDone, finish, id) { if (window.GEOQA && window.GEOQA[id]) { const box = body.querySelector('.hints'); let started = false;
+    const showAns = () => { body.querySelector('.ans').hidden = false; finish(); body.scrollTop = 1e5; };
+    foot([['🧭 같이 풀기', () => { if (started) return; started = true; foot([['답·풀이 보기', showAns, 'pri']]); guideRun(id, box, () => {}); }, 'pri'], ['답·풀이 보기', showAns]]); return; }
+  const steps = hintSteps(q, id), box = body.querySelector('.hints'); let n = 0;
   const showHint = () => { if (n === 0) box.innerHTML += `<div class="hint k"><b>핵심 개념</b> ${KEYTIP[c.id] || ''}</div>`; else box.innerHTML += `<div class="hint"><b>힌트 ${n}</b> ${steps[n - 1]}</div>`; n++; render(); body.scrollTop = 1e5; };
   const render = () => { const left = steps.length + 1 - n; foot([...(left > 0 ? [[n === 0 ? '💡 힌트' : `💡 다음 힌트 (${left})`, showHint]] : []), ['답·풀이 보기', () => { body.querySelector('.ans').hidden = false; finish(); body.scrollTop = 1e5; }, 'pri']]); };
   render(); }
