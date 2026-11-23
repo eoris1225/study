@@ -1,15 +1,27 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
 import * as THREE from 'three';
-import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231206';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231206';
-import { mol, NAME } from './mols.js?v=202611231206';
-import { stageShow, stageStep, stageHas, stageRender } from './stage3d.js?v=202611231206';
+import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231253';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231253';
+import { mol, NAME } from './mols.js?v=202611231253';
+import { stageShow, stageStep, stageHas, stageRender } from './stage3d.js?v=202611231253';
 window.__stage = stageShow; window.__stageHas = stageHas;
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231206';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231253';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
 const choose = async (t, opts, ans) => ans;
+const CHSUM = {
+  enz: [['효소 반응', '세포 속 어디서나 (분자 수준)', '체온에서도 반응이 빨리 일어나게', '활성화 에너지 ↓, 반응열 그대로'], ['기질 특이성', '효소의 활성 부위', '모양이 맞는 기질만 붙어서', '효소마다 하는 일이 정해짐'], ['온도·pH 영향', '효소(단백질)', '단백질 모양이 변해서', '최적 온도·pH에서 최대, 너무 뜨거우면 변성']],
+  intro: [['ATP ⇄ ADP + Pᵢ', '세포 전체', '바로 쓸 수 있는 에너지 화폐가 필요해서', '끝 인산이 떨어질 때 에너지 방출'], ['산화·환원', '세포 (주로 마이토콘드리아)', '포도당의 전자를 떼어 운반해야 해서', 'NAD⁺ → NADH (환원)'], ['세포호흡', '세포질 → 마이토콘드리아', '포도당 에너지를 단계별로 뽑으려고', 'ATP 최대 32']],
+  gly: [['해당 과정', '세포질', '포도당을 반으로 쪼개 에너지를 조금 얻으려고 (O₂ 불필요)', '피루브산 2 + 2NADH + 순 2ATP']],
+  pyr: [['피루브산 산화', '마이토콘드리아 기질', 'TCA 회로에 넣을 아세틸 CoA를 만들려고', 'CO₂ 1 · NADH 1 (피루브산 1개당), ATP 0']],
+  tca: [['TCA 회로', '마이토콘드리아 기질', '탄소를 CO₂로 다 떼며 전자를 최대한 모으려고', '1바퀴: CO₂ 2 · NADH 3 · FADH₂ 1 · ATP 1']],
+  etc: [['전자전달계', '마이토콘드리아 내막', '전자의 에너지로 H⁺를 막사이공간에 퍼 올리려고', 'O₂ + e⁻ + H⁺ → H₂O'], ['화학 삼투 (ATP 합성)', '내막의 ATP 합성 효소', 'H⁺가 기질로 흘러 들어오는 힘을 쓰려고', 'ATP 대량 생산 (28)']],
+  poison: [['사이안화물', '복합체 Ⅳ', '전자가 O₂로 못 가게 막아서', 'O₂ 소비 ↓, ATP ↓'], ['올리고마이신', 'ATP 합성 효소', 'H⁺ 통로를 막아서', 'ATP ↓, O₂ 소비 ↓'], ['DNP', '내막', 'H⁺가 새서 기울기가 없어져서', 'ATP ↓, O₂ 소비 ↑, 열 ↑']],
+  ferm: [['젖산 발효', '세포질 (근육, 젖산균)', '산소 없을 때 NAD⁺를 재생하려고', '젖산, ATP 2 (CO₂ 없음)'], ['알코올 발효', '세포질 (효모)', '산소 없을 때 NAD⁺를 재생하려고', '에탄올 + CO₂, ATP 2']],
+  light: [['명반응', '엽록체 타이라코이드 막', '빛에너지를 화학 에너지로 바꾸려고', 'ATP · NADPH · O₂ (O₂는 물에서)'], ['광인산화', '타이라코이드 막의 ATP 합성 효소', '타이라코이드 내부에 쌓인 H⁺의 힘을 쓰려고', 'ATP']],
+  calvin: [['캘빈 회로 (탄소 고정)', '엽록체 스트로마', '명반응의 ATP·NADPH로 CO₂를 당으로 바꾸려고', '포도당 1 = CO₂ 6 · ATP 18 · NADPH 12'], ['세포호흡 vs 광합성', '마이토콘드리아 vs 엽록체', '서로의 재료를 만들어 주는 짝', '공통: 전자전달계 + ATP 합성 효소']],
+  boss: [['다른 영양소', '세포질 · 마이토콘드리아', '지방·단백질도 에너지원으로 쓰려고', '지방산 → 아세틸 CoA, 아미노산 → 탈아미노 후 TCA']] };
 const LABS_OF = { enz: ['ea', 'lock', 'cof', 'env', 'sat', 'cat'], intro: ['atp', 'redox', 'mito'], gly: ['gly'], pyr: ['pyr'], tca: ['tca'], etc: ['etc'], poison: ['poison'], ferm: ['ferm'], light: ['spec', 'chrom', 'zs'], calvin: ['calvin', 'cmp'], boss: ['subs'] };
 const V = (x, y, z) =>new THREE.Vector3(x, y, z);
 initEngine($('#game')); initInput({ joy: $('#joy'), knob: $('#joy i'), bUp: $('#bUp'), bDn: $('#bDn'), bAct: $('#bAct'), bDash: $('#bDash') });
@@ -522,6 +534,8 @@ async function studyFlow(k, run) {
       if (part.length) { const r = await quiz(part, `확인 문제 · ${title}`); banner(`${r.right} / ${r.total}`, '틀린 문제는 메뉴의 「오답 다시 풀기」에', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(.8); }
       SAVE.pos = { k, i: i + 1, s: 0 }; save(); }
     camOverride = null; }
+  /* 정리: 어디서 · 왜 · 결과 */
+  { const T = CHSUM[M.id]; if (T) await notice('📍 정리 — ' + title + ' (어디서 · 왜 · 결과)', `<table class="sumt"><tr><th>과정</th><th>📍 어디서</th><th>❓ 왜</th><th>결과</th></tr>${T.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>`, '다음 ▶'); }
   /* 2. 3D 현장 체험 */
   prog(`${M.t} · ${n + 1} / ${n + 1}단계 (3D 현장)`);
   await run(); HUD.obj(''); target(null); stepMission = () => { };

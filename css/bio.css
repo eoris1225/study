@@ -247,3 +247,5 @@ body.lesson-on #inv{opacity:.5}
 @keyframes pfWaveL{50%{transform:rotate(18deg)}}@keyframes pfWaveR{50%{transform:rotate(-14deg)}}
 @keyframes pfPoint{50%{transform:rotate(-55deg)}}
 @keyframes pfHop{30%{transform:translateY(-10px) scale(1.08,.94)}60%{transform:translateY(0) scale(.95,1.06)}}
+
+.sumt{width:100%;border-collapse:collapse;font-size:14.5px;line-height:1.5;margin:4px 0}.sumt th{background:#3a2610;color:#ffd23f;padding:6px;text-align:left}.sumt td{border-top:1px solid #e8a33d44;padding:6px;vertical-align:top}.sumt td:first-child{font-weight:700;color:#f0c27a}

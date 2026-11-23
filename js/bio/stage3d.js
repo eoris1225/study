@@ -1,6 +1,6 @@
 /* 개념 설명용 3D 무대: 카드가 오른쪽에 있을 때 왼쪽 빈 공간(카메라 앞)에 개념별 3D 애니메이션 + 3D 친구 */
 import * as THREE from 'three';
-import { E, shake, sfx } from './engine.js?v=202611231206';
+import { E, shake, sfx } from './engine.js?v=202611231253';
 
 const ROOT = new THREE.Group(); ROOT.visible = false;
 const STS = new THREE.Scene(); STS.add(new THREE.AmbientLight('#ffffff', 1.1)); { const d = new THREE.DirectionalLight('#ffffff', 1.6); d.position.set(3, 5, 8); STS.add(d); }
@@ -103,9 +103,13 @@ const SC = {
   resp(g) { const st = [['해당 과정', '세포질', '#ffb3d0'], ['피루브산 산화', '기질', '#ffd23f'], ['TCA 회로', '기질', '#9ccf6a'], ['산화적 인산화', '내막', '#5af0ff']];
     st.forEach(([a, b, c], i) => { const x = -5 + i * 3.4; g.add(at(box(2.6, 1.3, .6, c, .35), x, 0)); g.add(at(tx(a, '#120c06', .4), x, .15, .4)); g.add(at(tx(b, c, .4), x, -1.2)); if (i) g.add(at(box(.6, .12, .12, '#fff', .8), x - 1.7, 0)); });
     const m = sph(.35, '#ffffff', 1.5); g.add(m); return t => { const k = (t % 6) / 6; const x = -5 + k * 3 * 3.4; m.position.set(x, .95 + Math.abs(Math.sin(k * 18)) * .4, .4); }; },
-  mito(g) { const o = new THREE.Mesh(new THREE.CapsuleGeometry(2, 4.5, 10, 24), M('#ff9a50', .25, { transparent: true, opacity: .35 })); o.rotation.z = Math.PI / 2; g.add(o); const inn = new THREE.Mesh(new THREE.CapsuleGeometry(1.6, 4, 10, 24), M('#ffd23f', .2, { transparent: true, opacity: .35 })); inn.rotation.z = Math.PI / 2; g.add(inn);
-    for (let i = 0; i < 7; i++) { const c = box(.18, 2.2, .9, '#ffd23f', .7); g.add(at(c, -3 + i, (i % 2 ? 1 : -1) * .6)); } [['외막', -4.6, 2.6, '#ffb070'], ['내막(크리스타)', 0, 2.4, '#ffd23f'], ['기질', 1.6, -.1, '#fff'], ['막사이공간', 3.8, -2.4, '#ffcf90']].forEach(([s, x, y, c]) => g.add(at(tx(s, c, .45), x, y, 2)));
-    return t => { g.rotation.y = Math.sin(t * .6) * .5; }; },
+  mito(g) { const W = 4.6, H = 2.3;
+    const shell = (rx, ry, col, op, z) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: .35, transparent: true, opacity: op, roughness: .5 })); m.scale.set(rx, ry, .9); m.position.z = z; return m; };
+    g.add(shell(W + .5, H + .5, '#ff8a3a', .55, -.6), shell(W + .2, H + .2, '#ffc8a0', .5, -.4), shell(W, H, '#ffd23f', .95, -.2), shell(W - .3, H - .3, '#3a6aa8', 1, 0));
+    for (let i = 0; i < 7; i++) { const x = -3.3 + i * 1.1, up = i % 2 === 0, h = 2.4; const c = box(.28, h, .3, '#ffd23f', .7); g.add(at(c, x, up ? H - .3 - h / 2 : -(H - .3) + h / 2, .1)); }
+    const L = (s2, x, y, lx, ly, col) => { g.add(at(tx(s2, col, .5, '#120c06cc'), lx, ly, 1)); g.add(at(box(.04, .04, .04, col, 1), x, y, .5)); const d = V(x - lx, y - ly, 0); const ln = box(d.length(), .06, .06, col, 1.2); ln.position.set((x + lx) / 2, (y + ly) / 2, .5); ln.rotation.z = Math.atan2(d.y, d.x); g.add(ln); };
+    L('외막', -W - .4, .8, -6.3, 2.6, '#ff9a5a'); L('막사이공간', W + .1, .9, 5.8, 3, '#ffc8a0'); L('내막 (주름 = 크리스타)', -1.1, -H + .1, -3.4, -3.6, '#ffd23f'); L('기질 (TCA 회로)', 1, 0, 4.4, -3.4, '#8ac8ff');
+    return t => { g.rotation.y = Math.sin(t * .5) * .25; }; },
   endo(g) { const host = sph(3.2, '#16323e', .2); host.material.transparent = true; host.material.opacity = .35; g.add(host); const bac = new THREE.Mesh(new THREE.CapsuleGeometry(.6, 1.2, 8, 16), M('#ff9a5a', .4)); bac.rotation.z = Math.PI / 2; g.add(bac);
     const wrap = new THREE.Mesh(new THREE.CapsuleGeometry(.78, 1.2, 8, 16), M('#7fd0e0', .3, { transparent: true, opacity: .35 })); wrap.rotation.z = Math.PI / 2; g.add(wrap); const dna = new THREE.Mesh(new THREE.TorusGeometry(.25, .05, 8, 24), M('#ff5aa8', 1.2)); g.add(dna); let last = -1;
     return t => { const per = 7, ph = t % per, cyc = Math.floor(t / per), k = sm(ph / 2); bac.position.set(lerp(6, .5, k), 0, 0); wrap.position.copy(bac.position); wrap.visible = ph > 2.2; dna.position.copy(bac.position).add(V(0, 0, .7));
@@ -182,21 +186,78 @@ function stepFriend(t, dt) { if (!friend) return; const u = friend.userData; con
 
 export function stageStep(dt) { if (!ROOT.visible || !E.cam) return; T += dt;
   const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(E.cam.quaternion); ROOT.position.copy(E.cam.position).addScaledVector(fwd, 15); ROOT.quaternion.copy(E.cam.quaternion);
-  if (cur) try { cur(T - t0, dt); } catch (e) { console.error('[stage]', e); cur = null; }
+  stepZoom(dt); if (cur && !zoom) try { cur(T - t0, dt); } catch (e) { console.error('[stage]', e); cur = null; }
   for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i], u = p.userData; u.k += dt; if (u.k > u.life) { p.parent && p.parent.remove(p); pops.splice(i, 1); continue; } const k = u.k / u.life;
     if (p.isSprite) { const s = k < .12 ? .4 + k / .12 * .8 : 1.2 - (k - .12) * .25; p.scale.copy(u.base).multiplyScalar(s); p.material.opacity = k > .7 ? (1 - k) / .3 : 1; p.position.y += dt * .6; }
     else { if (u.inward) p.position.copy(u.o).addScaledVector(u.v, .45 * (1 - k)); else p.position.addScaledVector(u.v, dt); p.material.opacity = 1 - k; p.material.transparent = true; } }
   stepFriend(T, dt); }
+/* ── 어디서 · 왜 ── */
+const KEYLOC = { meta: 'cell', ea: 'mol', dh: 'mol', exo: 'mol', endoE: 'mol', eaE: 'mol', calc: 'mol', gibil: 'mol', es: 'mol', cof: 'mol', kinds: 'mol', tph: 'mol', sat: 'mol', inh: 'mol',
+  atp: 'cell', redox: 'cell', nad: 'cell', resp: 'cell', mito: 'mito', endo: 'cell', glyC: 'cyto', glyPath: 'cyto', pyrC: 'matrix', tcaC: 'matrix', count: 'matrix', elev: 'inner', mem: 'inner',
+  ferm: 'cyto', photoAll: 'chloro', chlS: 'chloro', ps: 'thyla', spec: 'chloro', rf: 'lab', z: 'thyla', chl: 'thyla', exp: 'lab', calvin: 'stroma', cmp: 'cell', subs: 'body' };
+const WHY = { meta: '살아 있으려면 물질을 쪼개 에너지를 얻고(이화), 몸을 만들어야(동화) 해서', ea: '반응물이 생성물이 되려면 에너지 언덕을 넘어야 해서', dh: '반응물과 생성물의 에너지 높이가 달라서', exo: '큰 분자가 쪼개지면 남는 에너지가 나와서',
+  endoE: '작은 분자로 큰 분자를 만들려면 에너지를 넣어야 해서', eaE: '체온은 낮아서, 효소가 언덕을 낮춰야 반응이 빨라져서', calc: '효소는 꼭대기만 낮추고 출발·도착 높이는 그대로라서', gibil: '같은 말 "기질"이 두 가지 뜻으로 쓰여서',
+  es: '활성 부위 모양이 맞는 기질만 붙어야 해서 (특이성)', cof: '단백질만으로는 활성 부위가 완성되지 않는 효소가 있어서', kinds: '효소마다 하는 일(쪼개기·붙이기…)이 정해져 있어서', tph: '효소는 단백질이라 열·pH에 모양이 변해서',
+  sat: '효소 수가 정해져 있어서 다 차면 더 빨라질 수 없어서', inh: '억제제가 활성 부위를 뺏거나 모양을 바꿔서', atp: '세포가 쓰는 에너지는 ATP로 바꿔 둬야 바로 쓸 수 있어서', redox: '포도당의 수소(전자)를 떼어 운반해야 에너지를 뽑아서',
+  nad: '떼어 낸 전자를 전자전달계까지 실어 날라야 해서', resp: '포도당 에너지를 한 번에 못 빼고 단계별로 뽑아야 해서', mito: '산소 호흡의 대부분이 여기서 일어나서', endo: '원래 독립된 세균이 세포 안에 들어와 살게 돼서',
+  glyC: '포도당을 반으로 쪼개 ATP 2 · NADH 2를 얻으려고 (산소 필요 없음)', glyPath: '먼저 ATP 2개를 투자해야 포도당이 쪼개지기 쉬워져서', pyrC: '피루브산을 TCA 회로에 들어갈 수 있는 아세틸 CoA로 바꾸려고',
+  tcaC: '탄소를 CO₂로 다 떼어 내면서 전자(NADH · FADH₂)를 최대한 모으려고', count: '포도당 1개에서 얻는 양을 계산하려고', elev: '전자가 에너지를 내려놓아야 그 힘으로 H⁺를 퍼 올려서',
+  mem: 'H⁺가 다시 흘러 들어오는 힘으로 ATP를 대량 생산하려고 (화학 삼투)', ferm: '산소가 없을 때 NAD⁺를 재생해 해당 과정을 계속 돌리려고', photoAll: '빛에너지를 포도당(화학 에너지)에 저장하려고',
+  chlS: '막(명반응)과 액체(캘빈 회로)에서 일을 나눠 하려고', ps: '색소들이 빛을 모아 반응 중심으로 몰아줘야 해서', spec: '엽록소가 흡수하는 색의 빛만 광합성에 쓰여서', rf: '색소마다 녹는 정도가 달라 분리돼서',
+  z: '빛을 두 번 받아 전자를 NADP⁺까지 올려 보내려고', chl: 'H⁺ 농도 차로 ATP를 만들려고 (광인산화)', exp: '광합성에서 무엇이 나오고 어디서 오는지 확인하려고', calvin: '명반응의 ATP · NADPH로 CO₂를 포도당으로 바꾸려고',
+  cmp: '두 과정이 서로의 재료를 만들어 주는 짝이라서', subs: '탄수화물 말고 지방 · 단백질도 에너지원으로 쓰려고' };
+const LOC = {
+  body: { n: '우리 몸', chain: ['body'] }, cell: { n: '세포', chain: ['body', 'cell'] }, cyto: { n: '세포질 (세포 안 액체)', chain: ['body', 'cell', 'cyto'] }, mito: { n: '마이토콘드리아', chain: ['body', 'cell', 'mitoL'] },
+  matrix: { n: '마이토콘드리아 기질 (내막 안쪽)', chain: ['body', 'cell', 'mitoL', 'matrix'] }, inner: { n: '마이토콘드리아 내막', chain: ['body', 'cell', 'mitoL', 'inner'] }, mol: { n: '세포 속 효소 분자 (분자 수준)', chain: ['cell', 'mol'] },
+  chloro: { n: '엽록체 (잎 세포)', chain: ['leaf', 'pcell', 'chloro'] }, stroma: { n: '엽록체 스트로마 (액체)', chain: ['leaf', 'pcell', 'chloro', 'stromaL'] }, thyla: { n: '엽록체 타이라코이드 막', chain: ['leaf', 'pcell', 'chloro', 'thylaL'] }, lab: { n: '실험실', chain: ['labL'] } };
+/* 각 단계 그림 + 다음 단계가 튀어나올 초점 */
+const LV = {
+  body(g) { const sk = '#f0c8a8'; g.add(at(sph(.9, sk, .3), 0, 3.2)); const t = new THREE.Mesh(new THREE.CapsuleGeometry(1, 2, 8, 16), M('#5a8ad0', .3)); g.add(at(t, 0, .8)); [-1, 1].forEach(k => { const a = new THREE.Mesh(new THREE.CapsuleGeometry(.32, 2, 6, 12), M(sk, .3)); a.position.set(k * 1.5, .7, 0); a.rotation.z = k * .25; g.add(a); const l = new THREE.Mesh(new THREE.CapsuleGeometry(.4, 2.2, 6, 12), M('#3a4a6a', .3)); l.position.set(k * .55, -2.3, 0); g.add(l); });
+    const hot = sph(.35, '#ff5a5a', 2); g.add(at(hot, 1.55, .6, .4)); g.userData.focus = V(1.55, .6, 0); g.userData.lab = '우리 몸 → 근육'; },
+  cell(g) { const c = sph(4.2, '#f0b0c8', .2); c.material.transparent = true; c.material.opacity = .35; c.scale.z = .5; g.add(c); g.add(at(sph(1.2, '#8a5ad0', .4), -1.2, .6)); for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(new THREE.CapsuleGeometry(.28, .7, 6, 12), M('#ff8a3a', .6)); m.rotation.z = i; m.position.set(Math.cos(i * 1.1) * 2.6, Math.sin(i * 1.1) * 2, .3); g.add(m); }
+    for (let i = 0; i < 40; i++) g.add(at(sph(.06, '#ffffff', .8), (Math.random() - .5) * 7, (Math.random() - .5) * 5, .4)); g.userData.focus = V(Math.cos(1.1) * 2.6, Math.sin(1.1) * 2, 0); g.userData.lab = '세포'; },
+  cyto(g) { for (let i = 0; i < 70; i++) g.add(at(sph(.08 + Math.random() * .1, ['#ffe0f0', '#ffd0a0', '#c0e0ff'][i % 3], .7), (Math.random() - .5) * 14, (Math.random() - .5) * 9, -1)); const w = sph(9, '#f0b0c8', .15); w.material.transparent = true; w.material.opacity = .15; w.material.side = THREE.BackSide; g.add(w); g.userData.focus = V(0, 0, 0); g.userData.lab = '세포질'; },
+  mitoL(g) { const o = new THREE.Mesh(new THREE.CapsuleGeometry(1.8, 4, 10, 24), M('#ff8a3a', .4, { transparent: true, opacity: .7 })); o.rotation.z = Math.PI / 2; g.add(o); const n = new THREE.Mesh(new THREE.CapsuleGeometry(1.4, 3.6, 10, 24), M('#ffd23f', .35)); n.rotation.z = Math.PI / 2; g.add(at(n, 0, 0, .2));
+    for (let i = 0; i < 6; i++) g.add(at(box(.2, 1.8, .4, '#c89010', .4), -2.5 + i, (i % 2 ? .5 : -.5), .5)); g.userData.focus = V(.5, 0, 0); g.userData.lab = '마이토콘드리아'; },
+  matrix(g) { const l = sph(10, '#2a5a98', .25); l.material.side = THREE.BackSide; g.add(l); [-1, 1].forEach(k => { for (let i = 0; i < 4; i++) g.add(at(box(.4, 6, 1, '#ffd23f', .5), k * (6.5 + (i % 2) * .4), -2 + i * 1.3, -3)); }); for (let i = 0; i < 30; i++) g.add(at(sph(.1, '#a0d0ff', .9), (Math.random() - .5) * 12, (Math.random() - .5) * 8, -2.5)); g.userData.focus = V(0, 0, 0); g.userData.lab = '기질'; },
+  inner(g) { g.add(at(box(20, 3.6, 1, '#ffd23f', .35), 0, 0, -3)); const top = box(20, 6, .5, '#ff9a7a', .2); g.add(at(top, 0, 5, -3.5)); const bot = box(20, 6, .5, '#2a5a98', .2); g.add(at(bot, 0, -5, -3.5)); g.add(at(tx('막사이공간 (H⁺ 많음)', '#ffc8a0', .6), -5, 5.5, -2), at(tx('내막', '#ffd23f', .6), -7, 0, -2), at(tx('기질', '#8ac8ff', .6), -5, -5.5, -2)); g.userData.focus = V(0, 0, 0); g.userData.lab = '내막'; },
+  mol(g) { for (let i = 0; i < 26; i++) { const m = sph(.15 + Math.random() * .3, ['#5aff9a', '#ffd23f', '#ff8aa8', '#8ac8ff'][i % 4], .6); g.add(at(m, (Math.random() - .5) * 14, (Math.random() - .5) * 9, -2 - Math.random() * 2)); } g.userData.focus = V(0, 0, 0); g.userData.lab = '분자'; },
+  leaf(g) { const l = new THREE.Mesh(new THREE.SphereGeometry(3, 32, 16), M('#3fdc5a', .3)); l.scale.set(1.4, .7, .2); g.add(l); g.add(at(box(8, .08, .1, '#9aff7a', .6), 0, 0, .3)); for (let i = -2; i <= 2; i++) { const v = box(2.2, .06, .1, '#9aff7a', .6); v.rotation.z = (i % 2 ? .5 : -.5); g.add(at(v, i * 1.3, (i % 2 ? .5 : -.5), .3)); } g.add(at(sph(.3, '#ffe066', 2), 1.4, .4, .4)); g.userData.focus = V(1.4, .4, 0); g.userData.lab = '잎'; },
+  pcell(g) { g.add(box(8, 5.4, .4, '#2a8a3a', .25)); g.add(at(box(7.4, 4.8, .5, '#c8f0c0', .25), 0, 0, .1)); g.add(at(sph(.9, '#8a5ad0', .4), -2.4, 1.2, .5)); for (let i = 0; i < 7; i++) { const c = sph(.5, '#3fdc5a', .6); c.scale.set(1.6, .8, .6); g.add(at(c, -2 + (i % 4) * 1.6, -1.4 + Math.floor(i / 4) * 2.2, .6)); } g.userData.focus = V(1.2, .8, 0); g.userData.lab = '잎 세포'; },
+  chloro(g) { const o = sph(3, '#3fdc5a', .3); o.scale.set(1.6, .9, .5); o.material.transparent = true; o.material.opacity = .6; g.add(o); for (let s2 = 0; s2 < 4; s2++) for (let j = 0; j < 5; j++) g.add(at(cyl(.5, .16, '#1f8a3a', .6), -3 + s2 * 2, -1 + j * .3, .6)); g.userData.focus = V(1, .8, 0); g.userData.lab = '엽록체'; },
+  stromaL(g) { const l = sph(10, '#9ae08a', .2); l.material.side = THREE.BackSide; g.add(l); [-1, 1].forEach(k => { for (let j = 0; j < 6; j++) g.add(at(cyl(1.2, .3, '#1f8a3a', .5), k * 7, -3 + j * .45, -3)); }); g.userData.focus = V(0, 0, 0); g.userData.lab = '스트로마'; },
+  thylaL(g) { g.add(at(box(20, 3.6, 1, '#3aa84a', .4), 0, 0, -3)); g.add(at(box(20, 6, .5, '#c8f0c0', .2), 0, 5, -3.5)); g.add(at(box(20, 6, .5, '#2a6a3a', .2), 0, -5, -3.5)); g.add(at(tx('스트로마', '#e0ffd0', .6), -5, 5.5, -2), at(tx('타이라코이드 막', '#9aff9a', .6), -7, 0, -2), at(tx('타이라코이드 내부 (H⁺ 많음)', '#ffc8a0', .6), -4, -5.5, -2)); g.userData.focus = V(0, 0, 0); g.userData.lab = '타이라코이드 막'; },
+  labL(g) { g.add(at(box(14, .4, 3, '#8a6a4a', .3), 0, -3.4, -2)); g.userData.focus = V(0, 0, 0); g.userData.lab = '실험실'; } };
+const setOp = (g, o) => g.traverse(m => { if (m.material) { m.material.transparent = true; m.material.opacity = (m.userData.op0 ??= m.material.opacity) * o; } });
+let zoom = null, curLoc = null, locBg = null;
+const tag = document.createElement('div'); tag.id = 'stLoc'; tag.hidden = true; document.body.appendChild(tag);
+{ const st = document.createElement('style'); st.textContent = `#stLoc{position:fixed;left:14px;top:62px;z-index:21;max-width:min(46vw,560px);pointer-events:none;font-family:'Noto Sans KR',sans-serif}
+#stLoc .w{display:inline-block;background:#120c06e8;border:2px solid #ffd23f;border-radius:12px;padding:6px 12px;font-size:19px;font-weight:900;color:#ffd23f;box-shadow:0 4px 14px #000a}
+#stLoc .y{margin-top:6px;background:#120c06d8;border-left:4px solid #5affd0;border-radius:8px;padding:6px 10px;font-size:15px;line-height:1.55;color:#eafff8}#stLoc .y b{color:#5affd0}
+#stLoc .z{margin-top:6px;font-size:14px;color:#ffe9a0;font-weight:700;letter-spacing:.5px}`; document.head.appendChild(st); }
+function startZoom(loc) { const L = LOC[loc]; if (!L) return; const from = curLoc ? LOC[curLoc].chain : []; let k0 = 0; while (k0 < from.length && from[k0] === L.chain[k0]) k0++;
+  const chain = L.chain.slice(Math.max(0, k0 - 1)); const levels = chain.map(id => { const g = new THREE.Group(); LV[id](g); g.visible = false; ROOT.add(g); return g; });
+  zoom = { levels, t: 0, per: 1.05, chain }; curLoc = loc; }
+function stepZoom(dt) { if (!zoom) return; zoom.t += dt; const { levels, per } = zoom, n = levels.length, k = zoom.t / per, i = Math.floor(k), f = sm(k - i);
+  levels.forEach((g, j) => { g.visible = j === i || j === i + 1; });
+  const A = levels[i], B = levels[i + 1];
+  if (A) { const fc = A.userData.focus, s = B ? 1 + f * f * 7 : 1; A.scale.setScalar(s); A.position.set(fc.x * (1 - s), fc.y * (1 - s), -1); setOp(A, B ? 1 - f : 1); }
+  if (B) { const fc = A.userData.focus, s = .1 + f * .9; B.scale.setScalar(s); B.position.set(fc.x * (1 - f), fc.y * (1 - f), -1); setOp(B, f); }
+  const lab = (B && f > .5 ? B : A).userData.lab; tag.querySelector('.z') && (tag.querySelector('.z').textContent = '🔍 ' + zoom.chain.map(id => { const g = levels[zoom.chain.indexOf(id)]; return g.userData.lab; }).join(' → '));
+  if (i >= n - 1) { /* 도착: 마지막 장소를 흐린 배경으로 */ if (locBg) ROOT.remove(locBg); locBg = levels[n - 1]; locBg.scale.setScalar(1.4); locBg.position.set(0, 0, -5); setOp(locBg, .45); levels.slice(0, -1).forEach(g => ROOT.remove(g)); zoom = null; if (ROOT.userData.stage) ROOT.userData.stage.visible = true; t0 = T; } }
 export function stageShow(key, col, words) {
-  if (!E.scene) return; if (!built) { built = true; STS.add(ROOT); const back = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshBasicMaterial({ color: '#0d0a08', transparent: true, opacity: .8, depthWrite: false })); back.position.z = -3; back.renderOrder = -1; ROOT.add(back); ROOT.userData.back = back; }
-  if (!key) { ROOT.visible = false; return; } ROOT.visible = true;
+  if (!E.scene) return; if (!built) { built = true; STS.add(ROOT); const back = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshBasicMaterial({ color: '#0d0a08', transparent: true, opacity: .93, depthWrite: false })); back.position.z = -9; back.renderOrder = -1; ROOT.add(back); ROOT.userData.back = back; }
+  if (!key) { ROOT.visible = false; tag.hidden = true; curLoc = null; curKey = null; zoom = null; if (locBg) { ROOT.remove(locBg); locBg = null; } return; } ROOT.visible = true; tag.hidden = false;
   if (words) talkUntil = performance.now() + Math.min(6000, 600 + words * 55); hopT = .6;
   const c = col || '#5af0ff'; if (!friend || friend.userData.col !== c) { if (friend) ROOT.remove(friend); friend = makeFriend(c); friend.userData.col = c; friend.position.set(-6.2, -3.3, 1); friend.scale.setScalar(.9); ROOT.add(friend); }
   if (key === curKey) return; curKey = key;
   if (ROOT.userData.stage) ROOT.remove(ROOT.userData.stage); pops.length = 0;
   const g = new THREE.Group(); g.position.set(.6, .3, 0); g.scale.setScalar(1.12); ROOT.add(g); ROOT.userData.stage = g;
-  const [name, opt] = ALIAS[key] || [key]; const fn = SC[name]; cur = fn ? fn(g, opt || {}) : null; if (!fn) g.add(at(tx('🔬', '#fff', 1.5), 0, 0)); t0 = T; }
+  const [name, opt] = ALIAS[key] || [key]; const fn = SC[name]; cur = fn ? fn(g, opt || {}) : null; if (!fn) g.add(at(tx('🔬', '#fff', 1.5), 0, 0)); t0 = T;
+  const loc = KEYLOC[key] || 'cell'; tag.innerHTML = `<div class="w">📍 어디서? ${LOC[loc].n}</div>${WHY[key] ? `<div class="y"><b>왜?</b> ${WHY[key]}</div>` : ''}<div class="z"></div>`;
+  if (loc !== curLoc) { if (locBg) { ROOT.remove(locBg); locBg = null; } g.visible = false; startZoom(loc); } else tag.querySelector('.z').textContent = ''; }
 export const stageHas = k => !!(SC[(ALIAS[k] || [k])[0]]);
 
 /* 세포 화면을 다 그린 뒤 그 위에 무대를 따로 그림 (배경과 안 겹치게) */
 export function stageRender() { if (!ROOT.visible || !E.R) return; const R = E.R, a = R.autoClear; R.autoClear = false; R.clearDepth(); R.render(STS, E.cam); R.autoClear = a; }
+window.__stageFF = sec => { for (let i = 0; i < sec / .05; i++) stageStep(.05); };
