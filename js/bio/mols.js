@@ -1,6 +1,6 @@
 /* 분자 모형: 탄소 개수가 눈에 보이게 (포도당 6 → 피루브산 3 → 아세틸 2) */
 import * as THREE from 'three';
-import { label } from './engine.js?v=202611231459';
+import { label } from './engine.js?v=202611231526';
 
 const G = { s: new THREE.SphereGeometry(1, 20, 14), cyl: new THREE.CylinderGeometry(.16, .16, 1, 8), cap: new THREE.CapsuleGeometry(.55, 1.1, 6, 14), ring: new THREE.TorusGeometry(.8, .14, 8, 24) };
 const M = {};

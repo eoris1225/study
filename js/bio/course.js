@@ -1,6 +1,6 @@
 /* 📘 개념 강의: 교과서 순서(효소 → 세포 호흡 → 발효 → 광합성)로, 단계마다 교과서 그림 + 말풍선 설명 + 3D,
    절마다 확인 질문 → 그 절에서 배운 것으로 풀 수 있는 교과서 문제. 위치는 bio_course_v1에 저장 */
-import { quiz, face, CAST } from './ui.js?v=202611231459';
+import { quiz, face, CAST } from './ui.js?v=202611231526';
 
 const KEY = 'bio_course_v1';
 const C = () => window.COURSE || [];
@@ -73,8 +73,9 @@ export async function runCourse(start, hooks = {}) {
     };
     log.onclick = e => { const k = e.target.closest('.kw'); if (!k || k.classList.contains('got')) return; grab(k); if (!log.querySelector('.kw:not(.got)')) { const h = log.querySelector('.kwh'); if (h) h.remove(); } };
     draw();
-    let back = false, warned = -1, since = 0;
+    let back = false, warned = -1, warnedT = -1, since = 0;
     while (true) { const a = await waitBtn(); if (a === 'prev') { if (i > 0) { i--; draw(); continue; } back = true; break; }
+      const tk = window.__stageTask && window.__stageTask(); if (tk && warnedT !== i) { warnedT = i; window.__stageCheer && window.__stageCheer('먼저 3D에서 직접 해 봐!', '#ff8a6a'); continue; }
       const left = log.querySelectorAll('.kw:not(.got)'); if (left.length && warned !== i) { warned = i; left.forEach(k => { k.classList.remove('nudge'); void k.offsetWidth; k.classList.add('nudge'); }); window.__stageCheer && window.__stageCheer('잠깐! 핵심어 챙겨!', '#ff8a6a'); continue; }
       since++; const w0 = words(sec.steps[i][0]);
       if (since >= 2 && w0.length) { since = 0; log.onclick = null; bPrev.hidden = true; bNext.hidden = true; await speedQuiz(log, sec.steps[i][0], w0, ch, bNext); bPrev.hidden = false; bNext.hidden = false;
