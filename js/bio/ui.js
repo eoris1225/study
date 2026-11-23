@@ -93,12 +93,36 @@ export function quiz(qs, title = '지식 관문') {
         const s = document.createElement('button'); s.className = 'pri'; s.textContent = '확인'; qb.appendChild(s);
         s.onclick = () => { const good = q.s.map(([, v], k) =>pick[k] === v); [...qa.children].forEach((row, k) => { row.classList.add(good[k] ? 'g' : 'b'); row.querySelectorAll('button').forEach(b =>b.disabled = true); }); finish(good.every(Boolean), '정답: ' + q.s.map(([, v], k) => `(${k + 1}) ${v ? '○' : '×'}`).join('  ')); };
       } else if (q.type === 'w') {
-        qq.innerHTML = chemHTML(q.q); const ta = document.createElement('textarea'); ta.placeholder = '머릿속으로 또는 여기에 답을 써 본 뒤 [모범 답안 보기]'; qa.appendChild(ta);
-        const s = document.createElement('button'); s.className = 'pri'; s.textContent = '모범 답안 보기'; qb.appendChild(s);
-        s.onclick = () => { ta.disabled = true; qx.hidden = false; qx.className = 'qx'; qx.innerHTML = `<b>모범 답안</b><div>${chemHTML(q.ans)}</div>${q.exp ? `<div class="dim">${chemHTML(q.exp)}</div>` : ''}<div class="self">내 답이 핵심을 다 담았나요?</div>`; qb.innerHTML = '';
-          const yes = document.createElement('button'); yes.className = 'pri'; yes.textContent = '맞음'; const no = document.createElement('button'); no.textContent = '부족함'; no.className = 'sec';
-          const go = ok => { if (ok) { right++; SAVE.right[q.id] = (SAVE.right[q.id] || 0) + 1; SAVE.wrong = SAVE.wrong.filter(x =>x !== q.id); } else if (!SAVE.wrong.includes(q.id)) SAVE.wrong.push(q.id); sfx(ok ? 'ok' : 'bad'); i++; one(); };
-          yes.onclick = () =>go(true); no.onclick = () =>go(false); qb.append(no, yes); };
+        qq.innerHTML = chemHTML(q.q);
+        /* 손글씨 답안지: 손가락·펜으로 직접 쓰고, 모범 답안과 비교해 스스로 채점 */
+        const WK = 'bio_wink_v1'; let WS = {}; try { WS = JSON.parse(localStorage.getItem(WK)) || {}; } catch (e) { }
+        const sheet = document.createElement('div'); sheet.className = 'wsheet';
+        sheet.innerHTML = `<div class="wtool"><b>답안지</b><span>손가락이나 펜으로 쓰세요</span><button data-w="undo">되돌리기</button><button data-w="clear">전부 지우기</button><button data-w="kb">키보드로 쓰기</button></div><div class="wpad"><canvas></canvas></div><textarea hidden placeholder="여기에 입력"></textarea>`;
+        qa.appendChild(sheet);
+        const cv = sheet.querySelector('canvas'), g = cv.getContext('2d'), pad = sheet.querySelector('.wpad'), ta = sheet.querySelector('textarea'); let strokes = [], cur = null, locked = false;
+        const fit = () => { const r = Math.min(2, devicePixelRatio || 1), w = pad.clientWidth, h = pad.clientHeight; cv.width = w * r; cv.height = h * r; cv.style.width = w + 'px'; cv.style.height = h + 'px'; g.setTransform(r, 0, 0, r, 0, 0); redraw(); };
+        const redraw = () => { g.clearRect(0, 0, cv.width, cv.height); g.lineCap = g.lineJoin = 'round'; g.strokeStyle = '#1a2a3a';
+          strokes.forEach(st => { g.lineWidth = st.w; g.beginPath(); st.p.forEach(([x, y], k) => k ? g.lineTo(x, y) : g.moveTo(x, y)); if (st.p.length === 1) g.lineTo(st.p[0][0] + .1, st.p[0][1]); g.stroke(); }); };
+        if (WS[q.id] && WS[q.id].s) { strokes = WS[q.id].s; ta.value = WS[q.id].t || ''; }
+        const keep = () => { WS[q.id] = { s: strokes.slice(-400), t: ta.value }; const ks = Object.keys(WS); if (ks.length > 40) delete WS[ks[0]]; try { localStorage.setItem(WK, JSON.stringify(WS)); } catch (e) { } };
+        const P = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+        cv.addEventListener('pointerdown', e => { if (locked) return; e.preventDefault(); e.stopPropagation(); try { cv.setPointerCapture(e.pointerId); } catch (_) { } cur = { id: e.pointerId, w: e.pointerType === 'pen' ? 1.6 + (e.pressure || .5) * 2.4 : 2.8, p: [P(e)] }; strokes.push(cur); redraw(); });
+        cv.addEventListener('pointermove', e => { if (!cur || e.pointerId !== cur.id) return; e.preventDefault(); e.stopPropagation(); cur.p.push(P(e)); const n = cur.p.length; g.lineWidth = cur.w; g.beginPath(); g.moveTo(...cur.p[n - 2]); g.lineTo(...cur.p[n - 1]); g.stroke(); });
+        const up = e => { if (!cur || e.pointerId !== cur.id) return; e.stopPropagation(); cur = null; keep(); };
+        cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('click', e => e.stopPropagation());
+        sheet.querySelector('.wtool').onclick = e => { const b = e.target.closest('button'); if (!b || locked) return; const a = b.dataset.w;
+          if (a === 'undo') { strokes.pop(); redraw(); keep(); } if (a === 'clear') { strokes = []; redraw(); keep(); }
+          if (a === 'kb') { ta.hidden = !ta.hidden; b.textContent = ta.hidden ? '키보드로 쓰기' : '키보드 닫기'; if (!ta.hidden) ta.focus(); } };
+        ta.oninput = keep; if (ta.value) { ta.hidden = false; sheet.querySelector('[data-w=kb]').textContent = '키보드 닫기'; }
+        requestAnimationFrame(fit); addEventListener('resize', fit);
+        const s = document.createElement('button'); s.className = 'pri'; s.textContent = '다 썼어요 → 모범 답안 보기'; qb.appendChild(s);
+        s.onclick = () => { locked = true; ta.disabled = true; sheet.classList.add('done'); keep();
+          const pts = String(q.ans).split(/(?<=[.다])\s+|\s*(?=\(\d\)|[①-⑤])/).map(x => x.trim()).filter(x => x.length > 1);
+          qx.hidden = false; qx.className = 'qx wans'; qx.innerHTML = `<b>모범 답안</b><div class="wpts">${pts.map((t, k) => `<label><input type="checkbox"> <span>${chemHTML(t)}</span></label>`).join('')}</div>${q.exp ? `<div class="dim">${chemHTML(q.exp)}</div>` : ''}<div class="self">내 답안지와 비교해서, 내가 쓴 내용에 들어 있는 줄을 체크하세요.</div>`;
+          qb.innerHTML = ''; const cnt = document.createElement('span'); cnt.className = 'wcnt'; qb.appendChild(cnt);
+          const boxes = [...qx.querySelectorAll('.wpts input')]; const upd = () => { const n = boxes.filter(b => b.checked).length; cnt.textContent = `${n} / ${boxes.length} 포함`; }; boxes.forEach(b => b.onchange = upd); upd();
+          const mk = (t, cls, ok) => { const b = document.createElement('button'); b.textContent = t; b.className = cls; b.onclick = () => { if (ok) { right++; SAVE.right[q.id] = (SAVE.right[q.id] || 0) + 1; SAVE.wrong = SAVE.wrong.filter(x => x !== q.id); } else if (!SAVE.wrong.includes(q.id)) SAVE.wrong.push(q.id); sfx(ok ? 'ok' : 'bad'); removeEventListener('resize', fit); i++; one(); }; qb.appendChild(b); };
+          mk('✕ 틀림 (다시 풀기에 넣기)', 'sec', false); mk('△ 부분 정답 (다시 풀기에 넣기)', 'sec', false); mk('○ 맞음', 'pri', true); qx.scrollIntoView({ block: 'nearest' }); };
       } else { /* fill */
         const inputs = []; qq.innerHTML = chemHTML(q.q).replace(/\{(\d+)\}/g, (m, n) => `<span class="blank" data-i="${n}"></span>`);
         qq.querySelectorAll('.blank').forEach(sp => { const k = +sp.dataset.i, b = q.b[k]; if (b && !Array.isArray(b) && b.o) { const s = document.createElement('span'); s.className = 'seg'; b.o.forEach(o => { const x = document.createElement('button'); x.innerHTML = chem(o); x.onclick = () => { s.querySelectorAll('button').forEach(y =>y.classList.remove('sel')); x.classList.add('sel'); s.dataset.v = o; }; s.appendChild(x); }); sp.appendChild(s); inputs[k] = { get: () =>s.dataset.v || '', el: s, ok: v =>v === b.a, ans: b.a }; }
