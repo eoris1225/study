@@ -503,12 +503,20 @@ async function studyFlow(k, run) {
     if (L.check && L.check.ch) qs = qs.concat(pickQs(L.check.ch, L.check.n || 3).filter(q => !qs.includes(q)));
     const labs = LABS_OF[M.id] || [], fs = L.facts;
     const sv = SAVE.pos && SAVE.pos.k === k ? SAVE.pos : { i: 0, s: 0 }, start = Math.min(sv.i, n);
+    /* 문제는 필요한 개념을 모두 배운 뒤에: 문제(보기·해설 포함)에 나오는 개념 용어 중 가장 늦게 배우는 카드의 단계로 */
+    const partOf = j => { for (let i = 0; i < n; i++) if (j < Math.floor((i + 1) * fs.length / n)) return i; return n - 1; };
+    const norm = t => String(t || '').replace(/<[^>]+>/g, ' ').replace(/[\s·()]/g, '');
+    const terms = fs.map((f, j) => ({ j, w: [...f[0].matchAll(/\[([^\]]+)\]/g)].map(m => norm(m[1])).filter(w => w.length >= 2) }));
+    const KW = ['온도', 'pH', '펩신', '트립신', '아밀레이스', '농도', '억제제', '보조인자', '조효소', '주효소', '전효소', '가수분해', '연결효소', '전이효소', '변성', '엽록소', '카로티노이드', '스펙트럼', '전개율', '광계', 'P680', 'P700', '루비스코', 'RuBP', '3PG', 'PGAL', 'NADPH', '광인산화', '순환', '캘빈', '스트로마', '타이라코이드', '크리스타', '세포내공생', '젖산', '에탄올', '효모', '사이안화물', 'DNP', '올리고마이신', '힐', '루벤', '벤슨', '엥겔만', '반응열', '활성화에너지', '복합체', '특이성'];
+    const qPart = q => { const t = norm([q.q, q.fig, ...(q.o || []), ...(q.s || []).map(x => x[0]), q.ans, q.exp, ...(q.b || []).flat()].join(' ')); let last = -1;
+      terms.forEach(({ j, w }) => { if (w.some(x => t.includes(x))) last = Math.max(last, partOf(j)); });
+      KW.forEach(k => { if (!t.includes(k)) return; fs.forEach((f, j) => { if (norm(f[0] + f[1]).includes(k)) last = Math.max(last, partOf(j)); }); }); return last < 0 ? n - 1 : last; };
     for (let i = start; i < n; i++) { prog(`${M.t} · ${i + 1} / ${n + 1}단계`);
       const f = fs.slice(Math.floor(i * fs.length / n), Math.floor((i + 1) * fs.length / n));
       const sub = i === start ? (sv.s || 0) : 0, mark = st => { SAVE.pos = { k, i, s: st }; save(); };
       if (f.length && sub < 1) await teach(f, '개념 설명 — ' + title, Math.floor(i * fs.length / n), fs.length);
       mark(1); if (labs[i] && sub < 2) await window.LAB.open(labs[i], { quick: 2 }); mark(2);
-      const part = qs.slice(Math.floor(i * qs.length / n), Math.floor((i + 1) * qs.length / n));
+      const part = qs.filter(q => qPart(q) === i);
       if (part.length) { const r = await quiz(part, `확인 문제 · ${title}`); banner(`${r.right} / ${r.total}`, '틀린 문제는 메뉴의 「오답 다시 풀기」에', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(.8); }
       SAVE.pos = { k, i: i + 1, s: 0 }; save(); }
     camOverride = null; }
