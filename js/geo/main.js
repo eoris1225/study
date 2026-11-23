@@ -201,7 +201,7 @@ function explain(d, text, id) { const t = text.replace(/<[^>]+>/g, ''), G = (win
   box.innerHTML = (G.length ? G.map((g, i) => `<div class="gle"><b>${g.t}</b><div>${g.d}</div>${g.plot ? `<button data-p="${i}">📍 3D로 보기</button>` : ''}</div>`).join('') : '') + `<div class="gle"><b>이 단원 핵심</b><div>${KEYTIP[ch] || ''}</div><button data-p="prob">📍 이 문제를 3D로 보기</button></div>`;
   box.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.p === 'prob') plot.showWith(EXTRA3D[id] || []); else plot.showWith(G[+b.dataset.p].plot); };
   d.querySelector('.idk').hidden = true; body.scrollTop = 1e5; }
-const EXTRA3D = { 'c1:9': ['P(2, 3, 1)', 'A(2, 0, 0)', 'B(0, 3, 0)', 'C(0, 0, 1)', 'D(2, -3, 1)', '선분 PA', '선분 PB', '선분 PC', '선분 AB', '선분 BC', '선분 CD', '선분 DA'], 'c1:8': ['P(5, 0, -3)', 'Q(2, 0, 1)', 'zx평면', '선분 AB', '선분 PQ', '선분 AP', '선분 BQ'], 'c1:7': ['H(4, 3, 0)', 'xy평면', '선분 PH'], 'c1:6': ['xy평면'], 'c1:0': ['xy평면', 'yz평면', 'zx평면'] };
+const EXTRA3D = { 'c2:8': ['P(2, 3, 1)', 'A(2, 0, 0)', 'B(0, 3, 0)', 'C(0, 0, 1)', 'D(2, -3, 1)', '선분 PA', '선분 PB', '선분 PC', '선분 AB', '선분 BC', '선분 CD', '선분 DA'], 'c1:8': ['P(5, 0, -3)', 'Q(2, 0, 1)', 'zx평면', '선분 AB', '선분 PQ', '선분 AP', '선분 BQ'], 'c1:7': ['H(4, 3, 0)', 'xy평면', '선분 PH'], 'c1:6': ['xy평면'], 'c1:0': ['xy평면', 'yz평면', 'zx평면'] };
 function guideRun(id, box, done) { const G = window.GEOQA[id]; let i = 0;
   const step = () => { if (i >= G.length) { box.insertAdjacentHTML('beforeend', `<div class="gq end"><div class="bub2">${face}<p>좋아, 길은 다 찾았어! 이제 <b>연습장에 직접 계산</b>해서 답을 써 보고, 답·풀이로 확인해.</p></div></div>`); done(); body.scrollTop = 1e5; return; }
     const [qq, opts0, ans0, why] = G[i], d = document.createElement('div'); d.className = 'gq'; let tries = 0;
