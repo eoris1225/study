@@ -496,16 +496,20 @@ async function studyFlow(k, run) {
   /* 1. 개념 실험실: 3D 세포 속 해당 장소를 배경으로, 챕터 친구가 함께 */
   { const C = CAST[SPK[M.id]] || CAST.mito; window.LAB_FRIEND = { html: face(SPK[M.id], 44), name: C.n, col: C.c };
     const cam = LCAM[M.id] && LCAM[M.id](); if (cam) camOverride = { pos: cam[0], look: cam[1] };
-    /* 개념 설명 먼저 (친구 + 그림) → 해당 실험으로 간단히 확인 */
-    if (L.facts.length) await teach(L.facts, '개념 설명 — ' + title, 0, L.facts.length);
-    for (const id of (LABS_OF[M.id] || [])) await window.LAB.open(id, { quick: 2 });
+    /* 설명 조금 → 실험으로 확인 → 문제 몇 개, 를 실험 수만큼 반복 */
+    if (M.id === 'enz') L.check = { ids: [...(L.check.ids || []), ...(window.BQ || []).filter(q => q.ch === 'te').map(q => q.id)], ch: L.check.ch, n: L.check.n };
+    const bq = window.BQ || []; let qs = ((L.check && L.check.ids) || []).map(id => bq.find(q => q.id === id)).filter(Boolean);
+    if (L.check && L.check.ch) qs = qs.concat(pickQs(L.check.ch, L.check.n || 3).filter(q => !qs.includes(q)));
+    const labs = LABS_OF[M.id] || [], n = Math.max(1, labs.length), fs = L.facts;
+    for (let i = 0; i < n; i++) {
+      const f = fs.slice(Math.floor(i * fs.length / n), Math.floor((i + 1) * fs.length / n));
+      if (f.length) await teach(f, '개념 설명 — ' + title, Math.floor(i * fs.length / n), fs.length);
+      if (labs[i]) await window.LAB.open(labs[i], { quick: 2 });
+      const part = qs.slice(Math.floor(i * qs.length / n), Math.floor((i + 1) * qs.length / n));
+      if (part.length) { const r = await quiz(part, `확인 문제 · ${title}`); banner(`${r.right} / ${r.total}`, '틀린 문제는 메뉴의 「오답 다시 풀기」에', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(.8); } }
     camOverride = null; }
   /* 2. 3D 현장 체험 */
   await run(); HUD.obj(''); target(null); stepMission = () => { };
-  /* 3. 테스트 (원할 때만) */
-  if (L.check && (L.check.ids || L.check.ch)) { const n = (L.check.ids || []).length + (L.check.ch ? (L.check.n || 3) : 0);
-    if (M.id === 'enz') L.check = { ids: [...(L.check.ids || []), ...(window.BQ || []).filter(q => q.ch === 'te').map(q => q.id)] };
-    await checkpoint(L, title); }
   SAVE.reached = Math.max(SAVE.reached, k + 1); save();
 }
 const shuffleA = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
