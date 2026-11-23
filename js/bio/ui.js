@@ -74,7 +74,7 @@ export function quiz(qs, title = '지식 관문') {
     IN.locked = true; const ov = $('#quiz'); ov.hidden = false; let i = 0, right = 0;
     const one = () => {
       if (i >= qs.length) { ov.hidden = true; IN.locked = false; save(); res({ right, total: qs.length }); return; }
-      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}<div class="qq"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
+      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}<div class="qq"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
       const qq = ov.querySelector('.qq'), qa = ov.querySelector('.qa'), qx = ov.querySelector('.qx'), qb = ov.querySelector('.qb');
       const finish = (ok, detail) => { if (ok) { right++; SAVE.right[q.id] = (SAVE.right[q.id] || 0) + 1; SAVE.wrong = SAVE.wrong.filter(x =>x !== q.id); } else if (!SAVE.wrong.includes(q.id)) SAVE.wrong.push(q.id); sfx(ok ? 'ok' : 'bad');
         qx.hidden = false; qx.className = 'qx ' + (ok ? 'ok' : 'no'); qx.innerHTML = `<b>${ok ? '정답' : '오답'}</b>${detail ? '<div>' + chemHTML(detail) + '</div>' : ''}<div>${chemHTML(q.exp || '')}</div>`;
@@ -123,8 +123,8 @@ function closeLesson() { $('#lesson').hidden = true; IN.locked = false; }
 /* 카드 보여주기: cards = [[fact, why], ...] */
 export function teach(cards, head, from, total) {
   return new Promise(res => { const b = lessonBox(); let i = 0;
-    const one = () => { if (i >= cards.length) { closeLesson(); res(); return; } const [f, why] = cards[i];
-      b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div><p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
+    const one = () => { if (i >= cards.length) { closeLesson(); res(); return; } const [f, why, dg] = cards[i];
+      b.innerHTML = `<div class="lh"><span>${head}</span><span>개념 ${from + i + 1} / ${total}</span></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg]}</div>` : ''}<p class="lf">${full(f)}</p>${why ? `<p class="lw">${chemHTML(why)}</p>` : ''}<div class="lbt"><button class="pri">${i + 1 < cards.length ? '다음 개념' : '확인하기'}</button></div>`;
       b.querySelector('.pri').onclick = () => { sfx('pick'); i++; one(); }; };
     one(); });
 }
@@ -132,9 +132,9 @@ export function teach(cards, head, from, total) {
 export function recall(facts, head, pool, stat) {
   return new Promise(res => { const b = lessonBox(); const Q = facts.map(f => ({ f, tries: 0 })); let right = 0, total = facts.length;
     const answers = [...new Set(pool.map(p => ansOf(p[0])).filter(Boolean))];
-    const one = () => { if (!Q.length) { closeLesson(); res({ right, total }); return; } const it = Q.shift(); const [f, why] = it.f, a = ansOf(f);
+    const one = () => { if (!Q.length) { closeLesson(); res({ right, total }); return; } const it = Q.shift(); const [f, why, dg] = it.f, a = ansOf(f);
       const opts = shuffle([a, ...shuffle(answers.filter(x => x !== a)).slice(0, 3)]);
-      b.innerHTML = `<div class="lh"><span>${head}</span><span>남은 문장 ${Q.length + 1}</span></div><p class="lf">${blankOf(f)}</p><div class="lo"></div><div class="lx" hidden></div><div class="lbt"></div>`;
+      b.innerHTML = `<div class="lh"><span>${head}</span><span>남은 문장 ${Q.length + 1}</span></div>${dg && window.BDIAG ? `<div class="ld">${window.BDIAG[dg].replace(/<p class="cap">[\s\S]*<\/p>/, '')}</div>` : ''}<p class="lf">${blankOf(f)}</p><div class="lo"></div><div class="lx" hidden></div><div class="lbt"></div>`;
       const box = b.querySelector('.lo'); opts.forEach(o => { const x = document.createElement('button'); x.innerHTML = chem(o); x.onclick = () => {
         [...box.children].forEach((y, j) => { y.disabled = true; if (opts[j] === a) y.classList.add('right'); }); const ok = o === a; sfx(ok ? 'ok' : 'bad');
         if (stat) stat(f, ok);

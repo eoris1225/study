@@ -140,3 +140,4 @@ sub,sup{font-size:.7em}
 #lesson .lbt{display:flex;justify-content:flex-end;margin-top:10px}
 #lesson .ls{margin:4px 0;padding-left:22px;font-size:15.5px;line-height:1.75}#lesson .ls b{color:#ffd23f}
 #lesson .ln{font-size:16px;line-height:1.7}#lesson .ln b{color:#ffd23f}
+#lesson .ld{background:#04121a;border-radius:12px;padding:4px 8px;margin:2px 0 6px}#lesson .cap,.fig .cap{font-size:14px;line-height:1.55;color:#dff;margin:2px 4px 4px}#lesson .cap b{color:#ffd23f}#lesson{max-height:78vh}
