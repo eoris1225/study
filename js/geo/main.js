@@ -1,6 +1,6 @@
 /* 기하 — 설명(3D 그림) → 직접 조작 확인 → 교과서 문제. 생명과학과 완전히 분리 (저장 키 geo_v1) */
 import * as THREE from 'three';
-import { initPlot } from './plot.js?v=2';
+import { initPlot } from './plot.js?v=4';
 const $ = s => document.querySelector(s);
 const CH = window.GEO;
 const KEY = 'geo_v1';
@@ -18,7 +18,8 @@ const tgt = new THREE.Vector3(0, .5, 0); let panMode = false;
 function place() { cam.position.set(tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, tgt.y + Math.sin(pitch) * dist, tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(tgt); }
 /* 화면을 끌어 시야 이동: 카메라의 오른쪽/위 방향으로 목표점을 옮김 */
 function pan(dx, dy) { const k = dist * .0016, r = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0), u = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1); tgt.addScaledVector(r, -dx * k).addScaledVector(u, dy * k); }
-function fit() { const w = view.clientWidth, h = view.clientHeight; R.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+let SHIFT = 0;
+function fit() { const w = view.clientWidth, h = view.clientHeight; R.setSize(w, h); cam.aspect = w / h; if (SHIFT) cam.setViewOffset(w, h, -SHIFT, 0, w, h); else cam.clearViewOffset(); cam.updateProjectionMatrix(); }
 new ResizeObserver(fit).observe(view); fit();
 let drag = null; const pts = new Map();
 view.addEventListener('pointerdown', e => { const pd = document.getElementById('pad'); if (pd && !pd.hidden && !pd.classList.contains('peek')) return; if (e.target.closest && e.target.closest('.pt')) return; auto = false; pts.set(e.pointerId, [e.clientX, e.clientY]); drag = [e.clientX, e.clientY, yaw, pitch]; view.setPointerCapture(e.pointerId); });
@@ -138,7 +139,7 @@ pad.querySelector('.pt').onclick = e => { const b = e.target.closest('button'); 
   if (b.dataset.p !== undefined) { penOnly = !penOnly; b.classList.toggle('on', penOnly); try { localStorage.setItem('geo_penonly', penOnly ? '1' : '0'); } catch (e) { } }
   if (b.dataset.v !== undefined) { pad.classList.toggle('peek'); b.textContent = pad.classList.contains('peek') ? '연습장으로' : '3D 보기'; } };
 let curScene = null;
-const plot = initPlot({ THREE, view, G, M, line, arrow, dot, label, axes, clear, restore: () => { if (curScene) setScene(curScene, null); }, setAuto: v => { auto = v; }, setDist: d => { dist = Math.max(10, Math.min(40, d)); } });
+const plot = initPlot({ THREE, view, G, M, line, arrow, dot, label, axes, clear, restore: () => { if (curScene) setScene(curScene, null); }, setAuto: v => { auto = v; }, setDist: d => { dist = Math.max(10, Math.min(40, d)); }, setShift: px => { SHIFT = px; fit(); } });
 /* ── 흐름 ── */
 const face = `<svg class="pf" viewBox="0 0 64 64" fill="none" stroke="#22201c" stroke-width="2.6" stroke-linejoin="round"><path d="M10 22 L24 10 L56 12 L54 46 L40 58 L8 56Z" fill="#fff"/><path d="M10 22 L42 24 L40 58 M42 24 L56 12"/><circle cx="20" cy="36" r="2.6" fill="#22201c"/><circle cx="32" cy="37" r="2.6" fill="#22201c"/><path d="M20 46 q6 4 12 0"/><path d="M44 30 l6 -4" stroke="#c8392b"/></svg>`;
 const hd = $('#hd'), body = $('#body'), ft = $('#ft');
@@ -194,11 +195,19 @@ function figDrag(fk) { const box = body.querySelector(`.fig[data-fk="${fk}"]`); 
   const up = e => { P.delete(e.pointerId); g = null; if (moved > 8) { box.dataset.drag = 1; setTimeout(() => delete box.dataset.drag, 350); } }; box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
   box.addEventListener('wheel', e => { e.preventDefault(); z = Math.max(.5, Math.min(5, z * (e.deltaY < 0 ? 1.15 : 1 / 1.15))); fit(); }, { passive: false }); }
 function probHTML(c, k, q, tag) { const fig = window.GEOFIG && window.GEOFIG[c.id + ':' + k]; if (fig) setTimeout(() => figDrag(c.id + ':' + k), 0); return `${tag}<div class="card"><div class="src">${q.s}</div>${fig ? `<div class="fig" data-fk="${c.id + ':' + k}">${(window.GEOVIEW && (GEOVIEW.yaw = GEOVIEW.pitch = 0), fig())}</div><div class="fighint">${window.GEOFIG_3D ? '↻ 그림을 끌면 3D로 돌아가요 · 두 손가락 확대 · 두 번 탭 = 원래대로' : '✥ 끌어서 이동 · 두 손가락 확대 · 두 번 탭 = 원래대로'}</div>` : ''}<div class="q">${q.q}</div></div><div class="hints"></div><div class="ans" hidden><b>답</b> ${q.a}${q.h ? `<div class="h"><b>전체 풀이</b> ${q.h}</div>` : ''}</div>`; }
+/* 모르겠어요: 질문에 나온 용어를 쉬운 말 + 3D 예시로 */
+function explain(d, text, id) { const t = text.replace(/<[^>]+>/g, ''), G = (window.GEOGLOSS || []).filter(g => g.k.some(k => t.includes(k))).slice(0, 3), box = d.querySelector('.gl'); box.hidden = false;
+  const ch = id.split(':')[0];
+  box.innerHTML = (G.length ? G.map((g, i) => `<div class="gle"><b>${g.t}</b><div>${g.d}</div>${g.plot ? `<button data-p="${i}">📍 3D로 보기</button>` : ''}</div>`).join('') : '') + `<div class="gle"><b>이 단원 핵심</b><div>${KEYTIP[ch] || ''}</div><button data-p="prob">📍 이 문제를 3D로 보기</button></div>`;
+  box.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.p === 'prob') plot.showWith(EXTRA3D[id] || []); else plot.showWith(G[+b.dataset.p].plot); };
+  d.querySelector('.idk').hidden = true; body.scrollTop = 1e5; }
+const EXTRA3D = { 'c1:8': ['P(5, 0, -3)', 'Q(2, 0, 1)', 'zx평면', '선분 AB', '선분 PQ', '선분 AP', '선분 BQ'], 'c1:7': ['H(4, 3, 0)', 'xy평면', '선분 PH'], 'c1:6': ['xy평면'], 'c1:0': ['xy평면', 'yz평면', 'zx평면'] };
 function guideRun(id, box, done) { const G = window.GEOQA[id]; let i = 0;
   const step = () => { if (i >= G.length) { box.insertAdjacentHTML('beforeend', `<div class="gq end"><div class="bub2">${face}<p>좋아, 길은 다 찾았어! 이제 <b>연습장에 직접 계산</b>해서 답을 써 보고, 답·풀이로 확인해.</p></div></div>`); done(); body.scrollTop = 1e5; return; }
     const [qq, opts0, ans0, why] = G[i], d = document.createElement('div'); d.className = 'gq'; let tries = 0;
     const ord = opts0.map((_, k) => k).sort(() => Math.random() - .5), opts = ord.map(k => opts0[k]), ans = ord.indexOf(ans0);
-    d.innerHTML = `<div class="bub2">${face}<p><span class="no">${i + 1}/${G.length}</span> ${qq}</p></div><div class="opts">${opts.map((o, k) => `<button data-k="${k}">${o}</button>`).join('')}</div><div class="why" hidden></div>`;
+    d.innerHTML = `<div class="bub2">${face}<p><span class="no">${i + 1}/${G.length}</span> ${qq}</p></div><div class="opts">${opts.map((o, k) => `<button data-k="${k}">${o}</button>`).join('')}</div><div class="why" hidden></div><button class="idk">🤔 무슨 말인지 모르겠어요</button><div class="gl" hidden></div>`;
+    d.querySelector('.idk').onclick = () => explain(d, qq + ' ' + opts0.join(' ') + ' ' + why, id);
     box.appendChild(d); body.scrollTop = 1e5;
     d.querySelector('.opts').onclick = e => { const b = e.target.closest('button'); if (!b || d.dataset.ok) return; const k = +b.dataset.k;
       if (k !== ans) { tries++; b.classList.add('no'); b.disabled = true; const w = d.querySelector('.why'); w.hidden = false; w.className = 'why bad';
