@@ -1,11 +1,11 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
 import * as THREE from 'three';
-import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231343';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231343';
-import { mol, NAME } from './mols.js?v=202611231343';
+import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231356';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231356';
+import { mol, NAME } from './mols.js?v=202611231356';
 import { stageShow, stageStep, stageHas, stageRender } from './stage3d.js?v=202611231253';
 window.__stage = stageShow; window.__stageHas = stageHas;
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231343';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231356';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */

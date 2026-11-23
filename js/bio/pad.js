@@ -33,14 +33,27 @@
     const t = el.closest('button, input, textarea, label, a, .opt, .oxr'); if (!t) return; if (t.matches('input, textarea')) t.focus(); else setTimeout(() => { justDrew = 0; t.click(); }, 0); };
   quiz.addEventListener('pointerup', up, true); quiz.addEventListener('pointercancel', up, true);
   /* 손바닥 무시: 펜이 화면 가까이(호버) 있거나 닿아 있는 동안만 손 터치를 막는다. 펜이 멀리 있으면 손가락은 완전히 원래대로 */
+  /* 필기 화면에서는 브라우저 스크롤을 끄고(touch-action:none) 손가락 스크롤만 직접 처리.
+     → 펜은 절대 스크롤로 안 바뀌고 선이 끊기지 않음. 펜이 닿아 있는 동안의 손(손바닥)은 무시 */
   let penDown = false, penUpT = 0; const palm = new Set();
-  const penMode = on => quiz.classList.toggle('penmode', on);
-  window.addEventListener('pointerdown', e => { if (e.pointerType === 'pen') { penDown = true; penMode(true); } }, true);
-  const penUp = e => { if (e.pointerType !== 'pen') return; penDown = false; penUpT = Date.now(); setTimeout(() => { if (!penDown) penMode(false); }, 300); };
+  window.addEventListener('pointerdown', e => { if (e.pointerType === 'pen') penDown = true; }, true);
+  const penUp = e => { if (e.pointerType !== 'pen') return; penDown = false; penUpT = Date.now(); };
   window.addEventListener('pointerup', penUp, true); window.addEventListener('pointercancel', penUp, true);
-  const isPalm = e => e.pointerType === 'touch' && !all && (penDown || Date.now() - penUpT < 300 || (e.width >= 120 && e.height >= 120));
-  quiz.addEventListener('pointerdown', e => { if (!isPalm(e) || (e.target.closest && e.target.closest('.wsheet'))) return; palm.add(e.pointerId); e.preventDefault(); e.stopPropagation(); }, true);
-  ['pointermove', 'pointerup', 'pointercancel'].forEach(t => quiz.addEventListener(t, e => { if (!palm.has(e.pointerId)) return; e.preventDefault(); e.stopPropagation(); if (t !== 'pointermove') { palm.delete(e.pointerId); justDrew = Date.now(); } }, true));
+  const isPalm = e => e.pointerType === 'touch' && (penDown || Date.now() - penUpT < 300 || (e.width >= 120 && e.height >= 120));
+  let fs = null, vel = 0, raf = 0;
+  quiz.addEventListener('pointerdown', e => { if (e.target.closest && e.target.closest('.wpad')) return;
+    if (isPalm(e)) { palm.add(e.pointerId); e.preventDefault(); e.stopPropagation(); return; }
+    if (e.pointerType !== 'touch' || all) return;
+    cancelAnimationFrame(raf); fs = { id: e.pointerId, y: e.clientY, y0: e.clientY, t: performance.now(), moved: false }; vel = 0; }, true);
+  quiz.addEventListener('pointermove', e => { if (palm.has(e.pointerId)) { e.preventDefault(); e.stopPropagation(); return; }
+    if (!fs || e.pointerId !== fs.id) return; if (!fs.moved && Math.abs(e.clientY - fs.y0) < 8) return;
+    fs.moved = true; const dy = e.clientY - fs.y, now = performance.now(); quiz.scrollTop -= dy; vel = dy / Math.max(1, now - fs.t) * .8 + vel * .2; fs.y = e.clientY; fs.t = now; e.preventDefault(); }, true);
+  const fup = e => { if (palm.has(e.pointerId)) { e.preventDefault(); e.stopPropagation(); palm.delete(e.pointerId); justDrew = Date.now(); return; }
+    if (!fs || e.pointerId !== fs.id) return; const m = fs.moved; fs = null; if (!m) return; justDrew = Date.now();
+    /* 손 뗀 뒤 살짝 미끄러지기 */
+    let v = vel * 16, last = performance.now(); const glide = t => { const dt = Math.min(40, t - last) / 16; last = t; quiz.scrollTop -= v * dt; v *= Math.pow(.94, dt); if (Math.abs(v) > .4) raf = requestAnimationFrame(glide); }; raf = requestAnimationFrame(glide); };
+  quiz.addEventListener('pointerup', fup, true); quiz.addEventListener('pointercancel', fup, true);
+  quiz.addEventListener('wheel', () => cancelAnimationFrame(raf), { passive: true });
   /* 펜으로 쓴 직후의 클릭은 버튼을 누르지 않게 */
   quiz.addEventListener('click', e => { if (Date.now() - justDrew < 350) { e.preventDefault(); e.stopPropagation(); } }, true);
   bar.onclick = e => { const b = e.target.closest('button'); if (!b) return;

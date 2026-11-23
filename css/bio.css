@@ -202,7 +202,7 @@ body.lesson-on #inv{opacity:.5}
 
 #lesson h3,#menu h1,#menu h3,#lab .lfind i{font-family:'Gowun Batang',serif}
 /* 문제 위 필기 */
-#quiz.inkon{place-items:start center}#quiz.inkon.penmode,#quiz.inkon.penmode *{touch-action:none}#quiz.inkon .qc{position:relative}
+#quiz.inkon{place-items:start center}#quiz.inkon,#quiz.inkon *{touch-action:none}#quiz.inkon .qc{position:relative}
 .inkcv{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
 #inkbar{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px;padding:4px 0;border-bottom:1px dashed #e8a33d55;position:relative;z-index:6}
 #inkbar button{background:#2e2419;border:1.5px solid #ffffff22;border-radius:7px;padding:3px 8px;font-size:12px;color:#f6ead6}
