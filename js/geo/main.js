@@ -14,16 +14,24 @@ const R = new THREE.WebGLRenderer({ antialias: true }); R.setPixelRatio(Math.min
 const scene = new THREE.Scene(); scene.background = new THREE.Color('#f6f1e4');
 const cam = new THREE.PerspectiveCamera(40, 1, .1, 200);
 let yaw = .75, pitch = .42, dist = 14, auto = true;
-function place() { cam.position.set(Math.sin(yaw) * Math.cos(pitch) * dist, Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(0, 0.5, 0); }
+const tgt = new THREE.Vector3(0, .5, 0); let panMode = false;
+function place() { cam.position.set(tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, tgt.y + Math.sin(pitch) * dist, tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(tgt); }
+/* 화면을 끌어 시야 이동: 카메라의 오른쪽/위 방향으로 목표점을 옮김 */
+function pan(dx, dy) { const k = dist * .0016, r = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 0), u = new THREE.Vector3().setFromMatrixColumn(cam.matrix, 1); tgt.addScaledVector(r, -dx * k).addScaledVector(u, dy * k); }
 function fit() { const w = view.clientWidth, h = view.clientHeight; R.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
 new ResizeObserver(fit).observe(view); fit();
 let drag = null; const pts = new Map();
 view.addEventListener('pointerdown', e => { const pd = document.getElementById('pad'); if (pd && !pd.hidden && !pd.classList.contains('peek')) return; if (e.target.closest && e.target.closest('.pt')) return; auto = false; pts.set(e.pointerId, [e.clientX, e.clientY]); drag = [e.clientX, e.clientY, yaw, pitch]; view.setPointerCapture(e.pointerId); });
 view.addEventListener('pointermove', e => { if (!pts.has(e.pointerId)) return; const prev = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
-  if (pts.size === 2) { const [p, q] = [...pts.values()]; const d = Math.hypot(p[0] - q[0], p[1] - q[1]); if (drag.d) dist = Math.max(8, Math.min(40, dist * drag.d / d)); drag.d = d; return; }
+  if (pts.size === 2) { const [p, q] = [...pts.values()]; const d = Math.hypot(p[0] - q[0], p[1] - q[1]), mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2; if (drag.d) { dist = Math.max(4, Math.min(60, dist * drag.d / d)); pan(mx - drag.mx, my - drag.my); } drag.d = d; drag.mx = mx; drag.my = my; return; }
+  if (panMode || e.shiftKey || (e.buttons & 6)) { pan(e.clientX - prev[0], e.clientY - prev[1]); return; }
   yaw -= (e.clientX - prev[0]) * .008; pitch = Math.max(-1.2, Math.min(1.4, pitch + (e.clientY - prev[1]) * .008)); });
 const up = e => { pts.delete(e.pointerId); if (drag) drag.d = 0; }; view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
-view.addEventListener('wheel', e => { dist = Math.max(8, Math.min(40, dist * (1 + Math.sign(e.deltaY) * .08))); });
+view.addEventListener('wheel', e => { e.preventDefault(); dist = Math.max(4, Math.min(60, dist * (1 + Math.sign(e.deltaY) * .08))); }, { passive: false });
+view.addEventListener('contextmenu', e => e.preventDefault());
+{ const nv = document.createElement('div'); nv.id = 'nav3d'; nv.innerHTML = '<button data-z="-1">＋</button><button data-z="1">－</button><button data-p>✥ 이동</button><button data-r>⟲ 처음</button>'; view.appendChild(nv);
+  nv.addEventListener('pointerdown', e => e.stopPropagation());
+  nv.onclick = e => { const b = e.target.closest('button'); if (!b) return; auto = false; if (b.dataset.z) dist = Math.max(4, Math.min(60, dist * (1 + b.dataset.z * .2))); if (b.dataset.p !== undefined) { panMode = !panMode; b.classList.toggle('on', panMode); } if (b.dataset.r !== undefined) { tgt.set(0, .5, 0); yaw = .75; pitch = .42; dist = 14; } }; }
 (function loop() { if (auto) yaw += .0025; place(); R.render(scene, cam); requestAnimationFrame(loop); })();
 
 /* 수학 좌표 (x 앞, y 오른쪽, z 위) → three 좌표 */
