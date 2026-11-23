@@ -1,6 +1,6 @@
 /* 개념 설명용 3D 무대: 카드가 오른쪽에 있을 때 왼쪽 빈 공간(카메라 앞)에 개념별 3D 애니메이션 + 3D 친구 */
 import * as THREE from 'three';
-import { E, shake, sfx } from './engine.js?v=202611231432';
+import { E, shake, sfx } from './engine.js?v=202611231459';
 
 const ROOT = new THREE.Group(); ROOT.visible = false;
 const STS = new THREE.Scene(); STS.add(new THREE.AmbientLight('#ffffff', 1.1)); { const d = new THREE.DirectionalLight('#ffffff', 1.6); d.position.set(3, 5, 8); STS.add(d); }
@@ -185,12 +185,27 @@ function stepFriend(t, dt) { if (!friend) return; const u = friend.userData; con
   u.arms[0].rotation.z = -.4 - Math.sin(t * 3) * .25 - (talking ? Math.abs(Math.sin(t * 5)) * .5 : 0); u.arms[1].rotation.z = .4 + (talking ? 1.4 + Math.sin(t * 7) * .5 : Math.sin(t * 2.5) * .2); }
 
 export function stageStep(dt) { if (!ROOT.visible || !E.cam) return; T += dt;
-  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(E.cam.quaternion); ROOT.position.copy(E.cam.position).addScaledVector(fwd, 15); ROOT.quaternion.copy(E.cam.quaternion);
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(E.cam.quaternion); ROOT.position.copy(E.cam.position).addScaledVector(fwd, DIST); ROOT.quaternion.copy(E.cam.quaternion);
   stepZoom(dt); if (cur && !zoom) try { cur(T - t0, dt); } catch (e) { console.error('[stage]', e); cur = null; }
   for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i], u = p.userData; u.k += dt; if (u.k > u.life) { p.parent && p.parent.remove(p); pops.splice(i, 1); continue; } const k = u.k / u.life;
     if (p.isSprite) { const s = k < .12 ? .4 + k / .12 * .8 : 1.2 - (k - .12) * .25; p.scale.copy(u.base).multiplyScalar(s); p.material.opacity = k > .7 ? (1 - k) / .3 : 1; p.position.y += dt * .6; }
     else { if (u.inward) p.position.copy(u.o).addScaledVector(u.v, .45 * (1 - k)); else p.position.addScaledVector(u.v, dt); p.material.opacity = 1 - k; p.material.transparent = true; } }
+  for (let i = pokes.length - 1; i >= 0; i--) { const p = pokes[i]; p.k += dt; const k = p.k / .5; if (k >= 1) { p.o.scale.copy(p.s); pokes.splice(i, 1); continue; } p.o.scale.copy(p.s).multiplyScalar(1 + Math.sin(k * Math.PI) * .45 * (1 - k)); p.o.rotation.z = p.r + Math.sin(k * Math.PI * 4) * .25 * (1 - k); }
   stepFriend(T, dt); }
+/* 빈 공간(패널 밖) 크기에 맞춰 무대 거리 조절: 가로 18칸 · 세로 12칸이 다 보이게 */
+let DIST = 15; const pokes = [];
+export function stageFit(w, h) { const per = 2 * Math.tan(31 * Math.PI / 180) / innerHeight; DIST = Math.max(13, Math.min(30, Math.max(15.5 / (w * per), 10.5 / (h * per)))); }
+/* 핵심어를 잡았을 때 3D에서 크게 터지는 칭찬 */
+export function stageCheer(str, col = '#ffd23f') { if (!ROOT.visible) return; const g = ROOT.userData.stage || ROOT; const x = (Math.random() - .5) * 6, y = 1.5 + Math.random() * 2;
+  pop(g, str, x, y, col, .9); sparks(g, x, y, col, 22, 5); hopT = .8; talkUntil = performance.now() + 700; sfx('atp'); }
+/* 3D를 직접 눌러 보기: 누른 물체가 통통 튀고 반짝 */
+const RC = new THREE.Raycaster(); const BOING = ['뿅!', '톡!', '말랑', '띠용', '꾹!'];
+export function stagePoke(cx, cy) { if (!ROOT.visible || !E.cam) return false; const g = ROOT.userData.stage; RC.setFromCamera({ x: cx / innerWidth * 2 - 1, y: -(cy / innerHeight) * 2 + 1 }, E.cam);
+  const targets = [g, friend].filter(Boolean); const hit = RC.intersectObjects(targets, true).find(h => h.object.visible && !h.object.isSprite); if (!hit) return false;
+  let o = hit.object; const isF = friend && (() => { let q = o; while (q) { if (q === friend) return true; q = q.parent; } return false; })();
+  if (isF) { hopT = .9; talkUntil = performance.now() + 900; const lp = ROOT.worldToLocal(hit.point.clone()); pop(ROOT, ['간지러워!', '헤헤', '나 말고 저거 봐!'][Math.floor(Math.random() * 3)], lp.x + 1, lp.y + 1.6, '#ffffff', .6); sfx('pick'); return true; }
+  while (o.parent && o.parent !== g && o.parent.parent !== g) o = o.parent; if (!pokes.some(p => p.o === o)) pokes.push({ o, k: 0, s: o.scale.clone(), r: o.rotation.z });
+  const lp = g.worldToLocal(hit.point.clone()); sparks(g, lp.x, lp.y, '#ffffff', 12, 3); pop(g, BOING[Math.floor(Math.random() * BOING.length)], lp.x, lp.y + 1, '#5affd0', .55); sfx('pick'); return true; }
 /* ── 어디서 · 왜 ── */
 const KEYLOC = { meta: 'cell', ea: 'mol', dh: 'mol', exo: 'mol', endoE: 'mol', eaE: 'mol', calc: 'mol', gibil: 'mol', es: 'mol', cof: 'mol', kinds: 'mol', tph: 'mol', sat: 'mol', inh: 'mol',
   atp: 'cell', redox: 'cell', nad: 'cell', resp: 'cell', mito: 'mito', endo: 'cell', glyC: 'cyto', glyPath: 'cyto', pyrC: 'matrix', tcaC: 'matrix', count: 'matrix', elev: 'inner', mem: 'inner',
@@ -246,7 +261,7 @@ function stepZoom(dt) { if (!zoom) return; zoom.t += dt; const { levels, per } =
   const lab = (B && f > .5 ? B : A).userData.lab; tag.querySelector('.z') && (tag.querySelector('.z').textContent = '🔍 ' + zoom.chain.map(id => { const g = levels[zoom.chain.indexOf(id)]; return g.userData.lab; }).join(' → '));
   if (i >= n - 1) { /* 도착: 마지막 장소를 흐린 배경으로 */ if (locBg) ROOT.remove(locBg); locBg = levels[n - 1]; locBg.scale.setScalar(1.4); locBg.position.set(0, 0, -5); setOp(locBg, .45); levels.slice(0, -1).forEach(g => ROOT.remove(g)); zoom = null; if (ROOT.userData.stage) ROOT.userData.stage.visible = true; t0 = T; } }
 export function stageShow(key, col, words) {
-  if (!E.scene) return; if (!built) { built = true; STS.add(ROOT); const back = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshBasicMaterial({ color: '#0d0a08', transparent: true, opacity: .93, depthWrite: false })); back.position.z = -9; back.renderOrder = -1; ROOT.add(back); ROOT.userData.back = back; }
+  if (!E.scene) return; if (!built) { built = true; STS.add(ROOT); const back = new THREE.Mesh(new THREE.PlaneGeometry(200, 140), new THREE.MeshBasicMaterial({ color: '#16202e', transparent: true, opacity: .9, depthWrite: false })); back.position.z = -9; back.renderOrder = -1; ROOT.add(back); ROOT.userData.back = back; }
   if (!key) { ROOT.visible = false; tag.hidden = true; curLoc = null; curKey = null; zoom = null; if (locBg) { ROOT.remove(locBg); locBg = null; } return; } ROOT.visible = true; tag.hidden = false;
   if (words) talkUntil = performance.now() + Math.min(6000, 600 + words * 55); hopT = .6;
   const c = col || '#5af0ff'; if (!friend || friend.userData.col !== c) { if (friend) ROOT.remove(friend); friend = makeFriend(c); friend.userData.col = c; friend.position.set(-6.2, -3.3, 1); friend.scale.setScalar(.9); ROOT.add(friend); }

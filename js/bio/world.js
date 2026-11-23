@@ -1,6 +1,6 @@
 /* 미토: 세계 — 세포막 · 세포질 · 핵 · 마이토콘드리아(외막/내막/크리스타) · 효소 기계들 */
 import * as THREE from 'three';
-import { E, label, dotTex } from './engine.js?v=202611231432';
+import { E, label, dotTex } from './engine.js?v=202611231459';
 
 export const W = {};
 const V = (x, y, z) =>new THREE.Vector3(x, y, z);
