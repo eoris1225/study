@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js';
 import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js';
 import { mol, NAME } from './mols.js';
-import { HUD, toast, banner, flash, say, choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, sub, subHide, fullFact, blankFact, ansFact } from './ui.js';
+import { HUD, toast, banner, flash, say, choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST } from './ui.js';
 
 const $ = s =>document.querySelector(s);
 const V = (x, y, z) =>new THREE.Vector3(x, y, z);
@@ -478,32 +478,6 @@ async function checkpoint(L, title) {
   banner(`${r.right} / ${r.total}`, '중간 점검 첫 시도 점수', r.right === r.total ? '#ffd23f' : '#7fffe0'); await wait(1);
 }
 const SPK = { enz: 'enzy', intro: 'mito', gly: 'enzy', pyr: 'nadi', tca: 'nadi', etc: 'oxy', poison: 'oxy', ferm: 'nadi', light: 'chloe', calvin: 'chloe', boss: 'mito' };
-/* 정답 고리: 앞에 고리 3개를 띄우고, 정답 고리를 통과하면 정답 */
-const GATES = []; window.__gates = GATES;
-function clearGates() { GATES.splice(0).forEach(g => E.scene.remove(g.o)); }
-function spawnGates(opts) {
-  clearGates(); const fwd = V(Math.sin(IN.yaw), 0, Math.cos(IN.yaw)), right = V(-Math.cos(IN.yaw), 0, Math.sin(IN.yaw)), inside = P.inMito || P.inChl, n = opts.length;
-  opts.forEach((o, i) => { const off = i - (n - 1) / 2; const pos = inside ? P.g.position.clone().addScaledVector(fwd, 9).addScaledVector(right, off * 7).add(V(0, (i % 2) * 2 - 1, 0)) : P.g.position.clone().addScaledVector(fwd, 24).addScaledVector(right, off * 10).add(V(0, 1 + (i % 2) * 2.5, 0));
-    if (pos.distanceTo(CELL.c) > CELL.r - 8) pos.sub(CELL.c).setLength(CELL.r - 8).add(CELL.c); if (pos.distanceTo(NUC.c) < NUC.r + 5) pos.sub(NUC.c).setLength(NUC.r + 5).add(NUC.c);
-    mitoConstrain(pos, P.inMito); chloroConstrain(pos, P.inChl);
-    const g = new THREE.Group(); g.position.copy(pos);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.6, .3, 10, 40), new THREE.MeshStandardMaterial({ color: '#bff', emissive: '#2bd', emissiveIntensity: .7 })); g.add(ring);
-    g.add(new THREE.Mesh(new THREE.CircleGeometry(2.4, 32), new THREE.MeshBasicMaterial({ color: '#5af0ff', transparent: true, opacity: .1, side: THREE.DoubleSide, depthWrite: false })));
-    const l = label(o.text, { scale: .75, border: '#9fe' }); l.position.y = 3.8; g.add(l);
-    g.lookAt(P.g.position); E.scene.add(g); g.scale.setScalar(.01); tween(.4, k => g.scale.setScalar(ease.back(k))); GATES.push(Object.assign({ o: g, ring }, o)); });
-}
-async function gateQuiz(facts) {
-  const answers = [...new Set(poolFacts().map(p => ansFact(p[0])).filter(Boolean))]; const Q = facts.map(f => ({ f, tries: 0 })); IN.locked = false;
-  while (Q.length) { const it = Q.shift(), [f, why, dg, sp] = it.f, a = ansFact(f);
-    spawnGates(shuffleA([a, ...shuffleA(answers.filter(x => x !== a)).slice(0, 2)]).map(t => ({ text: t, ok: t === a })));
-    sub(sp, blankFact(f) + '<br><span class="w">정답이 적힌 고리로 날아가서 통과!</span>', { cls: 'ask', dg });
-    let hit = null; await until(() => { for (const g of GATES) if (P.g.position.distanceTo(g.o.position) < 3.2) { hit = g; return true; } return false; });
-    const at = hit.o.position.clone();
-    if (hit.ok) { burst(at, '#ffd23f', 50, 10, 1, .4); sfx('ok'); HUD.add('ATP', 1); factStat(f, true); clearGates(); await sub(sp, '정답! ' + fullFact(f), { cls: 'ok', keepPip: true }); await wait(1.3); }
-    else { shake(.6); sfx('bad'); hit.ring.material.color.set('#ff5a7a'); P.vel.multiplyScalar(-1.5); factStat(f, false); it.tries++; if (it.tries < 3) Q.splice(Math.min(1, Q.length), 0, it); await wait(.3); clearGates();
-      await sub(sp, fullFact(f) + (why ? `<br><span class="w">${why}</span>` : ''), { cls: 'no', tap: true, keepPip: true }); } }
-  clearGates();
-}
 async function studyFlow(k, run) {
   speaker(SPK[MISSIONS[k].id]);
   if (k === 0 && !SAVE.met) { await meet([
@@ -518,20 +492,18 @@ async function studyFlow(k, run) {
   banner(M.t, '떠올리기 → 배우기 → 해보기 → 중간 점검 → 정리', '#7fffe0'); await wait(1.4);
   /* 1. 지난 챕터 떠올리기 (틀렸던 문장 먼저) */
   const prev = MISSIONS.slice(0, k).flatMap(m => ((window.BLESSON || {})[m.id] || { facts: [] }).facts);
-  const SP = SPK[M.id] || 'mito';
-  if (prev.length) { const fw = SAVE.fw || {}; const pick = prev.slice().sort((a, b) => ((fw[b[0].slice(0, 40)] || 0) - (fw[a[0].slice(0, 40)] || 0)) || Math.random() - .5).slice(0, 3); await sub(SP, '먼저 지난 내용 복습! 앞에 나타나는 고리 중 <b>정답</b>으로 날아가.', { tap: true }); await gateQuiz(pick); }
+  if (prev.length) { const fw = SAVE.fw || {}; const pick = prev.slice().sort((a, b) => ((fw[b[0].slice(0, 40)] || 0) - (fw[a[0].slice(0, 40)] || 0)) || Math.random() - .5).slice(0, 3); await recall(pick, '지난 내용 떠올리기', pool, factStat); }
   /* 2. 배우기: 카메라가 해당 장소를 비추고, 2개씩 배우고 바로 확인 */
-  if (L.facts.length) { const cam = LCAM[M.id] && LCAM[M.id](); if (cam) await showcase(cam[0], cam[1], 2.4);
-    for (let i = 0; i < L.facts.length; i += 2) { const chunk = L.facts.slice(i, i + 2);
-      for (const [f, why, dg, sp] of chunk) await sub(sp || SP, fullFact(f) + (why ? `<br><span class="w">${why}</span>` : ''), { tap: true, dg });
-      await gateQuiz(chunk); }
-    subHide(); await sub(SP, '이제 직접 해 보자! 방금 배운 게 눈앞에서 일어나는 걸 확인해.', { tap: true }); subHide(); }
+  if (L.facts.length) { const cam = LCAM[M.id] && LCAM[M.id](); if (cam) camOverride = { pos: cam[0], look: cam[1] };
+    for (let i = 0; i < L.facts.length; i += 2) { const chunk = L.facts.slice(i, i + 2); await teach(chunk, '배우기 — ' + title, i, L.facts.length); await recall(chunk, '방금 배운 것 확인', pool, factStat); }
+    camOverride = null;
+    await notice('해보기', '이제 직접 해 보면서 방금 배운 과정을 눈으로 확인해요. 왼쪽 위 <b>개념 패널</b>에 지금 하는 일이 실제로 무엇인지 나와요.', '해보기 시작'); }
   /* 3. 해보기 */
   await run(); HUD.obj(''); target(null); stepMission = () => { };
   /* 4. 중간 점검 (교과서 문제) */
   if (L.check && (L.check.ids || L.check.ch)) await checkpoint(L, title);
   /* 5. 정리 + 섞어서 전체 확인 */
-  if (L.facts.length) { await sub(SP, '마지막 확인! 순서 섞어서 4문제.', { tap: true }); await gateQuiz(shuffleA(L.facts).slice(0, 4)); subHide(); await summary(L.facts, title); }
+  if (L.facts.length) { await recall(shuffleA(L.facts).slice(0, 4), '정리 전 마지막 확인 (순서 섞음)', pool, factStat); await summary(L.facts, title); }
   SAVE.reached = Math.max(SAVE.reached, k + 1); save();
 }
 const shuffleA = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
