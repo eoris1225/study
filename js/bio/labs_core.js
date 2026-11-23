@@ -39,14 +39,14 @@ window.LAB = (() => {
       let goals = [], insights = [];
       const gl = side.querySelector('.lgo'), lin = side.querySelector('.lin'), nextB = side.querySelector('.lnext');
       function drawGoals() { const a = goals.findIndex(x => !x.done); gl.innerHTML = goals.map((x, i) => `<li class="${x.done ? 'ok' : i === a ? 'now' : ''}">${x.t}${i === a && x.hint ? `<small>${x.hint}</small>` : ''}</li>`).join(''); }
-      c.goals = list => { goals = list.map(x => Object.assign({ done: false }, x)); drawGoals(); };
+      c.goals = list => { goals = list.slice(0, opt.quick || 99).map(x => Object.assign({ done: false }, x)); drawGoals(); };
       c.isDone = id => { const x = goals.find(q => q.id === id); return !x || x.done; };
       c.active = () => (goals.find(x => !x.done) || {}).id;
       c.setHint = (id, h) => { const x = goals.find(q => q.id === id); if (x) { x.hint = h; drawGoals(); } };
-      c.hit = (id, insight) => { const x = goals.find(q => q.id === id); if (!x || x.done) return false; x.done = true; drawGoals(); beep('good');
+      c.hit = (id, insight) => { const x = goals.find(q => q.id === id); if (!x || x.done) { if (!x && opt.quick) c.flashMsg('좋아!', '#5aff9a'); return false; } x.done = true; drawGoals(); beep('good');
         if (insight) { insights.push(insight); const F = window.LAB_FRIEND; const card = el('div', 'lfind', `${F ? `<div class="lfr" style="--c:${F.col}">${F.html}<b>${F.name}</b></div>` : ''}<i>발견 ${insights.length}</i>${insight}`); lin.prepend(card); requestAnimationFrame(() => card.classList.add('on')); lin.scrollTop = 0; }
         c.flashMsg('발견!', '#ffd23f');
-        if (goals.every(q => q.done)) { nextB.disabled = false; nextB.classList.add('glow'); DONE[L.id] = 1; saveDone(); }
+        if (goals.every(q => q.done)) { nextB.disabled = false; nextB.classList.add('glow'); DONE[L.id] = 1; saveDone(); if (opt.quick) setTimeout(() => close(), 2600); }
         return true; };
       /* ── 조작 패널 ── */
       const ct = side.querySelector('.lct');

@@ -496,7 +496,9 @@ async function studyFlow(k, run) {
   /* 1. 개념 실험실: 3D 세포 속 해당 장소를 배경으로, 챕터 친구가 함께 */
   { const C = CAST[SPK[M.id]] || CAST.mito; window.LAB_FRIEND = { html: face(SPK[M.id], 44), name: C.n, col: C.c };
     const cam = LCAM[M.id] && LCAM[M.id](); if (cam) camOverride = { pos: cam[0], look: cam[1] };
-    for (const id of (LABS_OF[M.id] || [])) await window.LAB.open(id);
+    /* 개념 설명 먼저 (친구 + 그림) → 해당 실험으로 간단히 확인 */
+    if (L.facts.length) await teach(L.facts, '개념 설명 — ' + title, 0, L.facts.length);
+    for (const id of (LABS_OF[M.id] || [])) await window.LAB.open(id, { quick: 2 });
     camOverride = null; }
   /* 2. 3D 현장 체험 */
   await run(); HUD.obj(''); target(null); stepMission = () => { };
