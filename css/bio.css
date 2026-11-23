@@ -201,3 +201,11 @@ body.lesson-on #inv{opacity:.5}
 #lab .lask{background:#071c28ee}
 
 #lesson h3,#menu h1,#menu h3,#lab .lfind i{font-family:'Gowun Batang',serif}
+/* 펜 연습장 (문제 풀 때) */
+#qpad{position:fixed;left:0;top:0;bottom:0;width:52vw;z-index:31;background:#f6efe0;background-image:linear-gradient(#e3d8c2 1px,transparent 1px),linear-gradient(90deg,#e3d8c2 1px,transparent 1px);background-size:22px 22px;border-right:2px solid #2a2118}
+#qpad canvas{position:absolute;inset:0;touch-action:none}
+#qpad .pt{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
+#qpad .pt button{background:#fff;color:#2a2118;border:2px solid #2a2118;border-radius:3px;padding:5px 10px;font-size:14px;box-shadow:2px 2px 0 #2a2118}
+#qpad .pt button.on{background:#2a2118;color:#f6efe0}#qpad .pt [data-c="#c8392b"]{color:#c8392b}#qpad .pt [data-c="#1f4fb8"]{color:#1f4fb8}#qpad .pt [data-c].on{color:#f6efe0}
+body.padon #quiz{left:52vw;place-items:center;padding:10px}body.padon #quiz .qc{width:100%;max-width:100%;min-width:0}
+@media (max-aspect-ratio:1/1){#qpad{width:auto;right:0;bottom:auto;height:44vh;border-right:0;border-bottom:2px solid #2a2118}body.padon #quiz{left:0;top:44vh}}
