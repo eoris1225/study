@@ -201,11 +201,10 @@ body.lesson-on #inv{opacity:.5}
 #lab .lask{background:#071c28ee}
 
 #lesson h3,#menu h1,#menu h3,#lab .lfind i{font-family:'Gowun Batang',serif}
-/* 펜 연습장 (문제 풀 때) */
-#qpad{position:fixed;left:0;top:0;bottom:0;width:52vw;z-index:31;background:#f6efe0;background-image:linear-gradient(#e3d8c2 1px,transparent 1px),linear-gradient(90deg,#e3d8c2 1px,transparent 1px);background-size:22px 22px;border-right:2px solid #2a2118}
-#qpad canvas{position:absolute;inset:0;touch-action:none}
-#qpad .pt{position:absolute;left:10px;top:10px;display:flex;flex-wrap:wrap;gap:6px;z-index:2}
-#qpad .pt button{background:#fff;color:#2a2118;border:2px solid #2a2118;border-radius:3px;padding:5px 10px;font-size:14px;box-shadow:2px 2px 0 #2a2118}
-#qpad .pt button.on{background:#2a2118;color:#f6efe0}#qpad .pt [data-c="#c8392b"]{color:#c8392b}#qpad .pt [data-c="#1f4fb8"]{color:#1f4fb8}#qpad .pt [data-c].on{color:#f6efe0}
-body.padon #quiz{left:52vw;place-items:center;padding:10px}body.padon #quiz .qc{width:100%;max-width:100%;min-width:0}
-@media (max-aspect-ratio:1/1){#qpad{width:auto;right:0;bottom:auto;height:44vh;border-right:0;border-bottom:2px solid #2a2118}body.padon #quiz{left:0;top:44vh}}
+/* 문제 위 필기 */
+#quiz.inkon{place-items:start center}#quiz.inkon .qc{position:relative;touch-action:pan-y}
+.inkcv{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
+#inkbar{position:fixed;right:10px;bottom:10px;z-index:40;display:flex;gap:5px;background:rgba(30,22,14,.92);border:1.5px solid #e8a33d88;border-radius:12px;padding:6px}
+#inkbar button{background:#2e2419;border:1.5px solid #ffffff22;border-radius:8px;padding:5px 9px;font-size:13px;color:#f6ead6}
+#inkbar [data-c]{font-size:18px;line-height:1;padding:4px 8px}#inkbar [data-c="#ffe27a"]{color:#ffe27a}#inkbar [data-c="#ff6a5a"]{color:#ff6a5a}#inkbar [data-c="#7ab8ff"]{color:#7ab8ff}
+#inkbar button.on{border-color:#e8a33d;background:#6a3a1c}
