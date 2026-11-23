@@ -1,18 +1,18 @@
 /* 미토: 세포 속 발전소 — 플레이어 · 아이템 · 미션 스크립트 */
 import * as THREE from 'three';
-import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231356';
-import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231356';
-import { mol, NAME } from './mols.js?v=202611231356';
+import { E, initEngine, initInput, readMove, IN, tween, wait, stepTweens, fly, ease, burst, stepBursts, shake, SHAKE, sfx, label, setQuality } from './engine.js?v=202611231407';
+import { W, buildWorld, stepWorld, POS, MITO, CELL, NUC, mitoConstrain, makeRing, TCA_ST, setHplus, ENZ, CHL, CAL_ST, setLumen, chloroConstrain } from './world.js?v=202611231407';
+import { mol, NAME } from './mols.js?v=202611231407';
 import { stageShow, stageStep, stageHas, stageRender } from './stage3d.js?v=202611231253';
 window.__stage = stageShow; window.__stageHas = stageHas;
-import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231356';
+import { HUD, toast, banner, flash, say, choose as _choose, quiz, pickQs, marker, SAVE, save, chem, guide, teach, recall, summary, notice, meet, speaker, CAST, face } from './ui.js?v=202611231407';
 
 const $ = s =>document.querySelector(s);
 /* 개념 체험 중엔 객관식을 묻지 않는다 — 문제는 챕터 끝 테스트에서만 */
 const choose = async (t, opts, ans) => ans;
 const CHSUM = {
   enz: [['효소 반응', '세포 속 어디서나 (분자 수준)', '체온에서도 반응이 빨리 일어나게', '활성화 에너지 ↓, 반응열 그대로'], ['기질 특이성', '효소의 활성 부위', '모양이 맞는 기질만 붙어서', '효소마다 하는 일이 정해짐'], ['온도·pH 영향', '효소(단백질)', '단백질 모양이 변해서', '최적 온도·pH에서 최대, 너무 뜨거우면 변성']],
-  intro: [['ATP ⇄ ADP + Pᵢ', '세포 전체', '바로 쓸 수 있는 에너지 화폐가 필요해서', '끝 인산이 떨어질 때 에너지 방출'], ['산화·환원', '세포 (주로 마이토콘드리아)', '포도당의 전자를 떼어 운반해야 해서', 'NAD⁺ → NADH (환원)'], ['세포호흡', '세포질 → 마이토콘드리아', '포도당 에너지를 단계별로 뽑으려고', 'ATP 최대 32']],
+  intro: [['ATP ⇄ ADP + Pᵢ', '세포 전체', '포도당 에너지는 한 덩어리가 너무 커서, 세포가 바로 꺼내 쓰기 좋은 작은 단위(ATP)로 나눠 둬야 해서', '끝 인산이 떨어질 때 에너지 방출'], ['산화·환원', '세포 (주로 마이토콘드리아)', '포도당의 에너지는 <b>전자</b> 속에 들어 있음 → 에너지를 꺼내려면 전자를 에너지가 낮은 곳(최종: O₂)으로 옮겨야 함 → 그래서 전자를 떼어 냄 (= 산화)', 'NAD⁺ → NADH (환원)'], ['세포호흡', '세포질 → 마이토콘드리아', '전자를 O₂에 한 번에 주면 불(연소)처럼 열로 다 날아감 → 조금씩 나눠 옮기며 그때마다 ATP로 저장하려고', 'ATP 최대 32']],
   gly: [['해당 과정', '세포질', '포도당을 반으로 쪼개 에너지를 조금 얻으려고 (O₂ 불필요)', '피루브산 2 + 2NADH + 순 2ATP']],
   pyr: [['피루브산 산화', '마이토콘드리아 기질', 'TCA 회로에 넣을 아세틸 CoA를 만들려고', 'CO₂ 1 · NADH 1 (피루브산 1개당), ATP 0']],
   tca: [['TCA 회로', '마이토콘드리아 기질', '탄소를 CO₂로 다 떼며 전자를 최대한 모으려고', '1바퀴: CO₂ 2 · NADH 3 · FADH₂ 1 · ATP 1']],
