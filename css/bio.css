@@ -237,3 +237,13 @@ body.lesson-on #inv{opacity:.5}
 /* 교과서 사진: 항상 카드 폭에 꽉 차게 (세로로 긴 문제는 스크롤) */
 .qimg img{width:100%;max-width:none;max-height:none;height:auto}
 .qimg.big{display:block;overflow:auto;padding:12px;text-align:center}.qimg.big img{width:min(100%,1100px);max-width:none;max-height:none;margin:0 auto}
+/* 친구들: 깜빡임 · 둥실 · 손짓 */
+.pf{overflow:visible}.pf .pfb{transform-box:fill-box;transform-origin:50% 90%;animation:pfBob 2.4s ease-in-out infinite}
+.pf .eye{transform-box:fill-box;transform-origin:center;animation:pfBlink 3.7s infinite}
+.pf .arm{transform-box:fill-box}.pf .arm.l{transform-origin:100% 100%;animation:pfWaveL 1.6s ease-in-out infinite}.pf .arm.r{transform-origin:0% 100%;animation:pfWaveR 1.9s ease-in-out infinite}
+.pf.say .pfb{animation:pfHop .55s ease-out,pfBob 2.4s ease-in-out .55s infinite}.pf.say .arm.r{animation:pfPoint .5s ease-in-out 3}
+@keyframes pfBob{50%{transform:translateY(-3px) rotate(2deg)}}
+@keyframes pfBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+@keyframes pfWaveL{50%{transform:rotate(18deg)}}@keyframes pfWaveR{50%{transform:rotate(-14deg)}}
+@keyframes pfPoint{50%{transform:rotate(-55deg)}}
+@keyframes pfHop{30%{transform:translateY(-10px) scale(1.08,.94)}60%{transform:translateY(0) scale(.95,1.06)}}

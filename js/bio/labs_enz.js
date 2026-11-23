@@ -94,11 +94,11 @@
     function spawn(k, i) { const a = c.rnd(0, 6.28), o = c.draggable({ x: 0, y: 0, r: 30, k, vx: c.rnd(-30, 30), vy: c.rnd(-30, 30),
         draw: (x, y, o) => { shape(o.k, x, y, 22, COL[o.k], '#04101a'); c.txt(o.k === 'sq' ? '설탕 (기질)' : '다른 기질', x, y + 36, 11, '#cfe'); },
         onDrop: (x, y) => { if (c.dist(x, y, SX, SY) > 70) return false; if (busy > 0) { c.float('효소가 일하는 중', x, y - 30, '#9fe'); return false; }
-          if (o.k !== 'sq') { wrong++; c.float('모양이 안 맞아 결합 X', x, y - 34, '#ff7a6a'); c.fx(SX, SY, '#ff5a5a', 10); c.hit('wrong', '효소는 <b>활성 부위</b>와 입체 구조가 맞는 기질과만 결합해요 = <b>기질 특이성</b> (열쇠와 자물쇠). 그래서 효소마다 하는 일이 정해져 있어요.'); return false; }
+          if (o.k !== 'sq') { wrong++; c.float('모양이 안 맞아 결합 X', x, y - 34, '#ff7a6a'); c.fx(SX, SY, '#ff5a5a', 10); c.shake(12); c.boom(['안 맞아!!', '퉤!', '거부!'][wrong % 3], SX, SY - 80, '#ff6a5a', 46, .9, .12); c.hit('wrong', '효소는 <b>활성 부위</b>와 입체 구조가 맞는 기질과만 결합해요 = <b>기질 특이성</b> (열쇠와 자물쇠). 그래서 효소마다 하는 일이 정해져 있어요.'); return false; }
           bind(o); return true; } });
       const side = i % 4; o.x = o.hx = side === 0 ? 60 : side === 1 ? 940 : c.rnd(80, 920); o.y = o.hy = side === 2 ? 70 : side === 3 ? 560 : c.rnd(80, 540); subs.push(o); return o; }
     SH.forEach(k => { spawn(k, 0); spawn(k, 1); spawn(k, 2); });
-    function bind(o) { o.off = true; c.remove(o); subs.splice(subs.indexOf(o), 1); bound = { k: o.k, t: 0 }; busy = 1.3; c.beep('ok');
+    function bind(o) { c.boom('딸깍!', SX, SY - 70, '#5affd0', 52, .9); c.shake(8); o.off = true; c.remove(o); subs.splice(subs.indexOf(o), 1); bound = { k: o.k, t: 0 }; busy = 1.3; c.beep('ok');
       c.tween(1.3, k => { bound.t = k; }, () => { c.fx(SX, SY - 10, '#ffd23f', 24); bound = null; done++; c.float('생성물 2개!', SX, SY - 60);
         prods.push({ x: SX - 10, y: SY - 20, vx: -120, vy: -80, t: 0, n: '포도당' }, { x: SX + 10, y: SY - 20, vx: 120, vy: -80, t: 0, n: '과당' });
         if (done === 1) c.hit('fit', '맞는 기질이 들어가면 <b>효소·기질 복합체</b>가 되고, 기질에 변화가 일어나 <b>생성물</b>로 바뀐 뒤 효소에서 분리돼요. 예: <b>설탕 + 물 → 포도당 + 과당</b>.');

@@ -96,7 +96,7 @@
     const lb = c.seg('¹⁸O 표지 (루벤)', [['none', '없음'], ['w', '물(H₂¹⁸O)'], ['co2', 'CO₂(C¹⁸O₂)']], 'none', v => { S.lab = v; });
     const water = c.draggable({ x: 80, y: 470, r: 30, draw: (x, y) => { c.circle(x, y, 22, S.lab === 'w' ? '#ff6a9a' : '#5ac8ff', '#04101a'); c.txt('H₂O', x, y, 12, '#04101a', 'center', 900); },
       onDrop: (x, y) => { if (c.dist(x, y, N.p680[0], N.p680[1]) > 70) return false; if (S.e680 >= 1) { c.float('P680에 아직 전자가 있어요', x, y - 30, '#9fe'); return false; }
-        S.e680 += 2; S.lumen += 2; S.half++; c.fx(N.p680[0], N.p680[1], '#5ac8ff', 16); c.float('H₂O → ½O₂ + 2H⁺ + 2e⁻', N.p680[0] + 60, N.p680[1] - 40, '#8fe0ff');
+        c.boom('콰직! 물 분해', N.p680[0], N.p680[1] - 60, '#7ab8ff', 30, .9); c.shake(6); S.e680 += 2; S.lumen += 2; S.half++; c.fx(N.p680[0], N.p680[1], '#5ac8ff', 16); c.float('H₂O → ½O₂ + 2H⁺ + 2e⁻', N.p680[0] + 60, N.p680[1] - 40, '#8fe0ff');
         if (S.half % 2 === 0) { const lab = S.lab === 'w'; S.o2++; if (S.lab === 'w') S.o2w++; if (S.lab === 'co2') S.o2c++; bubs.push({ x: N.p680[0], y: N.p680[1], lab, t: 0 }); }
         c.hit('water', '빛을 받은 <b>P680</b>이 전자를 내보내면 빈자리는 <b>물이 쪼개져서</b> 채워요 = <b>물의 광분해</b>: 2H₂O → <b>O₂</b> + 4H⁺ + 4e⁻. 광합성에서 나오는 O₂는 여기서!');
         if (S.hill && S.o2 && S.fe > 0) c.hit('hill', '<b>힐 실험</b>: CO₂가 없어도 전자 수용체(옥살산 철(Ⅲ))만 있으면 빛을 받아 <b>O₂가 발생</b> → O₂ 발생은 명반응(물의 광분해)에서 일어나요.');

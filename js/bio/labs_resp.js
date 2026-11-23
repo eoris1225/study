@@ -9,15 +9,19 @@
     const SLOT = { x: 540, y: 300 };
     let attached = true, charge = 0, uses = 0, tried = false, flex = 0, atpCount = 0;
     const pi = c.draggable({ x: SLOT.x, y: SLOT.y, r: 26, draw: (x, y) => { c.ball(x, y, 24, '#ff9a3c'); c.txt(attached ? 'P' : 'Pᵢ', x, y + 1, 16, '#04101a', 'center', 900); },
+      onMove: (x, y) => { if (attached && c.dist(x, y, SLOT.x, SLOT.y) > 170) snap(x, y); },
       onDrop: (x, y) => { const d = c.dist(x, y, SLOT.x, SLOT.y);
-        if (attached) { if (d < 70) return false; attached = false; pi.hx = x; pi.hy = y; uses++; flex = 1; c.fx(SLOT.x, SLOT.y, '#ffd23f', 30); c.float('에너지 방출!', SLOT.x + 40, SLOT.y - 50); bolt = 1;
-          c.hit('release', 'ATP = <b>아데노신 + 인산 3개</b>. 끝의 인산이 떨어져 <b>ADP + Pᵢ</b>가 될 때 에너지가 나와 근육 수축 같은 생명 활동에 쓰여요.');
-          if (uses >= 3) c.hit('cycle', 'ATP는 세포의 <b>에너지 화폐</b>. 세포 속에 조금만 있고 쓰자마자 다시 만들어요 — <b>ATP ⇄ ADP + Pᵢ</b> 순환.'); return true; }
+        if (attached) { if (d > 110) { snap(x, y); return true; } if (d > 25) { c.boom('띠용~', SLOT.x, SLOT.y - 70, '#9fe', 34, .8, .1); c.beep('bad'); } return false; }
         if (d > 60) { pi.hx = x; pi.hy = y; return true; }
         if (charge <= 0) { tried = true; c.float('붙지 않아요 — 에너지가 필요해!', SLOT.x, SLOT.y - 60, '#ff8a6a'); c.tip('오른쪽 아래 포도당을 「세포호흡」 화로에 넣어 에너지를 만들어요'); pi.hx = SLOT.x + 90; pi.hy = SLOT.y + 90; return false; }
         charge--; attached = true; pi.hx = SLOT.x; pi.hy = SLOT.y; pi.x = SLOT.x; pi.y = SLOT.y; atpCount++; c.fx(SLOT.x, SLOT.y, '#ff9a3c', 20); c.float('ATP 재충전', SLOT.x, SLOT.y - 50, '#ff9a3c');
         c.hit('recharge', 'ADP + Pᵢ → ATP는 에너지가 <b>있어야</b> 일어나요. 그 에너지를 주는 게 <b>세포호흡</b>: 포도당 같은 유기물을 분해해 생명 활동에 쓸 <b>ATP를 합성</b>.'); return true; } });
-    let bolt = 0;
+    let bolt = 0, cheer = 0;
+    function snap(x, y) { attached = false; pi.hx = x; pi.hy = y; uses++; flex = 1; bolt = 1; cheer = 1.6;
+      c.shake(26); c.flash('#fff6c0', .9); c.beep('good'); c.fx(512, 300, '#ffd23f', 70, 420); c.fx(512, 300, '#ffffff', 30, 260);
+      c.boom('뚝!!!', 512, 230, '#ff5a3a', 96, 1.1, -.15); setTimeout(() => c.boom('에너지 방출!!', 700, 140, '#ffd23f', 44, 1.3, .06), 250);
+      c.hit('release', 'ATP = <b>아데노신 + 인산 3개</b>. 끝의 인산이 떨어져 <b>ADP + Pᵢ</b>가 될 때 에너지가 나와 근육 수축 같은 생명 활동에 쓰여요.');
+      if (uses >= 3) c.hit('cycle', 'ATP는 세포의 <b>에너지 화폐</b>. 세포 속에 조금만 있고 쓰자마자 다시 만들어요 — <b>ATP ⇄ ADP + Pᵢ</b> 순환.'); }
     const glu = []; const mkG = i => glu.push(c.draggable({ x: 640 + i * 70, y: 540, r: 26, draw: (x, y) => { c.poly(Array.from({ length: 6 }, (_, k) => [x + Math.cos(k * 1.047) * 22, y + Math.sin(k * 1.047) * 22]), '#ffb3d0', '#04101a'); c.txt('포도당', x, y, 10, '#04101a', 'center', 900); },
       onDrop: (x, y) => { if (c.dist(x, y, 880, 430) > 80) return false; const o = glu[i]; o.off = true; c.remove(o); charge++; c.fx(880, 430, '#ff6a3a', 30); c.float('에너지 생김', 880, 370, '#ff9a3c'); return true; } }));
     for (let i = 0; i < 3; i++) mkG(i);
@@ -34,11 +38,19 @@
       c.line([[240, 300], [262, 300]], '#cfe', 4); c.line([[340, 300], [396, 300]], '#cfe', 4);
       c.ball(420, 300, 24, '#ff9a3c'); c.txt('P', 420, 301, 16, '#04101a', 'center', 900); c.line([[444, 300], [456, 300]], '#cfe', 4);
       c.ball(480, 300, 24, '#ff9a3c'); c.txt('P', 480, 301, 16, '#04101a', 'center', 900);
-      if (attached && !pi.held) { const gl = .5 + .5 * Math.sin(t * 5); c.line([[504, 300], [516, 300]], `rgba(255,210,63,${.5 + gl * .5})`, 7); c.txt('고에너지 인산 결합', 510, 252, 13, '#ffd23f'); c.arrow(510, 262, 510, 286, '#ffd23f', 2, 8); }
+      if (attached) { const g = c.g, held = pi.held, ex = held ? pi.x : 540, ey = held ? pi.y : 300, st = held ? c.clamp(c.dist(ex, ey, SLOT.x, SLOT.y) / 170, 0, 1) : 0;
+        /* 번쩍번쩍 고에너지 결합: 후광 + 지글지글 번개 + 반짝이 */
+        const gl = .5 + .5 * Math.sin(t * 9); const hal = g.createRadialGradient(510, 300, 2, 510, 300, 70 + gl * 18); hal.addColorStop(0, `rgba(255,240,140,${.75 + st * .25})`); hal.addColorStop(1, 'rgba(255,200,40,0)'); g.fillStyle = hal; g.beginPath(); g.arc(510, 300, 90, 0, 6.3); g.fill();
+        const zig = (col, w, amp) => { const pts = []; for (let i = 0; i <= 8; i++) { const u = i / 8; pts.push([c.lerp(504, ex - 22, u) + (i % 8 ? c.rnd(-2, 2) : 0), c.lerp(300, ey, u) + (i % 8 ? c.rnd(-amp, amp) : 0)]); } c.line(pts, col, w); };
+        zig(st > .6 ? '#ff5a3a' : '#ffd23f', 9 - st * 6, 5 + st * 10); zig('#ffffff', 3 - st * 2, 4 + st * 8);
+        for (let i = 0; i < 6; i++) { const a = t * 3 + i * 1.047, r = 34 + Math.sin(t * 7 + i) * 6; const sx = 510 + Math.cos(a) * r, sy = 300 + Math.sin(a) * r * .7; c.txt('✦', sx, sy, 12 + 6 * Math.abs(Math.sin(t * 6 + i)), i % 2 ? '#fff' : '#ffe27a', 'center', 900); }
+        if (!held) { c.label('⚡ 고에너지 인산 결합 ⚡', 510, 230 + Math.sin(t * 4) * 3, '#ffd23f', 15); c.arrow(510, 246, 510, 280, '#ffd23f', 2, 8); }
+        else { /* 끌면 늘어나며 비명 */ c.shake(2 + st * 9); const n = 2 + Math.floor(st * 12); c.boom('으' + '어'.repeat(n) + '억' + (st > .7 ? '!!' : ''), 470, 200 - st * 20, st > .7 ? '#ff5a3a' : '#ffe9a0', 26 + st * 22, .09, -.05 + c.rnd(-.03, .03));
+          if (st > .5) for (let i = 0; i < 2; i++) c.txt('💦', 480 + c.rnd(-40, 40), 260 + c.rnd(-20, 10), 18); } }
       c.line([[150, 360], [150, 372], [340, 372], [340, 360]], '#9bc', 2); c.txt('아데노신', 245, 388, 13, '#9bc');
       c.label(attached ? 'ATP (인산 3개)' : 'ADP (인산 2개)  +  Pᵢ', 350, 190, attached ? '#ffd23f' : '#ff9a3c', 20);
       /* 근육 */
-      const k = Math.sin(flex * Math.PI); const L = 220 - k * 70;
+      const k = Math.sin(flex * Math.PI); const L = 220 - k * 70; cheer = Math.max(0, cheer - dt); if (cheer > .4 && cheer < 1.5 && Math.random() < dt * 4) c.boom(['으랏차!!', '불끈!', '파워!!'][Math.floor(Math.random() * 3)], 820 + c.rnd(-60, 60), 110, '#ff8aa8', 34, .7, c.rnd(-.2, .2));
       c.rr(820 - L / 2, 160, L, 50, 25, '#d0506a', '#ff8aa8', 2); c.txt('근육 섬유', 820, 135, 14, '#ffb3c8'); if (k > .1) c.txt('수축!', 820, 185, 18, '#fff');
       if (bolt > 0) { c.g.globalAlpha = bolt; c.line([[SLOT.x + 20, SLOT.y - 20], [640, 230], [700, 250], [760, 200]], '#ffd23f', 5); c.g.globalAlpha = 1; }
       /* 화로 */
@@ -173,7 +185,7 @@
     c.readout(() => `ATP 사용 <b>${used}</b> · 생성 <b>${made}</b> · 순 <b>${made - used}</b><br>NADH <b>${nadh}</b> · 산소 사용 <b>0</b><br>탄소: ${M.map(m => 'C' + m.C).join(' + ')}`);
     c.onDown = (x, y) => { if (step === 1) { swipe = { x, y }; return true; } };
     c.onUp = (x, y) => { if (step === 1 && swipe) { const m = M[0]; if (Math.abs((swipe.x + x) / 2 - m.x) < 60 && Math.min(swipe.y, y) < m.y - 30 && Math.max(swipe.y, y) > m.y + 30) doCut(); else c.float('사슬 가운데를 세로로 그어요', x, y, '#9fe'); } swipe = null; };
-    function doCut() { step = 2; const m = M[0]; M.length = 0; M.push({ C: 3, P: ['L'], nad: false, y: 300, x: 500 }, { C: 3, P: ['R'], nad: false, y: 300, x: 500 }); c.beep('ok'); c.tween(.7, k => { M[0].y = 300 - k * 110; M[1].y = 300 + k * 90; }, () => c.hit('split', '과당 2인산(C₆)이 쪼개져 <b>PGAL(C₃) 2분자</b>가 돼요. 이제부터는 모든 단계가 <b>2번씩</b> 일어나요.')); }
+    function doCut() { c.boom('싹둑!!', 500, 220, '#ff8aa8', 70, 1); c.shake(14); c.flash('#fff', .5); step = 2; const m = M[0]; M.length = 0; M.push({ C: 3, P: ['L'], nad: false, y: 300, x: 500 }, { C: 3, P: ['R'], nad: false, y: 300, x: 500 }); c.beep('ok'); c.tween(.7, k => { M[0].y = 300 - k * 110; M[1].y = 300 + k * 90; }, () => c.hit('split', '과당 2인산(C₆)이 쪼개져 <b>PGAL(C₃) 2분자</b>가 돼요. 이제부터는 모든 단계가 <b>2번씩</b> 일어나요.')); }
     c.loop((dt, t) => {
       c.rr(10, 60, 980, 440, 20, '#1a2a20', null); c.txt('세포질', 60, 84, 15, '#ffb3d0');
       M.forEach(m => { const w = m.C * 60; for (let i = 0; i < m.C; i++) { const x = m.x - w / 2 + 30 + i * 60; if (i) c.line([[x - 60, m.y], [x, m.y]], '#cfe', 4); c.ball(x, m.y, 22, '#404850', 'C', '#fff'); }
@@ -198,7 +210,7 @@
     function drawMol(x, y, n) { for (let i = 0; i < n; i++) { const cx = x - (n - 1) * 30 + i * 60; if (i) c.line([[cx - 60, y], [cx, y]], '#cfe', 4); c.ball(cx, y, 22, '#404850', 'C', '#fff'); } }
     c.onDown = (x, y) => { if (step === 0 && inMat && C3 === 3 && c.dist(x, y, mx + 60, 300) < 34) { cTake = { x, y }; return true; } };
     c.onMove = (x, y) => { if (cTake) { cTake.x = x; cTake.y = y; } };
-    c.onUp = () => { if (cTake) { if (c.dist(cTake.x, cTake.y, mx + 60, 300) > 80) { C3 = 2; co2++; step = 1; bub.push({ x: cTake.x, y: cTake.y, t: 0 }); c.beep('ok'); c.hit('co2', '피루브산에서 <b>CO₂</b>가 떨어져 나가요 = <b>탈탄산 반응</b> (탈탄산 효소). 탄소 3개 → 2개.'); } cTake = null; } };
+    c.onUp = () => { if (cTake) { if (c.dist(cTake.x, cTake.y, mx + 60, 300) > 80) { C3 = 2; co2++; step = 1; c.boom('뽁!', cTake.x, cTake.y - 40, '#e0e8f0', 54, .9); c.shake(10); bub.push({ x: cTake.x, y: cTake.y, t: 0 }); c.beep('ok'); c.hit('co2', '피루브산에서 <b>CO₂</b>가 떨어져 나가요 = <b>탈탄산 반응</b> (탈탄산 효소). 탄소 3개 → 2개.'); } cTake = null; } };
     const bub = [];
     const tNAD = c.draggable({ x: 820, y: 530, r: 30, draw: (x, y) => tok(c, x, y, 'NAD⁺', '#8fb8ff', 28), onDrop: (x, y) => { if (step !== 1 || c.dist(x, y, mx, 300) > 90) return false; nad = true; nadh++; step = 2; tNAD.off = true; c.remove(tNAD); c.float('NAD⁺ → NADH', mx, 230, '#8fc8ff'); c.hit('nad', '동시에 수소가 떨어져 <b>NAD⁺ → NADH</b> (산화). 하지만 이 단계에선 <b>ATP가 생기지 않아요</b>.'); return true; } });
     const tCoA = c.draggable({ x: 920, y: 530, r: 30, draw: (x, y) => tok(c, x, y, 'CoA', '#c08aff', 28), onDrop: (x, y) => { if (step !== 2 || c.dist(x, y, mx, 300) > 90) return false; coa = true; step = 3; tCoA.off = true; c.remove(tCoA);
@@ -254,7 +266,7 @@
     c.onMove = (x, y) => { if (rot == null) return; let a = Math.atan2(y - CY, x - CX) * 180 / Math.PI, d = a - rot; if (d > 180) d -= 360; if (d < -180) d += 360; rot = a; if (d > 0) advance(d); };
     c.onUp = () => { rot = null; };
     function advance(d) { const nx = ST[si + 1]; if (!nx) return; const lim = nx.a; const miss = nx.need.filter(k => !given[k]);
-      if (ang + d >= lim - 14 && miss.length) { ang = Math.max(ang, lim - 14); if (jammed < c.t - 1) { c.float(`멈춤! ${miss.map(k => ({ NAD: 'NAD⁺', FAD: 'FAD', ADP: 'ADP' })[k]).join(', ')} 필요`, ...pos(lim), '#ff8a6a'); c.beep('bad'); } jammed = c.t; c.hit('jam', 'TCA 회로는 <b>NAD⁺·FAD</b>가 있어야 돌아가요. NAD⁺는 전자전달계가 NADH의 전자를 O₂에 넘겨야 다시 생겨요 → <b>산소가 없으면 TCA 회로도 멈춰요</b>.'); if (miss.includes('NAD') && nadPool === 0) c.tip('NAD⁺가 하나도 없어요! 패널에서 받아와요'); return; }
+      if (ang + d >= lim - 14 && miss.length) { ang = Math.max(ang, lim - 14); if (jammed < c.t - 1) { c.float(`멈춤! ${miss.map(k => ({ NAD: 'NAD⁺', FAD: 'FAD', ADP: 'ADP' })[k]).join(', ')} 필요`, ...pos(lim), '#ff8a6a'); c.beep('bad'); } if (jammed < c.t - 1.5) { c.boom('끼이익!!', CX, CY - 40, '#ff6a5a', 50, 1); c.shake(14); } jammed = c.t; c.hit('jam', 'TCA 회로는 <b>NAD⁺·FAD</b>가 있어야 돌아가요. NAD⁺는 전자전달계가 NADH의 전자를 O₂에 넘겨야 다시 생겨요 → <b>산소가 없으면 TCA 회로도 멈춰요</b>.'); if (miss.includes('NAD') && nadPool === 0) c.tip('NAD⁺가 하나도 없어요! 패널에서 받아와요'); return; }
       ang += d; if (ang >= lim) { ang = lim; si++; given = {}; (nx.out || []).forEach((o, i) => { const k = o.replace('₂', '2'); tally[k === 'CO2' ? 'CO2' : k]++; const p = pos(lim); c.float(o, p[0] + 40, p[1] - 20 - i * 24, o === 'CO₂' ? '#c0c8d0' : o === 'ATP' ? '#ffd23f' : '#8fc8ff'); }); c.beep('pop');
         if (si === ST.length - 1) { turns = 1; c.hit('turn', '한 바퀴: <b>CO₂ 2 · NADH 3 · FADH₂ 1 · ATP 1</b> (기질 수준 인산화). 탄소 C₆ → C₅ → C₄로 줄며 CO₂가 나가고, <b>옥살아세트산이 다시 만들어져</b> 회로가 계속 돌아요.');
           sumB = c.button('포도당 1개분 결산 (2바퀴)', () => c.hit('glu', '피루브산 1개 완전 분해: 3CO₂ · 4NADH · 1FADH₂ · 1ATP. 포도당 1개(피루브산 2개)면 <b>CO₂ 6</b> (피루브산 산화 2 + TCA 4) · NADH 8 · FADH₂ 2 · ATP 2.')); } } }
@@ -369,7 +381,7 @@
     const B = {};
     Object.entries(IN).forEach(([k, [n]]) => { B[k] = c.button(n, () => apply(k), 'warn'); });
     c.button('해독 (정상으로)', () => apply(null));
-    function apply(k) { cur = k; since = 0; S.cn = k === 'cn'; S.oligo = k === 'oligo'; S.dnp = k === 'dnp'; Object.entries(B).forEach(([q, b]) => b.classList.toggle('on', q === k)); if (!k) { S.pairs.length = 0; S.occ = {}; } }
+    function apply(k) { if (k) { c.boom({ cn: '☠ 으악!!', oligo: '⛔ 꽉 막힘!', dnp: '💦 줄줄 샌다!' }[k], 500, 200, k === 'cn' ? '#ff5a5a' : '#ffd23f', 54, 1.2); c.shake(16); c.flash(k === 'cn' ? '#ff3030' : '#fff', .4); } cur = k; since = 0; S.cn = k === 'cn'; S.oligo = k === 'oligo'; S.dnp = k === 'dnp'; Object.entries(B).forEach(([q, b]) => b.classList.toggle('on', q === k)); if (!k) { S.pairs.length = 0; S.occ = {}; } }
     c.goals([
       { id: 'base', t: '정상 상태의 계기판(O₂ 소비 · ATP · 열) 지켜보기', hint: '5초 기다려요' },
       { id: 'cn', t: '<b>사이안화물</b>을 넣고 계기판 변화 보기' },
