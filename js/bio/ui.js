@@ -127,6 +127,18 @@ export const CAST = {
 export const face = (k, sz = 56) => { const C = CAST[k] || CAST.mito; return `<svg class="pf" width="${sz}" height="${sz}" viewBox="0 0 64 64" style="--c:${C.c}">${C.svg}</svg>`; };
 let SPEAK = 'mito'; export function speaker(k) { SPEAK = k || 'mito'; }
 
+/* ── 한 줄 자막(화면을 덮지 않음) + 작은 그림 창 ── */
+export const fullFact = f => full(f), blankFact = f => blankOf(f), ansFact = f => ansOf(f);
+export function sub(sp, html, o = {}) {
+  const b = $('#sub'), k = CAST[sp] ? sp : 'mito', C = CAST[k]; b.hidden = false; b.className = o.cls || '';
+  b.innerHTML = `${face(k, 42)}<div><i style="color:${C.c}">${C.n}</i><p>${chemHTML(html)}</p>${o.tap ? '<small>탭해서 계속 ▸</small>' : ''}</div>`;
+  const pip = $('#pip'); if (o.dg && window.BDIAG && window.BDIAG[o.dg]) { pip.hidden = false; pip.classList.remove('big'); pip.innerHTML = window.BDIAG[o.dg] + '<small class="pt">그림 누르면 크게</small>'; pip.onclick = () => pip.classList.toggle('big'); } else if (!o.keepPip) pip.hidden = true;
+  if (!o.tap) return Promise.resolve();
+  return new Promise(res => { const go = e => { if (e && e.stopPropagation) e.stopPropagation(); b.onclick = null; removeEventListener('keydown', kd); sfx('tick'); res(); };
+    const kd = e => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); go(); } }; setTimeout(() => { b.onclick = go; addEventListener('keydown', kd); }, 250); });
+}
+export function subHide() { $('#sub').hidden = true; $('#pip').hidden = true; }
+
 /* ── 흐름형 학습: 개념 카드 → 바로 빈칸 확인 ── */
 const full = f => chemHTML(f.replace(/\[([^\]]+)\]/g, '<b>$1</b>'));
 const blankOf = f => chemHTML(f.replace(/\[([^\]]+)\]/g, '<span class="lb">( ? )</span>'));

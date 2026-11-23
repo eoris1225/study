@@ -168,3 +168,12 @@ sub,sup{font-size:.7em}
 body.lesson-on #joy,body.lesson-on #btns,body.lesson-on #guide{display:none}
 body.lesson-on #inv{opacity:.5}
 #lesson .lf{font-size:18px}
+
+#sub{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(720px,calc(100vw - 400px));min-width:min(94vw,440px);display:flex;gap:10px;align-items:flex-start;background:rgba(4,18,28,.86);border:1.5px solid #9fe8;border-radius:16px;padding:8px 14px;z-index:21;cursor:pointer;animation:tin .2s;user-select:text;-webkit-user-select:text}
+#sub i{font-style:normal;font-weight:900;font-size:13px}#sub p{margin:1px 0;font-size:16.5px;line-height:1.5}#sub b{color:#ffd23f}#sub .lb{color:#ffd23f;font-weight:900}#sub .w{font-size:14px;color:#cfe}#sub small{opacity:.55;font-size:11px}
+#sub.ok{border-color:#5aff9a;background:rgba(10,50,30,.9)}#sub.no{border-color:#ff5a7a;background:rgba(60,10,20,.9)}#sub.ask{border-color:#ffd23f}
+#sub .pf{flex:none}
+#pip{position:fixed;left:12px;top:66px;width:min(360px,36vw);max-height:44vh;overflow:auto;background:rgba(4,18,28,.9);border:1.5px solid #9fe6;border-radius:12px;padding:4px 8px;z-index:20;cursor:zoom-in}
+#pip.big{width:min(640px,94vw);max-height:84vh;z-index:24;cursor:zoom-out}#pip .cap{font-size:12.5px;line-height:1.45;margin:2px}#pip.big .cap{font-size:15px}#pip .pt{display:block;text-align:right;opacity:.5;font-size:10px}
+#pip .dt{font-size:12px}#pip.big .dt{font-size:14px}
+@media (max-width:760px){#sub{width:94vw;min-width:0;bottom:150px}#pip{width:60vw;top:110px}}
