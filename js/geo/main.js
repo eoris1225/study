@@ -177,6 +177,14 @@ function figDrag(fk) { const box = body.querySelector(`.fig[data-fk="${fk}"]`); 
   const fit = () => { const s = svg(); if (!s) return; if (!vb0) vb0 = s.getAttribute('viewBox').split(/[ ,]+/).map(Number); const w = vb0[2] / z, h = vb0[3] / z; s.setAttribute('viewBox', `${vb0[0] + (vb0[2] - w) / 2 + px} ${vb0[1] + (vb0[3] - h) / 2 + py} ${w} ${h}`); };
   const redraw = () => { box.innerHTML = window.GEOFIG[fk](); fit(); };
   fit(); box.style.touchAction = 'none';
+  /* 끌기가 안 되는 기기용 버튼 */
+  const bar = document.createElement('div'); bar.className = 'figbar';
+  bar.innerHTML = (is3d ? '<button data-r="-1">↺ 왼쪽</button><button data-r="1">↻ 오른쪽</button><button data-t="-1">⤒ 위에서</button><button data-t="1">⤓ 아래에서</button>' : '<button data-mx="1">◀</button><button data-mx="-1">▶</button><button data-my="1">▲</button><button data-my="-1">▼</button>') + '<button data-z="1">＋</button><button data-z="-1">－</button><button data-0>⟲</button>';
+  box.after(bar); const hint = bar.nextElementSibling; if (hint && hint.classList.contains('fighint')) hint.remove();
+  bar.onclick = e => { const b = e.target.closest('button'); if (!b) return; const d = b.dataset;
+    if (d.r) { GEOVIEW.yaw += d.r * .35; redraw(); } if (d.t) { GEOVIEW.pitch = Math.max(-1.2, Math.min(1.2, GEOVIEW.pitch + d.t * .25)); redraw(); }
+    if (d.mx) { px -= d.mx * vb0[2] / z * .15; fit(); } if (d.my) { py -= d.my * vb0[3] / z * .15; fit(); } if (d.z) { z = Math.max(.5, Math.min(5, z * (d.z > 0 ? 1.25 : .8))); fit(); }
+    if (d[0] !== undefined) { GEOVIEW.yaw = GEOVIEW.pitch = 0; z = 1; px = py = 0; redraw(); } };
   box.addEventListener('pointerdown', e => { box.setPointerCapture(e.pointerId); P.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; g = null;
     const now = Date.now(); if (P.size === 1 && now - lastTap < 300) { GEOVIEW.yaw = GEOVIEW.pitch = 0; z = 1; px = py = 0; vb0 = null; box.innerHTML = window.GEOFIG[fk](); fit(); } lastTap = now; });
   box.addEventListener('pointermove', e => { if (!P.has(e.pointerId)) return; const pr = P.get(e.pointerId); P.set(e.pointerId, [e.clientX, e.clientY]); const dx = e.clientX - pr[0], dy = e.clientY - pr[1]; moved += Math.abs(dx) + Math.abs(dy);
