@@ -249,3 +249,10 @@ body.lesson-on #inv{opacity:.5}
 @keyframes pfHop{30%{transform:translateY(-10px) scale(1.08,.94)}60%{transform:translateY(0) scale(.95,1.06)}}
 
 .sumt{width:100%;border-collapse:collapse;font-size:14.5px;line-height:1.5;margin:4px 0}.sumt th{background:#3a2610;color:#ffd23f;padding:6px;text-align:left}.sumt td{border-top:1px solid #e8a33d44;padding:6px;vertical-align:top}.sumt td:first-child{font-weight:700;color:#f0c27a}
+
+/* 필기 모드: 카드 자체는 늘어나고 바깥(#quiz)이 스크롤 → 글씨가 내용과 같이 움직임 */
+#quiz.inkon .qc{max-height:none;overflow:visible;margin-bottom:40px}
+#quiz.inkon{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#quiz .qc>.inkcv{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
+#quiz .qimg img{cursor:default}
+.qimg .zbtn{margin-left:8px;font:700 12px inherit;padding:4px 10px;border-radius:8px;border:1px solid #e8a33d;background:#2a2118;color:#ffe9c4;opacity:1}

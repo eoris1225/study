@@ -1,5 +1,5 @@
 /* 미토: 화면 UI — HUD, 대사창, 퀴즈 관문(문제은행), 알림, 목표 표시 */
-import { IN, sfx } from './engine.js?v=202611231253';
+import { IN, sfx } from './engine.js?v=202611231343';
 const $ = s =>document.querySelector(s);
 const esc = s =>String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 export function chem(s) { return String(s).replace(/NAD\+/g, 'NAD<sup>+</sup>').replace(/H\+/g, 'H<sup>+</sup>').replace(/([A-Za-z\)])(\d+)/g, '$1<sub>$2</sub>'); }
@@ -79,9 +79,9 @@ export function quiz(qs, title = '지식 관문') {
     const qsave = () => { try { if (i >= qs.length) delete QP[qkey]; else QP[qkey] = { i, r: right, ids: qs.map(q => q.id) }; const ks = Object.keys(QP); if (ks.length > 30) delete QP[ks[0]]; localStorage.setItem(QK, JSON.stringify(QP)); } catch (e) { } };
     const one = () => { qsave();
       if (i >= qs.length) { ov.hidden = true; IN.locked = false; save(); res({ right, total: qs.length }); return; }
-      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.img ? `<div class="qimg"><img src="${q.img}" alt="교과서 문제"><small>사진을 누르면 크게 · 교과서 원본</small></div>` : q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}${q.img && q.type === 'fill' ? '<div class="qtag">답 쓰기</div>' : ''}<div class="qq${q.img && q.type !== 'fill' ? ' qhide' : ''}"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
+      const q = qs[i]; ov.innerHTML = `<div class="qc"><div class="qh"><span>${esc(title)}</span><span>${i + 1} / ${qs.length}</span></div><div class="src">${esc(q.src || '')}</div>${q.img ? `<div class="qimg"><img src="${q.img}" alt="교과서 문제"><small>교과서 원본 <button class="zbtn" type="button">🔍 크게 보기</button></small></div>` : q.figf ? `<div class="fig">${q.figf()}</div>` : q.fig ? `<div class="fig">${chemHTML(q.fig)}</div>` : ''}${q.img && q.type === 'fill' ? '<div class="qtag">답 쓰기</div>' : ''}<div class="qq${q.img && q.type !== 'fill' ? ' qhide' : ''}"></div><div class="qa"></div><div class="qx" hidden></div><div class="qb"></div></div>`;
       const qq = ov.querySelector('.qq'), qa = ov.querySelector('.qa'), qx = ov.querySelector('.qx'), qb = ov.querySelector('.qb');
-      const qi = ov.querySelector('.qimg'); if (qi) qi.onclick = () => qi.classList.toggle('big');
+      const qi = ov.querySelector('.qimg'); if (qi) qi.querySelector('.zbtn').onclick = e => { e.stopPropagation(); window.__zoomfig && window.__zoomfig(qi.querySelector('img')); };
       const finish = (ok, detail) => { if (ok) { right++; SAVE.right[q.id] = (SAVE.right[q.id] || 0) + 1; SAVE.wrong = SAVE.wrong.filter(x =>x !== q.id); } else if (!SAVE.wrong.includes(q.id)) SAVE.wrong.push(q.id); sfx(ok ? 'ok' : 'bad');
         qx.hidden = false; qx.className = 'qx ' + (ok ? 'ok' : 'no'); qx.innerHTML = `<b>${ok ? '정답' : '오답'}</b>${detail ? '<div>' + chemHTML(detail) + '</div>' : ''}<div>${chemHTML(q.exp || '')}</div>`;
         qb.innerHTML = ''; const n = document.createElement('button'); n.className = 'pri'; n.textContent = i + 1 < qs.length ? '다음 ▶' : '관문 통과 ▶'; n.onclick = () => { i++; one(); }; qb.appendChild(n); n.focus(); };

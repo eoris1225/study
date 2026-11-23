@@ -24,9 +24,10 @@
   const up = e => { P.delete(e.pointerId); g = null; }; ov.addEventListener('pointerup', up); ov.addEventListener('pointercancel', up);
   ov.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX, e.clientY); }, { passive: false });
   ov.querySelector('.zf-bar').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.z) zoomAt(b.dataset.z > 0 ? 1.3 : 1 / 1.3, innerWidth / 2, innerHeight / 2); if (b.dataset.r !== undefined) reset(); if (b.dataset.x !== undefined) ov.hidden = true; };
+  window.__zoomfig = open;
   addEventListener('keydown', e => { if (e.key === 'Escape') ov.hidden = true; });
   /* 그림 누르면 열기 (버튼·입력칸은 제외) */
   document.addEventListener('click', e => { if (!ov.hidden) return; const t = e.target; if (!t.closest || t.closest('button, input, textarea, .zf-bar, #lab, #pad')) return;
-    const box = t.closest('.fig, .qimg'); if (box && box.dataset.drag) return; if (t.closest('.fig[data-fk]')) return; let el = null; if (box) el = box.querySelector('img, svg'); else if (t.tagName === 'IMG' && t.closest('#quiz, #body, .card')) el = t;
+    const box = t.closest('.fig, .qimg'); if (box && box.dataset.drag) return; if (t.closest('.fig[data-fk]') || t.closest('#quiz')) return; let el = null; if (box) el = box.querySelector('img, svg'); else if (t.tagName === 'IMG' && t.closest('#quiz, #body, .card')) el = t;
     if (!el) return; e.preventDefault(); e.stopPropagation(); open(el); }, true);
 })();
