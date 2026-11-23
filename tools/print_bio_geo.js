@@ -31,6 +31,9 @@ th{background:#eee}
 .fig text{fill:#111}
 small{font-size:8.5pt}.dim{color:#555}
 .work{height:22mm}
+.ch2{display:flex;flex-wrap:wrap;align-items:center;row-gap:1.5mm;margin:1mm 0 1.5mm}.ch2 .nd{border:1.6px solid #111;border-radius:2mm;padding:.6mm 2.2mm;font-weight:800;text-align:center;background:#fafafa;line-height:1.25}.ch2 .nd small{display:block;font-weight:400;font-size:7.6pt;color:#444}
+.ch2 .ar{display:inline-flex;flex-direction:column;align-items:center;margin:0 1mm;min-width:9mm}.ch2 .ar i{font-style:normal;font-size:7.4pt;color:#b91c1c;line-height:1.15;text-align:center;font-weight:700}.ch2 .ar b{font-size:12pt;line-height:1}
+.stp{display:grid;grid-template-columns:repeat(4,1fr);gap:3.5mm;margin:1mm 0 1.5mm}.stp>div{border:1.5px solid #111;border-radius:2mm;padding:1mm 1.8mm;font-size:8.6pt;position:relative;line-height:1.35}.stp>div>b:first-child{display:inline-block;background:#111;color:#fff;border-radius:50%;width:4.4mm;height:4.4mm;text-align:center;line-height:4.4mm;font-size:7.6pt;margin-right:1mm}.stp>div:not(:last-child)::after{content:'➜';position:absolute;right:-3.4mm;top:38%;font-size:9.5pt}
 .chap{break-inside:auto;margin-bottom:3mm}.chap+.chap{break-before:page}
 .rc{margin:.6mm 0 0 2mm}.ex{border:1.5px solid #1f4fb8;border-radius:2mm;padding:2mm 3mm;margin:2mm 0}.st,.copy,.fig{break-inside:avoid}.exh{font-weight:900;color:#1f4fb8;margin-bottom:1mm}
 .st{margin:1.2mm 0 0 1mm;padding-left:2mm;border-left:3px solid #1f4fb855;font-size:9.4pt}.ea{margin-top:1.5mm;font-size:10pt}.pr{border-top:1.5px dashed #111;padding-top:2mm;margin-top:3mm}
@@ -43,6 +46,22 @@ small{font-size:8.5pt}.dim{color:#555}
 const page = (title, body) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${title}</title><style>${css}</style></head><body>${body}</body></html>`;
 
 /* ───────── 생명과학 ───────── */
+
+const chain = (...xs) => `<div class="ch2">${xs.map((x, i) => i % 2 ? `<span class="ar"><i>${x}</i><b>➜</b></span>` : (([a, b]) => `<span class="nd">${a}${b ? `<small>${b}</small>` : ''}</span>`)(x.split('|'))).join('')}</div>`;
+const steps = (...xs) => `<div class="stp">${xs.map((x, i) => `<div><b>${i + 1}</b>${x}</div>`).join('')}</div>`;
+function tcaSVG() { const cx = 470, cy = 145, r = 112, R = '#b91c1c';
+  const bx = (x, y, w, t1, t2, f = '#fafafa') => `<rect x="${x - w / 2}" y="${y - 21}" width="${w}" height="42" rx="7" fill="${f}" stroke="#111" stroke-width="1.8"/><text x="${x}" y="${y + (t2 ? -3 : 5)}" text-anchor="middle" font-weight="800" font-size="14">${t1}</text>${t2 ? `<text x="${x}" y="${y + 14}" text-anchor="middle" font-size="12">${t2}</text>` : ''}`;
+  const tip = d => { const a = d * Math.PI / 180, px = cx + r * Math.cos(a), py = cy + r * Math.sin(a), tx = -Math.sin(a), ty = Math.cos(a); return `<line x1="${px - tx * 8}" y1="${py - ty * 8}" x2="${px + tx * 8}" y2="${py + ty * 8}" stroke="#111" stroke-width="2.2" marker-end="url(#tA)"/>`; };
+  const lab = (x, y, t, a = 'middle') => `<text x="${x}" y="${y}" text-anchor="${a}" font-size="12.5" fill="${R}" font-weight="700">${t}</text>`;
+  return `<svg viewBox="0 0 700 300" style="width:100%;max-height:80mm;display:block;margin:1mm 0" font-family="Noto Sans KR"><defs><marker id="tA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#111"/></marker></defs>
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#111" stroke-width="2.2"/>${[225, 315, 45, 135].map(tip).join('')}
+  <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-weight="900" font-size="16">TCA 회로</text><text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="12" fill="#555">(기질)</text>
+  <line x1="85" y1="67" x2="85" y2="145" stroke="#111" stroke-width="2.2" marker-end="url(#tA)"/>${lab(97, 92, 'CO₂ 방출 (탈탄산)', 'start')}${lab(97, 110, 'NAD⁺ → NADH', 'start')}<text x="97" y="128" font-size="12" fill="#555">+ 조효소 A</text>
+  <path d="M160 170 Q 300 165 384 76" fill="none" stroke="#111" stroke-width="2.2" marker-end="url(#tA)"/>${lab(245, 192, '회로로 들어감')}
+  ${bx(85, 45, 150, '피루브산', 'C₃')}${bx(85, 168, 150, '아세틸 CoA', 'C₂')}
+  ${bx(cx - r, cy, 132, '옥살아세트산', 'C₄', '#eef7ee')}${bx(cx, cy - r, 120, '시트르산', 'C₆')}${bx(cx + r, cy, 70, 'C₅')}${bx(cx, cy + r, 70, 'C₄')}
+  ${lab(352, 40, 'C₂ + C₄ = C₆')}${lab(630, 58, 'CO₂ · NADH')}${lab(630, 240, 'CO₂ · NADH')}${lab(320, 266, 'ATP · FADH₂ · NADH')}<text x="320" y="282" text-anchor="middle" font-size="11" fill="#555">(탄소 그대로, 모양만 바뀜)</text></svg>`; }
+
 const BIO_SUM = `
 <h2>① 핵심 정리 <small>· 0~20분</small></h2>
 <h3>1. 효소와 에너지</h3>
@@ -58,18 +77,18 @@ const BIO_SUM = `
 
 ${ph(['e_energy', '활성화 에너지와 반응열'], ['e_inh', '경쟁적 · 비경쟁적 억제제'])}
 <h3>2. 세포 호흡 한눈에 (포도당 1개 기준)</h3>
-<div class="flow"><span>포도당 C₆</span><i>→ 해당 과정(세포질) →</i><span>피루브산 C₃ ×2</span><i>→ 산화(기질) →</i><span>아세틸 CoA C₂ ×2</span><i>→ TCA 회로(기질) →</i><span>CO₂</span><i>+ NADH·FADH₂ → 전자 전달계(내막) → ATP</i></div>
+${chain('포도당|C₆', '해당 과정<br>세포질', '피루브산 ×2|C₃', '산화<br>기질', '아세틸 CoA ×2|C₂', 'TCA 회로<br>기질', 'CO₂ · NADH · FADH₂', '전자 전달계<br>내막', 'ATP 32개')}
 <table><tr><th>단계</th><th>장소</th><th>탄소 변화</th><th>CO₂</th><th>NADH</th><th>FADH₂</th><th>ATP</th><th>O₂ 필요?</th></tr>
 <tr><td><b>해당 과정</b></td><td>세포질</td><td>C₆ → 2C₃</td><td>0</td><td>2</td><td>0</td><td>4 − 2 = <b>순 2</b> (기질 수준)</td><td>X</td></tr>
 <tr><td><b>피루브산 산화</b></td><td>기질</td><td>C₃ → C₂ (×2)</td><td>2</td><td>2</td><td>0</td><td>0</td><td rowspan="2">간접적 O<br><small>(O₂ 없으면 NAD⁺ 재생 안 돼서 멈춤)</small></td></tr>
 <tr><td><b>TCA 회로</b></td><td>기질</td><td>C₂+C₄→C₆→C₅→C₄ (×2)</td><td>4</td><td>6</td><td>2</td><td>2 (기질 수준)</td></tr>
 <tr><td><b>산화적 인산화</b></td><td>내막</td><td>-</td><td>-</td><td colspan="2">NADH 10 × 2.5 + FADH₂ 2 × 1.5</td><td><b>28</b></td><td>O (최종 전자 수용체)</td></tr>
 <tr><th colspan="3">합계</th><td>6</td><td>10</td><td>2</td><td><b>32 ATP</b></td><td></td></tr></table>
-<div class="box"><b>TCA 회로 = 탄소 떼어 내기 게임</b>: 피루브산(C₃) → <b>CO₂</b>·NADH 나오며 C₂ + CoA = 아세틸 CoA → 옥살아세트산(C₄)과 합쳐 <b>시트르산(C₆)</b> → CO₂·NADH 나오며 <b>C₅</b> → CO₂·NADH 나오며 <b>C₄</b> → ATP·FADH₂·NADH 나오며 다시 <b>옥살아세트산(C₄)</b>.<br>
-<b>CO₂가 나오는 곳 = 탄소 수가 줄어드는 곳</b> (C₃→C₂, C₆→C₅, C₅→C₄). 피루브산 1개당 CO₂ 3, NADH 4, FADH₂ 1, ATP 1.</div>
+<div class="box"><b>피루브산 산화 + TCA 회로 = 탄소를 하나씩 CO₂로 떼어 내기</b> <small class="dim">(피루브산 1개 기준, 포도당이면 ×2)</small>${tcaSVG()}
+<div><b>CO₂가 나오는 곳 = 탄소 수가 줄어드는 곳</b> (C₃→C₂, C₆→C₅, C₅→C₄). 한 바퀴 장부: <b>CO₂ 3 · NADH 4 · FADH₂ 1 · ATP 1</b></div></div>
 ${ph(['r_gly', '해당 과정'], ['r_tca', '피루브산 산화와 TCA 회로'])}
 <table><tr><th style="width:24%">마이토콘드리아</th><td>외막 / <b>내막</b>(주름 = 크리스타, 전자 전달계·ATP 합성 효소) / <b>막 사이 공간</b>(H⁺ 많음) / <b>기질</b>(TCA 회로 효소, DNA, 리보솜)</td></tr>
-<tr><th>산화적 인산화</th><td>NADH·FADH₂의 전자가 전자 전달계를 지나며 에너지를 조금씩 내놓음 → 그 에너지로 H⁺를 <b>기질 → 막 사이 공간</b>으로 능동 수송 → H⁺가 <b>ATP 합성 효소</b>를 지나 기질로 확산하며 ATP 합성 = <b>화학 삼투</b>. 끝에서 O₂ + 전자 + H⁺ → H₂O.</td></tr>
+<tr><th>산화적 인산화</th><td>${steps('NADH · FADH₂가 전자 전달계에 <b>전자</b>를 넘김', '전자가 계단을 내려가며 에너지를 조금씩 방출', '그 에너지로 <b>H⁺</b>를 기질 → <b>막 사이 공간</b>으로 퍼 올림', 'H⁺가 <b>ATP 합성 효소</b>로 돌아오며 ATP 합성 = <b>화학 삼투</b>')}맨 끝: O₂ + 전자 + H⁺ → <b>H₂O</b> (O₂ = 최종 전자 수용체)</td></tr>
 <tr><th>NADH vs FADH₂</th><td>NADH → 2.5 ATP, FADH₂ → 1.5 ATP (FADH₂는 전자를 더 뒤쪽에 넣어서 H⁺를 덜 퍼 올림)</td></tr>
 <tr><th>기질 수준 인산화</th><td>효소가 기질의 인산을 ADP에 <b>직접</b> 붙임 (해당 과정, TCA 회로). ↔ 산화적 인산화 (H⁺ 농도 차 이용)</td></tr></table>
 ${ph(['r_oxp', '산화적 인산화 (전자 전달계 · ATP 합성 효소)'])}
@@ -82,7 +101,7 @@ ${ph(['r_oxp', '산화적 인산화 (전자 전달계 · ATP 합성 효소)'])}
 <h3>3. 발효 (산소 없을 때, 세포질)</h3>
 <table><tr><th></th><th>젖산 발효</th><th>알코올 발효</th></tr>
 <tr><th>생물</th><td>젖산균, 근육(격렬한 운동)</td><td>효모</td></tr>
-<tr><th>과정</th><td>피루브산(C₃)이 NADH의 H를 받아 <b>젖산(C₃)</b></td><td>피루브산 → <b>CO₂ 방출</b> → 아세트알데하이드(C₂) → H를 받아 <b>에탄올(C₂)</b></td></tr>
+<tr><th>과정</th><td>${chain('피루브산|C₃', 'H 받음<br>NADH → NAD⁺', '젖산|C₃')}<small>탄소 수 그대로 → CO₂ 없음</small></td><td>${chain('피루브산|C₃', 'CO₂ 방출', '아세트알데하이드|C₂', 'H 받음<br>NADH → NAD⁺', '에탄올|C₂')}</td></tr>
 <tr><th>최종 전자 수용체</th><td>피루브산</td><td>아세트알데하이드</td></tr>
 <tr><th>식</th><td>C₆H₁₂O₆ → 2C₃H₆O₃ + 2ATP</td><td>C₆H₁₂O₆ → 2C₂H₅OH + 2CO₂ + 2ATP</td></tr>
 <tr><th>이용</th><td>요구르트, 김치</td><td>술, 빵(CO₂로 부풂)</td></tr></table>
@@ -95,10 +114,10 @@ ${ph(['f_lac', '젖산 발효'], ['f_alc', '알코올 발효'])}
 <tr><th>색소</th><td>엽록소 a = 반응 중심, 엽록소 b·카로티노이드 = 안테나(보조). 청자색·적색 흡수, 녹색 반사. 흡수 스펙트럼 ≈ 작용 스펙트럼 (엥겔만: 호기성 세균이 청자색·적색에 몰림)</td></tr>
 <tr><th>크로마토그래피</th><td>Rf = 색소 이동 거리 ÷ 전개액 이동 거리. 위에서부터 <b>카로틴 &gt; 잔토필 &gt; 엽록소 a &gt; 엽록소 b</b></td></tr>
 <tr><th>명반응</th><td><b>물의 광분해</b>(광계 Ⅱ 근처): H₂O → 2H⁺ + 2e⁻ + ½O₂ → <b>O₂는 물에서</b> (루벤 ¹⁸O 실험). 힐 실험: CO₂ 없이도 빛 + 전자 수용체면 O₂ 발생</td></tr>
-<tr><th>비순환적 전자 흐름</th><td>H₂O → 광계 Ⅱ(P680) → 전자 전달계(ATP) → 광계 Ⅰ(P700) → NADP⁺ → NADPH. 결과: ATP, NADPH, O₂</td></tr>
-<tr><th>순환적 전자 흐름</th><td>광계 Ⅰ → 전자 전달계 → 광계 Ⅰ. <b>ATP만</b> (캘빈 회로는 ATP 18 : NADPH 12로 ATP가 더 필요해서)</td></tr>
-<tr><th>광인산화</th><td>H⁺를 <b>스트로마 → 틸라코이드 내부</b>로 퍼 올림 → ATP 합성 효소로 스트로마 쪽으로 확산하며 ATP. 야겐도르프: pH 4 → pH 8로 옮기면 빛 없이도 ATP 합성</td></tr>
-<tr><th>캘빈 회로</th><td>① 탄소 고정: CO₂ + RuBP(C₅) → 3PG(C₃) ×2 (루비스코) ② 환원: 3PG → PGAL (ATP, NADPH 사용) ③ RuBP 재생 (ATP 사용). 포도당 1개 = 6바퀴 = <b>ATP 18, NADPH 12</b>. 최초 고정 산물 = 3PG (캘빈 ¹⁴C 실험)</td></tr></table>
+<tr><th>비순환적 전자 흐름</th><td>${chain('H₂O|물의 광분해 → O₂', 'e⁻', '광계 Ⅱ|P680', '', '전자 전달계|ATP 생성', '', '광계 Ⅰ|P700', '', 'NADP⁺ → NADPH')}결과: <b>ATP, NADPH, O₂</b> (빛을 두 번 받음)</td></tr>
+<tr><th>순환적 전자 흐름</th><td>${chain('광계 Ⅰ|P700', '', '전자 전달계|ATP 생성', '되돌아감', '광계 Ⅰ|다시 처음')}결과: <b>ATP만</b> (캘빈 회로는 ATP 18 : NADPH 12로 ATP가 더 필요해서 보충)</td></tr>
+<tr><th>광인산화</th><td>${chain('스트로마|H⁺ 적음', 'H⁺ 퍼 올림', '틸라코이드 내부|H⁺ 많음 (pH↓)', 'ATP 합성 효소로<br>확산', '스트로마|ATP 생성')}야겐도르프: pH 4 → pH 8로 옮기면 빛 없이도 ATP 합성</td></tr>
+<tr><th>캘빈 회로</th><td>${chain('RuBP|C₅', '+ CO₂<br>탄소 고정 (루비스코)', '3PG ×2|C₃', 'ATP · NADPH<br>환원', 'PGAL|C₃ (일부 → 포도당)', 'ATP<br>재생', 'RuBP|다시 처음')}포도당 1개 = 6바퀴 = <b>ATP 18, NADPH 12</b>. 최초 고정 산물 = 3PG (캘빈 ¹⁴C 실험)</td></tr></table>
 ${ph(['p_z', '명반응 전자 흐름'], ['p_calvin', '캘빈 회로'])}
 <div class="warn"><b class="t">헷갈리는 것</b> ① 빛을 끊으면 3PG ↑, RuBP ↓ (ATP·NADPH가 없어 3PG를 못 바꿈). CO₂를 끊으면 RuBP ↑, 3PG ↓. ② H⁺ 방향: 광합성은 스트로마 → 틸라코이드 내부, 호흡은 기질 → 막 사이 공간. ③ 최종 전자 수용체: 광합성 NADP⁺, 호흡 O₂ / 전자 공여체: 광합성 H₂O, 호흡 NADH·FADH₂.</div>`;
 
