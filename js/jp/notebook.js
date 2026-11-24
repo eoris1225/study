@@ -521,8 +521,13 @@ function suzuPage() { return (g, w, h) => { paper(g, w, h, 77); const S = pen(g,
   S.ell(210, 360, 9, 9, '#4a6ad8', null); S.ell(318, 352, 9, 9, '#4a6ad8', null); S.ln([[220, 450], [256, 470], [296, 446]], '#ff5a8a', 6); S.ell(190, 410, 18, 10, 'rgba(255,120,150,.5)', null); S.ell(326, 404, 18, 10, 'rgba(255,120,150,.5)', null);
   S.shaky('ユナの かお', 120, 580, 32, '#ffb02a'); S.shaky('(さわって かいた)', 110, 625, 24, '#ff8fb0'); }; }
 function pages(keys) { const order = Object.keys(N); keys = keys.slice().sort((a, b) => order.indexOf(a) - order.indexOf(b)); const out = [intro(keys.length, order.length)]; const body = [], start = [];
-  keys.forEach((k, i) => { start.push(2 + body.length + 1); entryPages(k, i + 1, MG()).forEach(p => body.push(p)); });
+  keys.forEach((k, i) => { start.push(2 + body.length + 1); const T = entryTerms(k); entryPages(k, i + 1, MG()).forEach(p => { p.terms = T; p.title = TITLE(k); body.push(p); }); });
   out.push(index(keys, start)); return out.concat(body, keys.length >= 3 ? [suzuPage()] : []); }
 let mgc = null; const MG = () => { if (!mgc) mgc = document.createElement('canvas').getContext('2d'); return mgc; };
-window.NOTEBOOK = { pages, TITLE, has: k => !!N[k] };
+/* 일본어 낱말 뽑기: 노트를 크게 볼 때 '이 페이지 일본어' 목록 (뜻·발음·음성) */
+const JPRUN = /[ぁ-ゖァ-ヺー〜一-龯々〆ヶ][ぁ-ゖァ-ヺー〜一-龯々〆ヶ、。・ ]*[ぁ-ゖァ-ヺー〜一-龯々〆ヶ。]?/g;
+function termsOf(s) { const out = []; String(s).replace(/(==|\+\+|%%|\*\*|__)/g, '').split(/[·|/→()（）「」『』]|\s{2,}/).forEach(part => (part.match(JPRUN) || []).forEach(r => { r = r.trim().replace(/[、。]$/, ''); if (r.length >= 2 && /[ぁ-ゖァ-ヺ一-龯]/.test(r) && !/^[一-龯]$/.test(r)) out.push(r); })); return out; }
+function entryTerms(key) { const src = (N[key] || '').split('\n'); const out = []; src.forEach(l => termsOf(l.replace(/^(t|h|tag|tb!?|box|memo|pic):/, '')).forEach(x => out.includes(x) || out.push(x))); return out; }
+function allTerms() { const s = new Set(); Object.keys(N).forEach(k => entryTerms(k).forEach(x => s.add(x))); return [...s]; }
+window.NOTEBOOK = { pages, TITLE, has: k => !!N[k], allTerms, entryTerms };
 })();

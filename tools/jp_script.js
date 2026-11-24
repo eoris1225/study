@@ -92,9 +92,30 @@ function build() {
   fs.writeFileSync(JS, js); console.log('→', JS, ST.length, '에피소드', ST.reduce((a, e) => a + e.lines.length, 0), '줄');
 }
 /* 게임에 나오는 일본어 문구를 전부 모음 → tools/jp_yomi.py 가 읽기(후리가나)·발음을 만듦 */
-function texts() { global.window = {}; for (const f of ['js/jp/words.js', 'js/jp/ja.js', 'js/jp/story.js', 'js/jp/quiz.js']) { delete require.cache[path.join(ROOT, f)]; require(path.join(ROOT, f)); }
+function texts() { global.window = {}; for (const f of ['js/jp/words.js', 'js/jp/ja.js', 'js/jp/story.js', 'js/jp/quiz.js', 'js/jp/notebook.js']) { delete require.cache[path.join(ROOT, f)]; require(path.join(ROOT, f)); }
   const S = new Set(), walk = v => { if (typeof v === 'string') window.JA.japaneseOf(v).forEach(x => S.add(x)); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
-  walk(window.JPSTORY); walk(window.JPQUIZ); (window.JPWORDS || []).forEach(w => w[0].split('・').forEach(x => S.add(x.trim())));
+  walk(window.JPSTORY); walk(window.JPQUIZ); (window.JPWORDS || []).forEach(w => w[0].split('・').forEach(x => S.add(x.trim()))); (window.NOTEBOOK.allTerms ? window.NOTEBOOK.allTerms() : []).forEach(x => S.add(x));
   fs.writeFileSync(path.join(ROOT, 'tools/.jp_texts.json'), JSON.stringify([...S])); console.log('→ tools/.jp_texts.json', S.size, '개'); }
-const CMD = { export: exportTxt, build, texts };
+/* 음성 녹음 계획: 대사마다 누가, 어떤 감정·속삭임·뜸으로 말하는지 → tools/jp_voice.py 가 VOICEVOX로 녹음 */
+function voiceplan() { global.window = {}; for (const f of ['js/jp/words.js', 'js/jp/ja.js', 'js/jp/story.js', 'js/jp/quiz.js', 'js/jp/notebook.js']) { delete require.cache[path.join(ROOT, f)]; require(path.join(ROOT, f)); }
+  const JA = window.JA, plan = new Map(), add = (who, text, ctx) => JA.japaneseOf(text).forEach(seg => { const k = `${who}|${seg}`; if (!plan.has(k) || (ctx.spoken && !plan.get(k).spoken)) plan.set(k, Object.assign({ key: k, who, text: seg }, ctx)); });
+  const spoken = t => /「/.test(t) && !/[가-힣]/.test(t.replace(/「[^」]*」/g, '').replace(/[(（][^)）]*[)）]/g, ''));   // 일본어로 말한 대사 (자동 재생·감정)
+  const WHISPER = /(속삭|귓가|귓속|소곤|나지막|목소리를 낮|작게 중얼|아주 작게|입술을 가져다|숨결로|귀 가까이|잠긴 목소리)/;
+  const SPK = { 하루토: 'u', 나: 'n', 유나: 'o', 스즈: 's', 엄마: 'm', 아빠: 'd', 하나: 'h', 미야코: 'k', 선생님: 't', 반친구: 'r', 선배아빠: 'f' };
+  const split = (line, defFace) => { const m = line.match(/^(하루토|선배아빠|선생님|반친구|미야코|유나|스즈|엄마|아빠|하나|나)\s*(?:\[([^\]]*)\])?\s*:\s*/); if (!m) return ['s', defFace, line]; const [f] = (m[2] || '').split('/'); return [SPK[m[1]], f || defFace, line.slice(m[0].length)]; };
+  for (const E of window.JPSTORY) { let breath = 0, slow = 0, tremble = 0; const hist = [];
+    for (const L of E.lines) {
+      if (!Array.isArray(L)) { if (L.breath) breath = L.breath; if (L.tspeed) slow = L.tspeed === '느림' ? 1 : L.tspeed === '빠름' ? -1 : 0; if (L.tremble) tremble = 1;
+        const ctx = { whisper: hist.slice(-2).some(h => WHISPER.test(h)), slow, breath: 0, tremble: 0 };
+        if (L.ask) { const [, , , , ok, no] = L.ask; for (const x of [ok, no]) if (x) { const [w, f, tx] = split(x, 'happy'); add(w, tx, Object.assign({}, ctx, { face: f, spoken: spoken(tx) })); } }
+        if (L.pick) L.pick[1].forEach(o => { const [w, f, tx] = split(o[3], o[1]); add(w, tx, Object.assign({}, ctx, { face: f, spoken: spoken(tx) })); });
+        continue; }
+      const [who, face, mot, text, tr] = L;
+      if (who !== 'n') add(who, text, { spoken: spoken(text), face, mot, whisper: hist.slice(-2).some(h => WHISPER.test(h)) || /^\((속삭|작게|귓속|속닥)/.test(text) || /^\((속삭|작게|속닥)/.test(tr || ''), slow, breath, tremble, label: (text.match(/^\(([^)]*)\)/) || [])[1] || '' });
+      hist.push(text + ' ' + (tr || '')); breath = 0; tremble = 0; } }
+  const gen = new Set(); const walk = v => { if (typeof v === 'string') JA.japaneseOf(v).forEach(x => gen.add(x)); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(window.JPSTORY); walk(window.JPQUIZ); (window.JPWORDS || []).forEach(w => w[0].split('・').forEach(x => gen.add(x.trim()))); (window.NOTEBOOK.allTerms ? window.NOTEBOOK.allTerms() : []).forEach(x => gen.add(x));
+  gen.forEach(seg => { const k = `w|${seg}`; if (!plan.has(k)) plan.set(k, { key: k, who: 'w', text: seg }); });
+  fs.writeFileSync(path.join(ROOT, 'tools/.jp_voice_plan.json'), JSON.stringify([...plan.values()])); console.log('→ tools/.jp_voice_plan.json', plan.size, '개'); }
+const CMD = { export: exportTxt, build, texts, voiceplan };
 CMD[process.argv[2]] ? CMD[process.argv[2]]() : console.log('사용법: node tools/jp_script.js export | build | texts');
