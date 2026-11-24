@@ -13,7 +13,7 @@ function exportTxt() {
   out.push('# 대본 형식 설명은 docs/jp/대본_쓰는법.md 참고. 이 파일을 고친 뒤  node tools/jp_script.js build  하면 게임에 들어가요.', '');
   for (const E of ST) { out.push(`=== ${E.t} | ${E.d || ''}`, '');
     for (const L of E.lines) {
-      if (Array.isArray(L)) { const [w, f, m, t] = L; const fm = f || m ? ` [${f || ''}/${m || ''}]` : ''; out.push(`${WHO[w] || w}${fm}: ${t}`); continue; }
+      if (Array.isArray(L)) { const [w, f, m, t, tr] = L; const fm = f || m ? ` [${f || ''}/${m || ''}]` : ''; out.push(`${WHO[w] || w}${fm}: ${t}`); if (tr) out.push(`   (${tr})`); continue; }
       for (const [k, v] of Object.entries(L)) {
         if (k === 'bg') out.push(`@배경 ${v}${L.night ? ' 밤' : ''}`);
         else if (k === 'night' || k === 'sub' || k === 'once') continue;
@@ -25,6 +25,11 @@ function exportTxt() {
         else if (k === 'sfx') out.push(`@소리 ${v}`);
         else if (k === 'wait') out.push(`@대기 ${v}`);
         else if (k === 'quiz') out.push(`@문제 ${v}`);
+        else if (k === 'light') out.push(`@조명 ${v}`);
+        else if (k === 'breath') out.push(`@호흡 ${v}`);
+        else if (k === 'tspeed') out.push(`@텍스트속도 ${v}`);
+        else if (k === 'tremble') out.push(`@글자떨림 ${v}`);
+        else if (k === 'note') out.push(`@수첩 ${v}`);
         else if (k === 'pos') for (const [c, p] of Object.entries(v)) out.push(`@위치 ${CHAR[c]} ${p.join(' ')}`);
         else if (k === 'walk') for (const [c, p] of Object.entries(v)) out.push(`@걷기 ${CHAR[c]} ${p.join(' ')}`);
         else if (k === 'mot') for (const [c, m] of Object.entries(v)) out.push(`@동작 ${CHAR[c]} ${m}`);
@@ -43,21 +48,27 @@ function build() {
   lines.forEach((raw, i) => { const ln = i + 1, l = raw.replace(/\s+$/, ''); if (!l.trim() || l.startsWith('#')) return;
     if (l.startsWith('=== ')) { const [t, d] = l.slice(4).split('|').map(x => x.trim()); E = { t, d, lines: [] }; ST.push(E); cur = null; return; }
     if (!E) { errs.push(`${ln}줄: 첫 에피소드 줄(=== 제목 | 설명)이 먼저 와야 해요`); return; }
+    if (/^\s+\(/.test(l) && !cur) { const last = E.lines[E.lines.length - 1]; if (Array.isArray(last)) { last[4] = l.trim().replace(/^\(|\)$/g, ''); return; } errs.push(`${ln}줄: (번역) 줄은 대사 바로 아래에만`); return; }
     if (/^\s+/.test(l) && cur) { const t = l.trim();
       if (cur.ask) { const A = cur.ask; if (/^[*-] /.test(t)) { if (t[0] === '*') A[2] = A[1].length; A[1].push(t.slice(2)); } else if (t.startsWith('해설:')) A[3] = t.slice(3).trim(); else if (t.startsWith('맞으면:')) A[4] = t.slice(4).trim(); else if (t.startsWith('틀리면:')) A[5] = t.slice(4).trim(); else errs.push(`${ln}줄: @선택 아래는 * 정답 / - 보기 / 해설: / 맞으면: / 틀리면:`); return; }
       if (cur.pick) { const P = cur.pick; if (t.startsWith('- ')) { const [o, fm, line] = t.slice(2).split('|').map(x => x.trim()); const [f, m, by] = (fm || '').split('/'); const r = [o, f || 'smile', m || 'idle', line || '']; if (by) r.push(by); P[1].push(r); } else if (t.startsWith('배움:')) P[2] = t.slice(3).trim(); else errs.push(`${ln}줄: @마음선택 아래는 - 보기 | 표정/동작 | 스즈 대사 / 배움:`); return; }
       errs.push(`${ln}줄: 들여쓰기 줄은 @선택·@마음선택 아래에만`); return; }
     cur = null;
-    if (l.startsWith('@')) { const sp = l.indexOf(' '), cmd = sp < 0 ? l.slice(1) : l.slice(1, sp), arg = sp < 0 ? '' : l.slice(sp + 1).trim(), a = arg.split(/\s+/); let D = {};
+    if (l.startsWith('@')) { const sp = l.indexOf(' '), cmd = sp < 0 ? l.slice(1) : l.slice(1, sp), arg = sp < 0 ? '' : l.slice(sp + 1).trim(), a = arg.split(/\s+/); let D = {}; const argC = arg.replace(/\s*\([^)]*\)\s*$/, '');
       if (cmd === '배경') { D.bg = a[0]; if (a[1] === '밤') D.night = true; }
       else if (cmd === '제목') { const [t, s] = arg.split(' / '); D.title = t; if (s) D.sub = s; }
       else if (cmd === '장소') D.place = '📍 ' + arg;
-      else if (cmd === '카메라') D.shot = arg;
-      else if (cmd === '효과') D.fx = arg === '없음' ? null : arg;
+      else if (cmd === '카메라') D.shot = argC;
+      else if (cmd === '효과') D.fx = argC === '없음' ? null : argC;
       else if (cmd === '흔들림') D.shake = +arg;
-      else if (cmd === '소리') D.sfx = arg;
+      else if (cmd === '소리') D.sfx = argC;
       else if (cmd === '대기') D.wait = +arg;
-      else if (cmd === '문제') D.quiz = arg;
+      else if (cmd === '문제') D.quiz = argC;
+      else if (cmd === '조명') D.light = argC;
+      else if (cmd === '호흡') D.breath = +argC;
+      else if (cmd === '텍스트속도') D.tspeed = argC;
+      else if (cmd === '글자떨림') D.tremble = argC;
+      else if (cmd === '수첩') D.note = argC;
       else if (cmd === '위치') D.pos = { [C(a[0], ln)]: a.slice(1).map(Number) };
       else if (cmd === '걷기') D.walk = { [C(a[0], ln)]: a.slice(1).map(Number) };
       else if (cmd === '동작') D.mot = { [C(a[0], ln)]: a[1] };
