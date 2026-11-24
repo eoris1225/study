@@ -545,10 +545,14 @@ function typeOut(html) { return new Promise(res => { clearInterval(typing); cons
   typing = setInterval(() => { n += TSPD; if (n >= total) { clearInterval(typing); typing = null; tx$.innerHTML = html; res(); return; } tx$.innerHTML = cutHTML(html, n); }, TSPD === 1 ? 38 : 22); tx$.onclick = () => { if (typing) { clearInterval(typing); typing = null; tx$.innerHTML = html; res(); } }; }); }
 function cutHTML(h, n) { let out = '', c = 0, inTag = false; for (const ch of h) { if (ch === '<') inTag = true; if (inTag) { out += ch; if (ch === '>') inTag = false; continue; } if (c >= n) break; out += ch; c++; } return out; }
 let waitTap = null;
+/* 뒤로 가기: 바로 앞 대사로 (선택지·퀴즈·수첩·카드가 떠 있을 땐 안 됨) */
+function goBack() { if (BOOK || !$('#menu').hidden || !$('#radial').hidden || !$('#quiz').hidden || ($('#card') && !$('#card').hidden) || CUR.ep == null) return;
+  const E = ST[CUR.ep]; if (!E) return; let j = CUR.i - 1; while (j > 0 && !Array.isArray(E.lines[j])) j--; if (j < 0) j = 0;
+  stopVoice(); clearInterval(typing); typing = null; waitTap = null; $('#jpop').hidden = true; sfx('pop'); runEp(CUR.ep, j); }
 function tapWait(ms) { return new Promise(res => { let t = null; const go = () => { clearTimeout(t); waitTap = null; res(); }; waitTap = go; if (auto && ms) t = setTimeout(function tick() { if (BOOK) t = setTimeout(tick, 500); else go(); }, ms); }); }
 const BLOCK = '#hud, #radial, #quiz, #menu, #card, #log, #jpop, #notebook, #nbterms, .jp, button, select';
 document.addEventListener('pointerup', e => { if (BOOK) { if (!(e.target.closest && e.target.closest('#nbui, #nbx, #nbterms, #jpop'))) bookZoom(BOOK.zoom ? 0 : e.clientX < innerWidth / 2 ? -1 : 1); return; } if (e.target.closest && e.target.closest(BLOCK)) return; if (typing) { tx$.click(); return; } if (waitTap) waitTap(); });
-document.addEventListener('keydown', e => { if (BOOK) { if (e.key === 'z' || e.key === 'Z') bookZoom(BOOK.zoom ? 0 : 1); else if (e.key === 'ArrowLeft') bookTurn(-1); else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') bookTurn(1); else if (e.key === 'Escape') closeBook(); e.preventDefault(); return; } if ((e.key === ' ' || e.key === 'Enter') && waitTap && $('#menu').hidden) { e.preventDefault(); if (typing) tx$.click(); else waitTap(); } });
+document.addEventListener('keydown', e => { if (BOOK) { if (e.key === 'z' || e.key === 'Z') bookZoom(BOOK.zoom ? 0 : 1); else if (e.key === 'ArrowLeft') bookTurn(-1); else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') bookTurn(1); else if (e.key === 'Escape') closeBook(); e.preventDefault(); return; } if ((e.key === 'ArrowLeft' || e.key === 'Backspace') && $('#menu').hidden) { e.preventDefault(); return goBack(); } if ((e.key === ' ' || e.key === 'Enter') && (waitTap || typing) && $('#menu').hidden) { e.preventDefault(); if (typing) tx$.click(); else waitTap(); } });
 /* 일본어 누르면: 뜻 · 발음 · 읽어 주기 */
 document.addEventListener('click', e => { const j = e.target.closest && e.target.closest('.jp'); const pop = $('#jpop');
   if (!j) { if (!e.target.closest('#jpop')) pop.hidden = true; return; } e.stopPropagation();
@@ -665,15 +669,27 @@ function heart(dv) { SAVE.aff = Math.max(0, Math.min(100, SAVE.aff + dv)); save(
 
 /* ── 스토리 진행 ── */
 const CUR = { ep: 0, i: 0, night: false, rain: false };
+let RUN = 0;   /* 새로 시작하면(뒤로 가기 포함) 앞의 진행은 멈춤 */
 async function runEp(ep, i0 = 0) {
-  CUR.ep = ep; const E = ST[ep]; $('#menu').hidden = true; $('#hud').hidden = false; $('#eptag').textContent = E.t;
+  const my = ++RUN; CUR.ep = ep; const E = ST[ep]; $('#menu').hidden = true; $('#hud').hidden = false; $('#eptag').textContent = E.t;
   /* 시작 위치까지의 배경·자세를 다시 계산 */
   let bg = E.lines.find(x => x.bg)?.bg || 'room';
   CUR.rain = false; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.bg) { bg = x.bg; CUR.night = !!x.night; CUR.rain = !!x.rain; } }
   setWorld(bg); let lt = '기본'; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.light) lt = x.light; } light(lt); TSPD = 2; TREM = '';
+  /* 그 장면 처음부터 시작 위치 직전까지: 자리·소품·효과·표정·자세를 조용히 다시 맞춤 */
+  let s0 = 0; for (let j = 0; j < i0; j++) if (E.lines[j] && E.lines[j].bg) s0 = j;
+  for (let j = s0; j < i0; j++) { const D = E.lines[j]; if (!D || Array.isArray(D)) continue;
+    if (D.pos) for (const [k, v] of Object.entries(D.pos)) place(k, v);
+    if (D.walk) for (const [k, v] of Object.entries(D.walk)) if (AV[k]) place(k, [v[0], AV[k].g.position.y, v[1], v[2] ?? AV[k].g.rotation.y]);
+    if (D.prop) for (const [k, n, on] of D.prop) prop(k, n, on !== false);
+    if (D.fx !== undefined) fx(D.fx);
+    if (D.face) for (const [k, f] of Object.entries(D.face)) setFace(AV[k], f);
+    if (D.mot) for (const [k, m] of Object.entries(D.mot)) motion(AV[k], m);
+    if (D.view) $('#view').classList.toggle('on', !/복귀|없음|끔/.test(D.view));
+    if (D.noise) $('#noise').className = /없음|끔/.test(D.noise) ? '' : /강/.test(D.noise) ? 's2' : 's1'; }
   for (let i = i0; i < E.lines.length; i++) {
     CUR.i = i; SAVE.ep = ep; SAVE.i = i; save(); $('#prog').textContent = `${Math.round(i / E.lines.length * 100)}%`;
-    const L = E.lines[i]; if (STOP) return;
+    const L = E.lines[i]; if (STOP || my !== RUN) return;
     if (!Array.isArray(L)) { await directive(L); continue; }
     const [who, face, mot, text, tr] = L;
     for (const k of ['o', 's']) AV[k].talk = 0;
@@ -684,11 +700,11 @@ async function runEp(ep, i0 = 0) {
     if (who !== 'n' && !AV[who] && !GU) { $('#guest').hidden = false; $('#guest').innerHTML = `<i style="color:${COLS[who]}">${IC('talk')}</i> ${NAMES[who]} <small>음성 참가 중 · 아바타 로딩…</small>`; } else $('#guest').hidden = true;
     const html = fmt(text, tr); box$.dataset.who = who; tx$.classList.toggle('trem1', TREM === '약함'); tx$.classList.toggle('trem2', TREM === '강함'); TREM = '';
     LOG.push([who, html]); if (LOG.length > 300) LOG.shift();
-    const sp = speak(who, text); await typeOut(html);
+    const sp = speak(who, text); await typeOut(html); if (my !== RUN) return;
     const t0 = performance.now();
     await tapWait(1200 + text.length * 45); await Promise.race([sp, new Promise(r => setTimeout(r, auto ? 9000 : 0))]);
   }
-  SAVE.ep = ep + 1; SAVE.i = 0; save();
+  if (my !== RUN) return; SAVE.ep = ep + 1; SAVE.i = 0; save();
   if (ep + 1 < ST.length) { await card(`${E.t} 끝`, '다음 에피소드로 →'); return runEp(ep + 1, 0); }
   await card('엔딩', '처음으로 돌아가기'); menu();
 }
@@ -771,7 +787,7 @@ function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $
     if (b.dataset.o === 'note') return notebook(true);
     if (b.dataset.o === 'home') location.href = 'index.html'; };
 }
-$('#bm').innerHTML = IC('menu'); $('#blog').innerHTML = IC('log'); $('#bnote').innerHTML = IC('note'); $('#bshot').innerHTML = IC('cam'); $('#aff').insertAdjacentHTML('afterbegin', IC('heart'));
+$('#bback').innerHTML = IC('left') + '<small>이전</small>'; $('#bback').onclick = () => goBack(); $('#bm').innerHTML = IC('menu'); $('#blog').innerHTML = IC('log'); $('#bnote').innerHTML = IC('note'); $('#bshot').innerHTML = IC('cam'); $('#aff').insertAdjacentHTML('afterbegin', IC('heart'));
 $('#bm').onclick = () => menu();
 const autoLabel = () => { $('#bauto').innerHTML = auto ? IC('auto') + '자동' : IC('tap') + '수동'; };
 $('#bauto').onclick = () => { auto = !auto; autoLabel(); try { localStorage.setItem('jp_auto', auto ? '1' : '0'); } catch (e) { } };

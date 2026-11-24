@@ -131,15 +131,15 @@ body.book #menu,body.book #hud,body.book #dlg,body.book #np,body.book #place,bod
 .toast{position:fixed;left:50%;top:18%;transform:translateX(-50%) rotate(-1.5deg);z-index:50;display:flex;gap:6px;align-items:center;background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--cut);padding:8px 18px;box-shadow:var(--sh);font:700 22px var(--hand)}
 .hp{position:fixed;right:34px;top:58px;z-index:50;display:flex;gap:3px;align-items:center;font:700 26px var(--hand);text-shadow:var(--ol);animation:hp 1.5s forwards}.hp.up{color:var(--pink)}.hp.dn{color:#9aa8e8}.hp .ic{color:#000}@keyframes hp{to{translate:0 -40px;opacity:0}}
 #aff{white-space:nowrap}
-@media (max-width:700px){#hud{gap:5px;padding:8px}#nbui{gap:6px;bottom:10px;max-width:calc(100vw - 12px)}#nbui button{font-size:15px;padding:5px 8px}#nbui span{min-width:40px;font-size:16px}#nbx{top:8px;right:8px}#jpop{width:min(270px,calc(100vw - 16px))}#menu{justify-content:center;padding:10px}#menu .mc{padding-left:44px}#dlg{bottom:10px}#aff span{width:50px}#prog{display:none}#eptag{display:none}#hud button{min-width:38px;height:36px}}
+@media (max-width:700px){#hud{gap:5px;padding:8px}#nbui{gap:6px;bottom:10px;max-width:calc(100vw - 12px)}#nbui button{font-size:15px;padding:5px 8px}#nbui span{min-width:40px;font-size:16px}#nbx{top:8px;right:8px}#jpop{width:min(270px,calc(100vw - 16px))}#bback small{display:none}#menu{justify-content:center;padding:10px}#menu .mc{padding-left:44px}#dlg{bottom:10px}#aff span{width:50px}#prog{display:none}#eptag{display:none}#hud button{min-width:38px;height:36px}}
 </style></head><body>
 <canvas id="cv"></canvas><div id="np"></div>
-<div id="hud" hidden><button id="bm" title="메뉴"></button><span id="eptag"></span><span id="prog"></span><button id="blog" title="대사 기록"></button><button id="bnote" title="생존 수첩"></button><button id="bshot" title="카메라"></button><button id="bauto"></button><div id="aff"><span><i></i></span><b></b></div></div>
+<div id="hud" hidden><button id="bm" title="메뉴"></button><span id="eptag"></span><span id="prog"></span><button id="bback" title="이전 대사 (←)"></button><button id="blog" title="대사 기록"></button><button id="bnote" title="생존 수첩"></button><button id="bshot" title="카메라"></button><button id="bauto"></button><div id="aff"><span><i></i></span><b></b></div></div>
 <div id="place"></div><div id="guest" hidden></div>
 <div id="dlg" class="who-n"><div class="nm"></div><div class="tx"></div></div>
 <div id="radial" hidden></div><div id="log" hidden></div><div id="nbui" hidden></div><div id="nbterms" hidden></div><div id="nbx" hidden></div><div id="jpop" hidden></div><div id="quiz" hidden></div><div id="card" hidden></div><div id="fade"></div><div id="flash"></div><div id="view"></div><div id="noise"></div><div id="menu" hidden></div>
 <div id="boot">불러오는 중…</div>
 <script src="js/jp/icons.js?v=1"></script><script src="js/jp/notebook.js?v=2"></script><script src="js/jp/words.js?v=1"></script><script src="js/jp/yomi.js?v=3"></script><script src="js/jp/voice.js?v=2"></script><script src="js/jp/ja.js?v=3"></script><script src="js/jp/story.js?v=12"></script><script src="js/jp/quiz.js?v=2"></script>
 <script type="importmap">{"imports":{"three":"./js/vendor/three.module.min.js"}}</script>
-<script type="module" src="js/jp/main.js?v=16"></script>
+<script type="module" src="js/jp/main.js?v=17"></script>
 </body></html>
