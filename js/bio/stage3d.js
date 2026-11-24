@@ -1,6 +1,6 @@
 /* 개념 설명용 3D 무대: 카드가 오른쪽에 있을 때 왼쪽 빈 공간(카메라 앞)에 개념별 3D 애니메이션 + 3D 친구 */
 import * as THREE from 'three';
-import { E, shake, sfx } from './engine.js?v=202611231432';
+import { E, shake, sfx } from './engine.js?v=202611231526';
 
 const ROOT = new THREE.Group(); ROOT.visible = false;
 const STS = new THREE.Scene(); STS.add(new THREE.AmbientLight('#ffffff', 1.1)); { const d = new THREE.DirectionalLight('#ffffff', 1.6); d.position.set(3, 5, 8); STS.add(d); }
@@ -173,6 +173,129 @@ const SC = {
 };
 const ALIAS = { ea: ['energy', { fail: true, ea: true }], eaE: ['energy', { enz: true, ea: true }], calc: ['energy', { enz: true, ea: true, dh: true }], dh: ['energy', { dh: true }], exo: ['energy', { exo: true, dh: true }], endoE: ['energy', { endo: true, dh: true, p: 2, top: 4, topE: 3 }],
   nad: ['redox'], glyPath: ['glyC'], count: ['tcaC'], es: ['es'], photoAll: ['photoAll'], chlS: ['chlS'] };
+/* ── 내 손으로 따라가는 흐름 게임: 탄소를 직접 떼고 붙이며 해당 과정 · TCA 회로 ── */
+const FLOW = {
+  tca: { chain: ['피루브산 C₃', 'C₂', '아세틸 CoA', '시트르산 C₆', 'C₅', 'C₄', '옥살아세트산 C₄'], keys: ['CO₂', 'NADH', 'FADH₂', 'ATP'], st: [
+    { c: 0 }, { c: 0, task: '빛나는 끝 탄소(−COOH)를 눌러 CO₂로 잘라 내!', add: { 'CO₂': 1 } }, { c: 1, task: '빈 트럭 NAD⁺를 눌러 H(전자)를 실어!', add: { NADH: 1 } },
+    { c: 1, task: '보라색 조효소 A(CoA)를 눌러 손잡이를 붙여!' }, { c: 2, task: '아세틸 CoA를 눌러 회로에 넣어!' },
+    { c: 3, task: '빛나는 탄소를 눌러 CO₂로 떼어 내!', add: { 'CO₂': 1, NADH: 1 } }, { c: 4, task: '한 번 더! 빛나는 탄소를 눌러!', add: { 'CO₂': 1, NADH: 1 } },
+    { c: 5, task: 'C₄ 주변의 ATP · FADH₂ · NADH를 하나씩 눌러 챙겨!', add: { ATP: 1, 'FADH₂': 1, NADH: 1 } }, { c: 6 }] },
+  gly: { chain: ['포도당 C₆', '과당 2인산', 'PGAL ×2', 'BPGA ×2', '피루브산 ×2'], keys: ['ATP', 'NADH'], st: [
+    { c: 0 }, { c: 0, task: 'ATP 두 개를 눌러 포도당 양 끝에 인산을 붙여! (투자)', add: { ATP: -2 } }, { c: 1, task: '빛나는 가운데 결합을 눌러 반으로 쪼개!' },
+    { c: 2, task: 'NAD⁺ 트럭 두 대를 눌러 H(전자)를 실어!', add: { NADH: 2 } }, { c: 3, task: 'ADP 네 개를 눌러 인산을 받아 가게 해!', add: { ATP: 4 } }, { c: 4 }] },
+  etc: { chain: ['NADH → 전자 계단', 'H⁺ 퍼 올리기', 'O₂ → H₂O', 'H⁺ 흐름 → ATP'], keys: ['H⁺', 'H₂O', 'ATP'], st: [
+    { c: 0 }, { c: 0, task: 'NADH를 눌러 전자를 넘겨!' }, { c: 1, task: 'Ⅰ · Ⅲ · Ⅳ를 하나씩 눌러 H⁺를 위로 퍼 올려!', add: { 'H⁺': 10 } }, { c: 2, task: 'O₂를 눌러 전자를 받게 해!', add: { 'H₂O': 1 } },
+    { c: 3, task: 'ATP 합성 효소를 눌러 H⁺를 흘려보내!', add: { ATP: 2.5 } }, { c: 3 }, { c: 2, task: 'O₂를 눌러 없애 봐! (산소가 끊기면?)' }] } };
+function cRow(n, col) { const g = new THREE.Group(), balls = [], bonds = []; for (let i = 0; i < n; i++) { const b = at(sph(.45, col, .35), (i - (n - 1) / 2) * 1.05, 0); g.add(b); balls.push(b); if (i) { const bd = at(box(.6, .12, .12, '#e8f0ff', .6), (i - .5 - (n - 1) / 2) * 1.05, 0); g.add(bd); bonds.push(bd); } } g.userData.balls = balls; g.userData.bonds = bonds; return g; }
+const endX = n => (n - 1) / 2 * 1.05;
+function pB() { const g = new THREE.Group(); g.add(sph(.32, '#ff9a3c', .9)); g.add(at(tx('P', '#fff', .34), 0, 0, .4)); return g; }
+function co2M() { const g = new THREE.Group(); g.add(sph(.38, '#9aa4b0', .4)); [-1, 1].forEach(k => g.add(at(sph(.3, '#ff5a5a', .5), k * .6, 0))); g.add(at(tx('CO₂', '#e0e8f0', .45), 0, .8)); return g; }
+function coaM() { const g = new THREE.Group(); g.add(box(1.2, .8, .6, '#c08aff', .6)); g.add(at(tx('CoA', '#fff', .4), 0, 0, .5)); return g; }
+function hitOn(o, id, r = 1.1) { const h = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); h.userData.hit = true; o.add(h); o.userData.tap = id; return o; }
+function nameOn(o, str, col, dy = -1.1, size = .48) { if (o.userData.nm) o.remove(o.userData.nm); const s = at(tx(str, col, size), 0, dy); o.add(s); o.userData.nm = s; }
+function flowUI(F, c, tl, task, ok) { const el = tag.querySelector('.fl'); if (!el) return;
+  el.innerHTML = `<div class="fc">${F.chain.map((s, i) => `<span class="${i < c ? 'p' : i === c ? 'n' : ''}">${s}</span>`).join('<i>›</i>')}</div><div class="ft">${F.keys.map(key => `<span data-k="${key}">${key} <b>${tl[key] || 0}</b></span>`).join('')}</div>${task ? `<div class="fk${ok ? ' ok' : ''}">${ok ? '완료! 오른쪽 다음 ▶' : '할 일: ' + task}</div>` : ''}`; }
+SC.flow = (g, o) => {
+  const F = FLOW[o.s], k = o.k || 0, S = F.st[k], tl = {}; F.st.slice(0, k).forEach(s => Object.entries(s.add || {}).forEach(([a, n]) => tl[a] = (tl[a] || 0) + n));
+  const tws = [], marks = new Map(), glows = []; let c = S.c, ok = false, upd = null, uiOn = false;
+  const ui = () => flowUI(F, c, tl, S.task, ok);
+  const tw = (ob, x, y, d = .6, cb, arc = 0, s1) => tws.push({ ob, a: ob.position.clone(), b: V(x, y, ob.position.z), d, k: 0, cb, arc, s0: ob.scale.x, s1 });
+  const mark = (ob, id, r) => { hitOn(ob, id, r); const m = new THREE.Group(); const ring = new THREE.Mesh(new THREE.TorusGeometry(.95, .07, 8, 40), new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: .9, depthTest: false })); m.add(ring); const s = at(tx('눌러!', '#ffd23f', .42), 0, 1.5); m.add(s); m.userData = { ring, s }; g.add(m); marks.set(id, { m, ob }); };
+  const unmark = id => { const x = marks.get(id); if (x) { g.remove(x.m); delete x.ob.userData.tap; marks.delete(id); } };
+  const gain = (key, n) => { tl[key] = (tl[key] || 0) + n; ui(); const el = tag.querySelector(`.fl [data-k="${key}"]`); if (el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } };
+  const done = (msg) => { ok = true; g.userData.task = null; c = (F.st[k + 1] || S).c; ui(); hopT = .9; talkUntil = performance.now() + 900; sfx('win'); if (msg) pop(g, msg, 0, 4.2, '#5affd0', .6); };
+  const mol = (n, col, nm, x, y, sc = 1) => { const r = cRow(n, col); r.position.set(x, y, 0); r.scale.setScalar(sc); nameOn(r, nm, col); g.add(r); return r; };
+  const wpos = ob => { const v = new THREE.Vector3(); ob.getWorldPosition(v); return g.worldToLocal(v); };
+  const truckGo = (truck, x, y, onEnd) => { const p = truck.position.clone(); g.remove(truck); const nd = at(capsule('#4aa8ff', 'NADH', 2), p.x, p.y); g.add(nd); sparks(g, p.x, p.y, '#4aa8ff', 16, 4); tw(nd, x, y, .9, () => { g.remove(nd); onEnd && onEnd(); }, .6, .5); };
+  g.userData.task = S.task || null; const taps = {}; g.userData.onTap = id => { const f = taps[id]; if (!f) return; delete taps[id]; unmark(id); sfx('pick'); f(); };
+  if (o.s === 'tca') {
+    const P4 = [[0, 3.1], [3.3, 0], [0, -3.1], [-3.3, 0]];
+    if (k >= 4 && k < 8) { const ring = new THREE.Mesh(new THREE.TorusGeometry(3.2, .12, 10, 80), M('#ffd23f', .35, { transparent: true, opacity: .45 })); ring.position.z = -.6; g.add(ring); g.add(at(tx('TCA 회로', '#ffd23f', .5), 0, 0, -.3)); upd = t => { ring.rotation.z = -t * .15; }; }
+    if (k === 0) { const m = mol(3, '#ffd23f', '피루브산 (C₃)', -8, 0); tw(m, 0, 0, 1.4, () => pop(g, '기질 도착!', 0, 2, '#ffd23f', .7)); g.add(at(tx('TCA 입장 조건: C₂ + CoA 손잡이', '#c08aff', .42), 3.4, -2.6)); }
+    if (k === 1) { const m = mol(3, '#ffd23f', '피루브산 (C₃)', 0, 0); const e = m.userData.balls[2]; glows.push(e); mark(e, 'cut', .8);
+      taps.cut = () => { g.remove(m); const m2 = mol(2, '#ffd23f', 'C₂ (아세틸기)', -.5, 0); const c2 = at(co2M(), endX(3), 0); g.add(c2); tw(c2, 4.6, 3, .9, null, .8); pop(g, '싹둑! CO₂ 탈출 (탈탄산)', 1.6, 1.8, '#e0e8f0', .65); shake(.25); sparks(g, endX(3), 0, '#ffffff', 20, 4); gain('CO₂', 1); done('탄소 3 → 2'); }; }
+    if (k === 2) { const m = mol(2, '#ffd23f', 'C₂ (아세틸기)', -.5, 0); const hs = [0, 1].map(i => { const h = at(sph(.2, '#ffffff', .9), (i - .5) * 1.05, .62); m.add(h); return h; });
+      const tr = at(capsule('#6a7488', 'NAD⁺ (빈 트럭)', 2), 4.4, -2.3); g.add(tr); mark(tr, 'nad', 1.3);
+      taps.nad = () => { hs.forEach((h, i) => { g.attach(h); tw(h, 4.4, -2.3, .5 + i * .1, () => { g.remove(h); if (i) { truckGo(tr, 7.5, -4.5); pop(g, '탈수소! NAD⁺ → NADH', 2.4, -.8, '#4aa8ff', .6); gain('NADH', 1); done('H(전자) 실었다!'); } }, .8); }); }; }
+    if (k === 3) { const m = mol(2, '#ffd23f', 'C₂ (아세틸기)', 0, 0); const co = at(coaM(), 4.4, 1.8); g.add(co); mark(co, 'coa', 1.1);
+      taps.coa = () => tw(co, -endX(2) - 1.05, 0, .6, () => { m.attach(co); nameOn(m, '아세틸 CoA (C₂)', '#c08aff'); sparks(g, -1.3, 0, '#c08aff', 22, 4); pop(g, '찰칵! 입장권 완성', 0, 1.8, '#c08aff', .7); pop(g, '여기까지 ATP는 0개', 0, -2.6, '#ffffff', .45); done(); }, .6); }
+    if (k === 4) { const oa = mol(4, '#47e38a', '옥살아세트산 (C₄)', P4[0][0], P4[0][1], .8); const ac = mol(2, '#ffd23f', '아세틸 CoA', -6, 1.4, .8); const co = at(coaM(), -6 - endX(2) * .8 - .9, 1.4); co.scale.setScalar(.8); g.add(co); mark(ac, 'go', 1.4);
+      taps.go = () => { tw(co, -2.8, 3.1, .7); tw(ac, -2, 3.1, .7, () => { g.remove(ac); g.remove(oa); const c6 = mol(6, '#ffb070', '시트르산 (C₆)', P4[0][0], P4[0][1], .8); sparks(g, 0, 3.1, '#ffb070', 26, 5); shake(.2); pop(g, '2 + 4 = 6 ! 시트르산', 0, 1.2, '#ffb070', .7);
+        tw(co, -7, 4.6, .9, () => g.remove(co), .5); pop(g, 'CoA는 빠져나와 재사용', -4.6, 3.6, '#c08aff', .45); done(); }); }; }
+    const cut = (n, from, to, col, nm2, co2to, msg) => { const m = mol(n, '#ffb070', n === 6 ? '시트르산 (C₆)' : `${n}탄소 화합물 (C${'₀₁₂₃₄₅₆'[n]})`, from[0], from[1], .8); const e = m.userData.balls[n - 1]; glows.push(e); mark(e, 'cut', .7);
+      taps.cut = () => { const p = wpos(e); g.remove(m); const c2 = at(co2M(), p.x, p.y); g.add(c2); tw(c2, co2to[0], co2to[1], 1, null, .6); const nd = at(capsule('#4aa8ff', 'NADH', 2), p.x, p.y - .8); g.add(nd); tw(nd, co2to[0] + 1, co2to[1] - 2, 1, () => g.remove(nd), .4, .6);
+        shake(.2); sparks(g, p.x, p.y, '#ffffff', 18, 4); pop(g, '뽁! CO₂ + NADH', p.x, p.y + 1.4, '#e0e8f0', .6); gain('CO₂', 1); gain('NADH', 1);
+        const m2 = mol(n - 1, '#ffb070', nm2, from[0], from[1], .8); tw(m2, to[0], to[1], 1.2, () => { if (msg) pop(g, msg, 0, -1.3, '#ffd23f', .5); done(); }, 1.2); }; };
+    if (k === 5) cut(6, P4[0], P4[1], '#ffb070', '5탄소 화합물 (C₅)', [4.2, 4.6]);
+    if (k === 6) cut(5, P4[1], P4[2], '#ffb070', '4탄소 화합물 (C₄)', [7, 2.4], '탄소 3개 전부 CO₂로 나감!');
+    if (k === 7) { const m = mol(4, '#ffb070', '4탄소 화합물 (C₄)', P4[2][0], P4[2][1], .8); let left = 3;
+      [['ATP', '#ffd23f', -5.4, -1.4, 'ATP', '기질 수준 인산화!'], ['FADH₂', '#47e38a', 5.4, -1.4, 'FADH₂', 'FAD → FADH₂'], ['NADH', '#4aa8ff', -5.4, 1.6, 'NADH', 'NAD⁺ → NADH']].forEach(([id, col, x, y, key, msg]) => { const ch = at(capsule(col, id, 1.9), x, y); g.add(ch); mark(ch, id, 1.1);
+        taps[id] = () => { pop(g, msg, x, y + 1.4, col, .5); sparks(g, x, y, col, 16, 4); gain(key, 1); tw(ch, -6.5, 4.5, .8, () => g.remove(ch), .5, .3);
+          if (--left === 0) { g.remove(m); const oa = mol(4, '#47e38a', '옥살아세트산 (C₄)', P4[2][0], P4[2][1], .8); tw(oa, P4[3][0], P4[3][1], .9, () => tw(oa, P4[0][0], P4[0][1], .9, () => { pop(g, '한 바퀴! 다시 옥살아세트산 = 회로', 0, 1.3, '#47e38a', .55); done(); }, 1.2), 1.2); } }; }); }
+    if (k === 8) { const items = [['CO₂', 3, '#e0e8f0'], ['NADH', 4, '#4aa8ff'], ['FADH₂', 1, '#47e38a'], ['ATP', 1, '#ffd23f']]; const spr = []; let ph = 0;
+      g.add(at(tx('피루브산 1개 (= 1바퀴 + 산화)', '#ffd23f', .5), 0, 3)); const head = g.children[g.children.length - 1];
+      upd = t => { const want = t > 4.5 ? 2 : t > .4 ? 1 : 0; if (want === ph) return; ph = want; spr.forEach(s => g.remove(s)); spr.length = 0;
+        items.forEach(([n, v, col], i) => { const s = at(tx(`${n} ${v * ph}`, col, .85), -4.8 + i * 3.2, 0); g.add(s); spr.push(s); sparks(g, -4.8 + i * 3.2, 0, col, 14, 3); });
+        if (ph === 2) { g.remove(head); g.add(at(tx('포도당 1개 = 피루브산 2개 → ×2', '#5affd0', .5), 0, 3)); pop(g, '×2 !!', 0, 1.6, '#5affd0', 1.2); shake(.3); F.keys.forEach(key => tl[key] = (tl[key] || 0) * 2); ui(); sfx('win'); } }; }
+  }
+  if (o.s === 'gly') {
+    const fbp = (x, y) => { const m = mol(6, '#ffb3d0', '과당 2인산 (불안정!)', x, y); [-1, 1].forEach(s => m.add(at(pB(), s * endX(6), .72))); return m; };
+    const pg = (y, nm, col, nP, hs) => { const m = mol(3, col, nm, 0, y); const ps = []; for (let i = 0; i < nP; i++) { const p = at(pB(), i ? -endX(3) - .75 : endX(3) + .75, 0); m.add(p); ps.push(p); } if (hs) { const h = at(sph(.2, '#ffffff', .9), 0, .62); m.add(h); m.userData.h = h; } m.userData.ps = ps; return m; };
+    if (k === 0) { const m = mol(6, '#ffb3d0', '포도당 (C₆)', -8, 0); tw(m, 0, 0, 1.4, () => pop(g, '세포질 도착! 너무 커서 마이토콘드리아엔 못 들어가', 0, 2, '#ffb3d0', .5)); }
+    if (k === 1) { const m = mol(6, '#ffb3d0', '포도당 (C₆)', 0, 0); let left = 2;
+      [-1, 1].forEach((s, i) => { const a = at(capsule('#ffd23f', 'ATP', 1.9), s * 4.2, -2.6); g.add(a); mark(a, 'a' + i, 1.1);
+        taps['a' + i] = () => tw(a, s * endX(6), 1.4, .6, () => { g.remove(a); m.add(at(pB(), s * endX(6), .72)); const ad = at(capsule('#9a8a60', 'ADP', 1.9), s * endX(6), 1.4); g.add(ad); tw(ad, s * 6, -4.5, .9, () => g.remove(ad), .4, .6);
+          sparks(g, s * endX(6), .7, '#ff9a3c', 16, 4); pop(g, 'ATP 투자 → 인산 붙음', s * 3, 2.4, '#ff9a3c', .5); gain('ATP', -1);
+          if (--left === 0) { nameOn(m, '과당 2인산 (불안정!)', '#ffb3d0'); upd = t => { m.rotation.z = Math.sin(t * 30) * .03; }; pop(g, '덜덜덜... 불안정 = 쪼개기 쉬움', 0, -2.4, '#ffb3d0', .5); done(); } }, .5); }); }
+    if (k === 2) { const m = fbp(0, 0); upd = t => { m.rotation.z = Math.sin(t * 30) * .03; }; const bd = m.userData.bonds[2]; glows.push(bd); mark(bd, 'split', .8);
+      taps.split = () => { g.remove(m); upd = null; const A = pg(0, 'PGAL (C₃)', '#ffb3d0', 1), B = pg(0, 'PGAL (C₃)', '#ffb3d0', 1); tw(A, 0, 1.7, .5); tw(B, 0, -1.9, .5); shake(.35); sparks(g, 0, 0, '#ffb3d0', 30, 6); pop(g, '쩍!! 6 = 3 + 3', 3.6, 0, '#ffd23f', .8); pop(g, '이제부터 전부 ×2', -3.8, 0, '#5affd0', .5); done(); }; }
+    if (k === 3) { let left = 2; [1.7, -1.9].forEach((y, i) => { const m = pg(y, 'PGAL (C₃)', '#ffb3d0', 1, true); const tr = at(capsule('#6a7488', 'NAD⁺', 2), 5, y); g.add(tr); mark(tr, 'n' + i, 1.2);
+      taps['n' + i] = () => { const h = m.userData.h; g.attach(h); tw(h, 5, y, .5, () => { g.remove(h); truckGo(tr, 8, y - 2); gain('NADH', 1); pop(g, '산화! NAD⁺ → NADH', 2.6, y + 1.2, '#4aa8ff', .5);
+        const pi = at(pB(), -7, y); g.add(pi); tw(pi, -endX(3) - .75, y, .6, () => { g.remove(pi); const p = at(pB(), -endX(3) - .75, 0); m.add(p); m.userData.ps.push(p); nameOn(m, 'BPGA (C₃, 인산 2)', '#ffb3d0'); sparks(g, -2, y, '#ff9a3c', 12, 3); if (--left === 0) done('PGAL → BPGA (NADH 2)'); }); }, .6); }; }); }
+    if (k === 4) { const rows = [1.7, -1.9].map(y => pg(y, 'BPGA (C₃, 인산 2)', '#ffb3d0', 2)); const queue = rows.flatMap(r => r.userData.ps.map(p => [r, p])); let left = 4;
+      [[3.4, 3.7], [5.8, 3.7], [3.4, -4.2], [5.8, -4.2]].forEach(([x, y], i) => { const ad = at(capsule('#9a8a60', 'ADP', 1.9), x, y); g.add(ad); mark(ad, 'd' + i, 1.1);
+        taps['d' + i] = () => { const [r, p] = queue.shift(); const w = wpos(p); r.remove(p); const pp = at(pB(), w.x, w.y); g.add(pp); tw(pp, x, y, .55, () => { g.remove(pp); g.remove(ad); const a = at(capsule('#ffd23f', 'ATP', 1.9), x, y); g.add(a); sparks(g, x, y, '#ffd23f', 18, 4); pop(g, '+1 ATP', x, y + 1.3, '#ffd23f', .6); gain('ATP', 1);
+          if (--left === 0) { rows.forEach(r => { r.userData.balls.forEach(b => { b.material.color.set('#ffd23f'); b.material.emissive.set('#ffd23f'); }); nameOn(r, '피루브산 (C₃)', '#ffd23f'); }); done('기질 수준 인산화로 ATP 4!'); } }, .6); }; }); }
+    if (k === 5) { const rows = [1.7, -1.9].map(y => mol(3, '#ffd23f', '피루브산 (C₃)', 0, y)); const lines = [['ATP 4 생성 − 2 투자 = 순 2 ATP', '#ffd23f'], ['NADH 2', '#4aa8ff'], ['피루브산 2 → 마이토콘드리아로!', '#5affd0']]; let n = 0;
+      upd = t => { const want = Math.min(3, Math.floor(t / 1.2)); while (n < want) { const [s, col] = lines[n]; g.add(at(tx(s, col, .5), 0, 4 - n * .85)); sparks(g, 0, 4 - n * .85, col, 12, 3); n++; } if (t > 4.2) rows.forEach(r => { r.position.x = Math.min(9, (t - 4.2) * 3); }); }; }
+  }
+  if (o.s === 'etc') {
+    const X = { I: -5, Q: -3.2, III: -1.2, c: .2, IV: 1.8, S: 5 }; g.add(at(box(15, 1.1, 1.4, '#d9b25a', .3), 0, 0, -.2));
+    g.add(at(tx('막 사이 공간', '#ffb0a0', .45), 5.2, 3.7));
+    const cx = {}; [['I', 'Ⅰ', '#ff8a6a'], ['III', 'Ⅲ', '#ffb03a'], ['IV', 'Ⅳ', '#ff5a8a']].forEach(([id, l, col]) => { const m = at(box(1.3, 2.4, 1.2, col, .45), X[id], 0, .3); m.add(at(tx(l, '#fff', .55), 0, 0, .8)); g.add(m); cx[id] = m; });
+    g.add(at(sph(.4, '#ffd23f', .6), X.Q, 0, .8), at(sph(.35, '#ff9a3c', .6), X.c, 1.4, .6));
+    const syn = new THREE.Group(); syn.add(cyl(.5, 2.2, '#8ac8ff', .4)); const head = at(sph(1, '#4aa8ff', .45), 0, -1.9); syn.add(head); const rot = at(box(1.7, .25, .25, '#ffffff', .6), 0, -1.9, 1); syn.add(rot); syn.add(at(tx('ATP 합성 효소', '#8ac8ff', .38), 0, -3.3)); g.add(at(syn, X.S, 0, .3));
+    const hs = []; for (let i = 0; i < (tl['H⁺'] || 0); i++) { const h = at(sph(.15, '#ff6a5a', 1), -4 + Math.random() * 7.5, 1.6 + Math.random() * 1.5, .5); g.add(h); hs.push(h); }
+    const elec = (path, cb, d = .45) => { const e = at(sph(.24, '#ffff66', 2), path[0][0], path[0][1], 1); g.add(e); let i = 1; const nx = () => { if (i >= path.length) { g.remove(e); cb && cb(); return; } const [x, y, lab] = path[i++]; tw(e, x, y, d, () => { sparks(g, x, y, '#ffff66', 8, 2); if (lab) pop(g, lab, x, y + 1, '#ffff99', .4); nx(); }, .5); }; nx(); };
+    const PATH = [[X.I, 0, '에너지↓'], [X.Q, 0], [X.III, 0, '에너지↓'], [X.c, 1.4], [X.IV, 0, '에너지↓']];
+    const o2 = () => { const m = new THREE.Group(); [-1, 1].forEach(k => m.add(at(sph(.34, '#ff5a5a', .6), k * .36, 0))); m.add(at(tx('O₂', '#ffb0b0', .45), 0, .8)); return at(m, 3.2, -2.5); };
+    if (k === 0) { const nd = at(capsule('#4aa8ff', 'NADH', 2), -5, -2.6); g.add(nd); upd = t => { nd.position.y = -2.6 + Math.sin(t * 2) * .15; }; pop(g, '여기가 ATP 대량 생산 공장', -1, 3, '#ffd23f', .5); }
+    if (k === 1) { const nd = at(capsule('#4aa8ff', 'NADH', 2), -5, -2.6); g.add(nd); mark(nd, 'nadh', 1.2);
+      taps.nadh = () => { g.remove(nd); const na = at(capsule('#6a7488', 'NAD⁺', 2), -5, -2.6); g.add(na); tw(na, -7, -4.5, 1, () => g.remove(na), .3); pop(g, 'NADH → NAD⁺ (전자 넘김)', -4, -1.4, '#4aa8ff', .45); elec([[-5, -2.2], ...PATH], () => done('계단을 내려가며 에너지를 조금씩!')); }; }
+    if (k === 2) { let left = 3; [['I', 4], ['III', 4], ['IV', 2]].forEach(([id, n]) => { mark(cx[id], id, 1.4); taps[id] = () => { elec([[X[id], -1.6], [X[id], 0]], null, .3);
+        for (let i = 0; i < n; i++) { const h = at(sph(.15, '#ff6a5a', 1), X[id] + (Math.random() - .5) * .6, -2, .5); g.add(h); hs.push(h); tw(h, -4 + Math.random() * 7.5, 1.6 + Math.random() * 1.5, .6 + i * .12, null, .3); }
+        gain('H⁺', n); pop(g, `H⁺ ${n}개 퍼 올림!`, X[id], 2.6, '#ff8a7a', .45); if (--left === 0) done('막 사이 공간 H⁺ ↑ (농도 차)'); }; }); }
+    if (k === 3) { const ox = o2(); g.add(ox); mark(ox, 'o2', 1); taps.o2 = () => { elec([[X.IV, 0], [3.2, -2.5]], () => { g.remove(ox); const w = at(tx('H₂O', '#8ad8ff', .7), 3.2, -2.5); g.add(w); sparks(g, 3.2, -2.5, '#8ad8ff', 18, 4); gain('H₂O', 1); done('O₂ = 최종 전자 수용체 → 물'); });
+        [0, 1].forEach(i => { const h = at(sph(.15, '#ff6a5a', 1), 2 + i, -4, .5); g.add(h); tw(h, 3.2, -2.5, .7, () => g.remove(h)); }); }; }
+    if (k === 4) { mark(syn, 'syn', 1.6); taps.syn = () => { let spin = 3; upd = (t, dt) => { if (spin > 0) { spin -= dt; rot.rotation.y += dt * 14; head.rotation.y += dt * 14; } };
+        hs.slice(0, 10).forEach((h, i) => tw(h, X.S, 1.2, .25 + i * .2, () => tw(h, X.S + (Math.random() - .5) * 2, -3.6, .5, () => g.remove(h)))); 
+        [1, 1, .5].forEach((n, i) => setTimeout(() => { if (!g.parent) return; const a = at(capsule('#ffd23f', 'ATP', 1.9), X.S, -1.9); g.add(a); tw(a, X.S - 2.4 - i * 2.1, -3.3, .6, null, .5); sparks(g, X.S, -1.9, '#ffd23f', 14, 3); gain('ATP', n); if (i === 2) done('NADH 1개 → 약 2.5 ATP (화학 삼투)'); }, 600 + i * 800)); }; }
+    if (k === 5) { const fd = at(capsule('#47e38a', 'FADH₂', 2), X.Q, -2.6); g.add(fd); g.add(at(tx('Ⅰ 건너뜀 → H⁺ 덜 퍼 올림 → 약 1.5 ATP', '#47e38a', .45), 0, 3)); let last = -1;
+      upd = t => { const c2 = Math.floor(t / 4); if (c2 !== last) { last = c2; elec([[X.Q, -2.2], [X.Q, 0], [X.III, 0], [X.c, 1.4], [X.IV, 0]]); pop(g, 'FADH₂는 Q로 바로!', X.Q, -1, '#47e38a', .45); } }; }
+    if (k === 6) { const ox = o2(); g.add(ox); mark(ox, 'o2', 1); taps.o2 = () => { tw(ox, 7, -5, .6, () => g.remove(ox)); pop(g, 'O₂ 끊김!', 3.2, -1.4, '#ff6a5a', .6); let n = 0;
+        const jam = () => { if (!g.parent || n >= 5) { Object.values(cx).forEach(m => { m.material.color.set('#555'); m.material.emissive.set('#333'); }); pop(g, '전자 정체 → NADH가 NAD⁺로 못 돌아감 → TCA도 멈춤', 0, 3, '#ff8a6a', .42); shake(.3); done(); return; }
+          const e = at(sph(.24, '#ffff66', 2), X.I, 0, 1); g.add(e); tw(e, X.IV - n * .5, 0, .5, () => sparks(g, X.IV - n * .5, 0, '#ff6a5a', 6, 2)); n++; setTimeout(jam, 450); }; setTimeout(jam, 500); }; }
+  }
+  return (t, dt) => { if (!uiOn) { uiOn = true; ui(); }
+    for (let i = tws.length - 1; i >= 0; i--) { const w = tws[i]; w.k = Math.min(1, w.k + dt / w.d); const e = sm(w.k); w.ob.position.lerpVectors(w.a, w.b, e); w.ob.position.y += Math.sin(Math.PI * w.k) * w.arc; if (w.s1 !== undefined) w.ob.scale.setScalar(lerp(w.s0, w.s1, e)); if (w.k >= 1) { tws.splice(i, 1); w.cb && w.cb(); } }
+    marks.forEach(({ m, ob }) => { ob.getWorldPosition(m.position); g.worldToLocal(m.position); m.position.z += .8; m.userData.ring.scale.setScalar(1 + .2 * Math.sin(t * 6)); m.userData.s.position.y = 1.5 + .25 * Math.abs(Math.sin(t * 4)); });
+    if (!ok) glows.forEach(b => { b.material.emissiveIntensity = 1 + Math.sin(t * 7) * .9; });
+    upd && upd(t, dt); };
+};
+for (let i = 0; i < 9; i++) ALIAS['tca' + i] = ['flow', { s: 'tca', k: i }];
+for (let i = 0; i < 6; i++) ALIAS['gly' + i] = ['flow', { s: 'gly', k: i }];
+for (let i = 0; i < 7; i++) ALIAS['etc' + i] = ['flow', { s: 'etc', k: i }];
+export const stageTask = () => (ROOT.visible && ROOT.userData.stage && ROOT.userData.stage.userData.task) || null;
 
 /* ── 3D 친구 ── */
 function makeFriend(col) { const g = new THREE.Group(); const body = sph(1, col, .35); body.scale.set(1.05, 1, .9); g.add(body); const eyes = eyesOn(.26); eyes.position.set(0, .2, .82); g.add(eyes);
@@ -185,12 +308,28 @@ function stepFriend(t, dt) { if (!friend) return; const u = friend.userData; con
   u.arms[0].rotation.z = -.4 - Math.sin(t * 3) * .25 - (talking ? Math.abs(Math.sin(t * 5)) * .5 : 0); u.arms[1].rotation.z = .4 + (talking ? 1.4 + Math.sin(t * 7) * .5 : Math.sin(t * 2.5) * .2); }
 
 export function stageStep(dt) { if (!ROOT.visible || !E.cam) return; T += dt;
-  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(E.cam.quaternion); ROOT.position.copy(E.cam.position).addScaledVector(fwd, 15); ROOT.quaternion.copy(E.cam.quaternion);
+  const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(E.cam.quaternion); ROOT.position.copy(E.cam.position).addScaledVector(fwd, DIST); ROOT.quaternion.copy(E.cam.quaternion);
   stepZoom(dt); if (cur && !zoom) try { cur(T - t0, dt); } catch (e) { console.error('[stage]', e); cur = null; }
   for (let i = pops.length - 1; i >= 0; i--) { const p = pops[i], u = p.userData; u.k += dt; if (u.k > u.life) { p.parent && p.parent.remove(p); pops.splice(i, 1); continue; } const k = u.k / u.life;
     if (p.isSprite) { const s = k < .12 ? .4 + k / .12 * .8 : 1.2 - (k - .12) * .25; p.scale.copy(u.base).multiplyScalar(s); p.material.opacity = k > .7 ? (1 - k) / .3 : 1; p.position.y += dt * .6; }
     else { if (u.inward) p.position.copy(u.o).addScaledVector(u.v, .45 * (1 - k)); else p.position.addScaledVector(u.v, dt); p.material.opacity = 1 - k; p.material.transparent = true; } }
+  for (let i = pokes.length - 1; i >= 0; i--) { const p = pokes[i]; p.k += dt; const k = p.k / .5; if (k >= 1) { p.o.scale.copy(p.s); pokes.splice(i, 1); continue; } p.o.scale.copy(p.s).multiplyScalar(1 + Math.sin(k * Math.PI) * .45 * (1 - k)); p.o.rotation.z = p.r + Math.sin(k * Math.PI * 4) * .25 * (1 - k); }
   stepFriend(T, dt); }
+/* 빈 공간(패널 밖) 크기에 맞춰 무대 거리 조절: 가로 18칸 · 세로 12칸이 다 보이게 */
+let DIST = 15; const pokes = [];
+export function stageFit(w, h) { const per = 2 * Math.tan(31 * Math.PI / 180) / innerHeight; DIST = Math.max(13, Math.min(30, Math.max(15.5 / (w * per), 10.5 / (h * per)))); }
+/* 핵심어를 잡았을 때 3D에서 크게 터지는 칭찬 */
+export function stageCheer(str, col = '#ffd23f') { if (!ROOT.visible) return; const g = ROOT.userData.stage || ROOT; const x = (Math.random() - .5) * 6, y = 1.5 + Math.random() * 2;
+  pop(g, str, x, y, col, .9); sparks(g, x, y, col, 22, 5); hopT = .8; talkUntil = performance.now() + 700; sfx('atp'); }
+/* 3D를 직접 눌러 보기: 누른 물체가 통통 튀고 반짝 */
+const RC = new THREE.Raycaster(); const BOING = ['뿅!', '톡!', '말랑', '띠용', '꾹!'];
+export function stagePoke(cx, cy) { if (!ROOT.visible || !E.cam) return false; const g = ROOT.userData.stage; RC.setFromCamera({ x: cx / innerWidth * 2 - 1, y: -(cy / innerHeight) * 2 + 1 }, E.cam);
+  const targets = [g, friend].filter(Boolean); const hit = RC.intersectObjects(targets, true).find(h => (h.object.visible || h.object.userData.hit) && !h.object.isSprite); if (!hit) return false;
+  if (g) { let q = hit.object; while (q && q !== g && q.userData.tap === undefined) q = q.parent; if (q && q !== g && g.userData.onTap) { g.userData.onTap(q.userData.tap); return true; } }
+  let o = hit.object; const isF = friend && (() => { let q = o; while (q) { if (q === friend) return true; q = q.parent; } return false; })();
+  if (isF) { hopT = .9; talkUntil = performance.now() + 900; const lp = ROOT.worldToLocal(hit.point.clone()); pop(ROOT, ['간지러워!', '헤헤', '나 말고 저거 봐!'][Math.floor(Math.random() * 3)], lp.x + 1, lp.y + 1.6, '#ffffff', .6); sfx('pick'); return true; }
+  while (o.parent && o.parent !== g && o.parent.parent !== g) o = o.parent; if (!pokes.some(p => p.o === o)) pokes.push({ o, k: 0, s: o.scale.clone(), r: o.rotation.z });
+  const lp = g.worldToLocal(hit.point.clone()); sparks(g, lp.x, lp.y, '#ffffff', 12, 3); pop(g, BOING[Math.floor(Math.random() * BOING.length)], lp.x, lp.y + 1, '#5affd0', .55); sfx('pick'); return true; }
 /* ── 어디서 · 왜 ── */
 const KEYLOC = { meta: 'cell', ea: 'mol', dh: 'mol', exo: 'mol', endoE: 'mol', eaE: 'mol', calc: 'mol', gibil: 'mol', es: 'mol', cof: 'mol', kinds: 'mol', tph: 'mol', sat: 'mol', inh: 'mol',
   atp: 'cell', redox: 'cell', nad: 'cell', resp: 'cell', mito: 'mito', endo: 'cell', glyC: 'cyto', glyPath: 'cyto', pyrC: 'matrix', tcaC: 'matrix', count: 'matrix', elev: 'inner', mem: 'inner',
@@ -246,7 +385,7 @@ function stepZoom(dt) { if (!zoom) return; zoom.t += dt; const { levels, per } =
   const lab = (B && f > .5 ? B : A).userData.lab; tag.querySelector('.z') && (tag.querySelector('.z').textContent = '🔍 ' + zoom.chain.map(id => { const g = levels[zoom.chain.indexOf(id)]; return g.userData.lab; }).join(' → '));
   if (i >= n - 1) { /* 도착: 마지막 장소를 흐린 배경으로 */ if (locBg) ROOT.remove(locBg); locBg = levels[n - 1]; locBg.scale.setScalar(1.4); locBg.position.set(0, 0, -5); setOp(locBg, .45); levels.slice(0, -1).forEach(g => ROOT.remove(g)); zoom = null; if (ROOT.userData.stage) ROOT.userData.stage.visible = true; t0 = T; } }
 export function stageShow(key, col, words) {
-  if (!E.scene) return; if (!built) { built = true; STS.add(ROOT); const back = new THREE.Mesh(new THREE.PlaneGeometry(60, 40), new THREE.MeshBasicMaterial({ color: '#0d0a08', transparent: true, opacity: .93, depthWrite: false })); back.position.z = -9; back.renderOrder = -1; ROOT.add(back); ROOT.userData.back = back; }
+  if (!E.scene) return; if (!built) { built = true; STS.add(ROOT); const back = new THREE.Mesh(new THREE.PlaneGeometry(200, 140), new THREE.MeshBasicMaterial({ color: '#16202e', transparent: true, opacity: .9, depthWrite: false })); back.position.z = -9; back.renderOrder = -1; ROOT.add(back); ROOT.userData.back = back; }
   if (!key) { ROOT.visible = false; tag.hidden = true; curLoc = null; curKey = null; zoom = null; if (locBg) { ROOT.remove(locBg); locBg = null; } return; } ROOT.visible = true; tag.hidden = false;
   if (words) talkUntil = performance.now() + Math.min(6000, 600 + words * 55); hopT = .6;
   const c = col || '#5af0ff'; if (!friend || friend.userData.col !== c) { if (friend) ROOT.remove(friend); friend = makeFriend(c); friend.userData.col = c; friend.position.set(-6.2, -3.3, 1); friend.scale.setScalar(.9); ROOT.add(friend); }
@@ -254,10 +393,15 @@ export function stageShow(key, col, words) {
   if (ROOT.userData.stage) ROOT.remove(ROOT.userData.stage); pops.length = 0;
   const g = new THREE.Group(); g.position.set(.6, .3, 0); g.scale.setScalar(1.12); ROOT.add(g); ROOT.userData.stage = g;
   const [name, opt] = ALIAS[key] || [key]; const fn = SC[name]; cur = fn ? fn(g, opt || {}) : null; if (!fn) g.add(at(tx('🔬', '#fff', 1.5), 0, 0)); t0 = T;
-  const loc = KEYLOC[key] || 'cell'; tag.innerHTML = `<div class="w">📍 어디서? ${LOC[loc].n}</div>${WHY[key] ? `<div class="y"><b>왜?</b> ${WHY[key]}</div>` : ''}<div class="z"></div>`;
+  const loc = KEYLOC[key] || 'cell'; tag.innerHTML = `<div class="w">📍 어디서? ${LOC[loc].n}</div>${WHY[key] ? `<div class="y"><b>왜?</b> ${WHY[key]}</div>` : ''}<div class="z"></div><div class="fl"></div>`;
   if (loc !== curLoc) { if (locBg) { ROOT.remove(locBg); locBg = null; } g.visible = false; startZoom(loc); } else tag.querySelector('.z').textContent = ''; }
 export const stageHas = k => !!(SC[(ALIAS[k] || [k])[0]]);
 
 /* 세포 화면을 다 그린 뒤 그 위에 무대를 따로 그림 (배경과 안 겹치게) */
 export function stageRender() { if (!ROOT.visible || !E.R) return; const R = E.R, a = R.autoClear; R.autoClear = false; R.clearDepth(); R.render(STS, E.cam); R.autoClear = a; }
 window.__stageFF = sec => { for (let i = 0; i < sec / .05; i++) stageStep(.05); };
+
+for (let i = 0; i < 9; i++) { KEYLOC['tca' + i] = 'matrix'; WHY['tca' + i] = i < 4 ? WHY.pyrC : WHY.tcaC; }
+for (let i = 0; i < 6; i++) { KEYLOC['gly' + i] = 'cyto'; WHY['gly' + i] = i === 1 ? WHY.glyPath : WHY.glyC; }
+for (let i = 0; i < 7; i++) { KEYLOC['etc' + i] = 'inner'; WHY['etc' + i] = i < 2 ? WHY.elev : WHY.mem; }
+window.__stageDbg = () => ROOT.userData.stage;

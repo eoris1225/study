@@ -25,7 +25,7 @@ export function initEngine(host) {
   return E;
 }
 /* 옆 패널이 열려 있으면 3D 화면 중심을 왼쪽으로 옮겨 가려지지 않게 */
-export function viewShift(px) { if (!E.cam) return; if (px) E.cam.setViewOffset(innerWidth, innerHeight, px, 0, innerWidth, innerHeight); else E.cam.clearViewOffset(); E.cam.updateProjectionMatrix(); }
+export function viewShift(px, py = 0) { if (!E.cam) return; if (px || py) E.cam.setViewOffset(innerWidth, innerHeight, px, py, innerWidth, innerHeight); else E.cam.clearViewOffset(); E.cam.updateProjectionMatrix(); }
 window.__viewShift = viewShift;
 export function setQuality(q) { E.quality = q; try { localStorage.setItem('bio_q', q); } catch (e) { } location.reload(); }
 
