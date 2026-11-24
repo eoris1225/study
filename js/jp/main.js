@@ -99,6 +99,9 @@ const MOT = {
   look_away: t => ({ head: [.15, .65 * Math.min(1, t * 4), .1], neck: [0, .2, 0], upperarm_R: [-.4, 0, .2], forearm_R: [-1.6, -.3, 0] }),
   ear_red: t => ({ upperarm_L: [-.3, 0, .18], upperarm_R: [-.3, 0, -.18], forearm_L: [-.7, .6, 0], forearm_R: [-.7, -.6, 0], head: [.32, 0, .12], spine2: [.08, 0, 0] }),
   reach_miss: t => ({ upperarm_L: [-1.15 + S(t * 1.6) * .12, 0, .25], upperarm_R: [-1.15 - S(t * 1.6) * .12, 0, -.25], forearm_L: [-.25, .2, 0], forearm_R: [-.25, -.2, 0], spine1: [.18, 0, 0], head: [.1, S(t * .9) * .12, .1] }),
+  grip_sleeve: t => ({ upperarm_R: [-.85, 0, .1], forearm_R: [-.6, -.35, 0], upperarm_L: [-.3, 0, .2], forearm_L: [-.9, .5, 0], head: [.22, 0, .06], spine1: [.08, 0, 0] }),
+  lean_in: t => { const k = Math.min(1, t * 2); return { spine1: [.25 * k, 0, 0], spine2: [.15 * k, 0, 0], head: [-.05, 0, .08 * k], upperarm_L: [-1.2 * k, 0, .3], upperarm_R: [-1.2 * k, 0, -.3], forearm_L: [-.6 * k, .45, 0], forearm_R: [-.6 * k, -.45, 0] }; },
+  flinch_sound: t => ({ upperarm_L: [-.4, 0, .5], upperarm_R: [-.4, 0, -.5], forearm_L: [-2, .6, 0], forearm_R: [-2, -.6, 0], head: [.3, 0, 0], spine2: [.15, 0, 0], shoulder_L: [0, 0, .12], shoulder_R: [0, 0, -.12], _sh: S(t * 22) * .015 }),
   stretch: t => ({ upperarm_L: [0, 0, 1.9], upperarm_R: [0, 0, -1.9], forearm_L: [0, 0, .6], forearm_R: [0, 0, -.6], spine1: [-.1, 0, S(t * 2) * .1] })
 };
 function bow(t, d) { const k = t < .6 ? t / .6 : t < 1.8 ? 1 : Math.max(0, 1 - (t - 1.8) / .6); return { spine1: [d * k * .6, 0, 0], spine2: [d * k * .4, 0, 0], head: [.1 * k, 0, 0], upperarm_L: [-.2 * k, 0, .1], upperarm_R: [-.2 * k, 0, -.1], forearm_L: [-.3 * k, .3 * k, 0], forearm_R: [-.3 * k, -.3 * k, 0] }; }
@@ -203,28 +206,35 @@ function setWorld(n) {
   /* 나란히 선 장면은 서로 마주 보면서 카메라(+z) 쪽으로 살짝 */
   if (Math.abs(SPOTS.o[2] - SPOTS.s[2]) < 1.5) { const k = SPOTS.o[0] < SPOTS.s[0] ? 1 : -1; SPOTS.o[3] = k * 1.15; SPOTS.s[3] = -k * 1.15; }
   place('o', SPOTS.o); place('s', SPOTS.s); FXclear();
+  roll = 0; fovT = 34; $('#view').classList.remove('on'); $('#noise').className = '';
+  if (CUR.rain && !['room', 'genkan', 'class', 'club', 'hospital'].includes(n)) fx('rain');
 }
-const LIGHTS = { 벚꽃역광: { h: '#ffe6f0', g: '#8a6a7a', hi: 1.5, s: '#ffd0c0', si: 2.6, sp: [-10, 9, -18], ex: 1.18 }, 저녁실내: { h: '#ffd8a8', g: '#6a4a30', hi: 1.15, s: '#ffb070', si: 1.6, sp: [12, 8, 6], ex: 1.05 }, 아침햇살: { h: '#fff4e4', g: '#7a6a58', hi: 1.65, s: '#ffe6c0', si: 2.5, sp: [14, 10, 10], ex: 1.12 }, 정오햇살: { h: '#ffffff', g: '#7a7064', hi: 1.75, s: '#fffaf0', si: 2.6, sp: [4, 22, 6], ex: 1.08 }, 오후노을_시작: { h: '#ffe8cc', g: '#6a5040', hi: 1.45, s: '#ffc890', si: 2.2, sp: [16, 9, 8], ex: 1.08 }, 오후노을: { h: '#ffd4a8', g: '#5a3a28', hi: 1.25, s: '#ff9a50', si: 2.1, sp: [18, 5, 6], ex: 1.12 }, 저녁노을_어스름: { h: '#c8a8e0', g: '#3a2a40', hi: 1, s: '#ff9a70', si: 1.3, sp: [-16, 4, -10], ex: 1.18 }, 밤달빛: { h: '#9ab0ff', g: '#20203a', hi: .75, s: '#b8c8ff', si: .9, sp: [-8, 14, 4], ex: 1.25 }, 기본: { h: '#ffffff', g: '#6a5a50', hi: 1.6, s: '#fff2e0', si: 2.2, sp: [8, 18, 12], ex: 1.05 } };
-function light(n) { const k = LIGHTS[n] ? n : /밤|달/.test(n) ? '밤달빛' : /어스름|저녁노을/.test(n) ? '저녁노을_어스름' : /노을|석양/.test(n) ? '오후노을' : /아침/.test(n) ? '아침햇살' : /정오|낮/.test(n) ? '정오햇살' : /벚꽃/.test(n) ? '벚꽃역광' : /실내|저녁/.test(n) ? '저녁실내' : '기본'; const L = LIGHTS[k]; hemi.color.set(L.h); hemi.groundColor.set(L.g); hemi.intensity = L.hi; sun.color.set(L.s); sun.intensity = L.si; sun.position.set(...L.sp); R.toneMappingExposure = L.ex; }
+const LIGHTS = { 벚꽃역광: { h: '#ffe6f0', g: '#8a6a7a', hi: 1.5, s: '#ffd0c0', si: 2.6, sp: [-10, 9, -18], ex: 1.18 }, 저녁실내: { h: '#ffd8a8', g: '#6a4a30', hi: 1.15, s: '#ffb070', si: 1.6, sp: [12, 8, 6], ex: 1.05 }, 아침햇살: { h: '#fff4e4', g: '#7a6a58', hi: 1.65, s: '#ffe6c0', si: 2.5, sp: [14, 10, 10], ex: 1.12 }, 정오햇살: { h: '#ffffff', g: '#7a7064', hi: 1.75, s: '#fffaf0', si: 2.6, sp: [4, 22, 6], ex: 1.08 }, 오후노을_시작: { h: '#ffe8cc', g: '#6a5040', hi: 1.45, s: '#ffc890', si: 2.2, sp: [16, 9, 8], ex: 1.08 }, 오후노을: { h: '#ffd4a8', g: '#5a3a28', hi: 1.25, s: '#ff9a50', si: 2.1, sp: [18, 5, 6], ex: 1.12 }, 저녁노을_어스름: { h: '#c8a8e0', g: '#3a2a40', hi: 1, s: '#ff9a70', si: 1.3, sp: [-16, 4, -10], ex: 1.18 }, 밤달빛: { h: '#9ab0ff', g: '#20203a', hi: .75, s: '#b8c8ff', si: .9, sp: [-8, 14, 4], ex: 1.25 }, 기본: { h: '#ffffff', g: '#6a5a50', hi: 1.6, s: '#fff2e0', si: 2.2, sp: [8, 18, 12], ex: 1.05 },
+  오후햇살: { h: '#fff0d8', g: '#7a6450', hi: 1.7, s: '#ffe0a8', si: 2.6, sp: [14, 14, 8], ex: 1.12 }, 오후실내: { h: '#ffe8c8', g: '#6a5038', hi: 1.4, s: '#ffd090', si: 2, sp: [14, 10, 6], ex: 1.06 },
+  장마_오후: { h: '#b8c8d8', g: '#4a5058', hi: 1.1, s: '#c8d4e0', si: 1, sp: [-6, 12, 8], ex: 1 }, 장마_역광: { h: '#c8d0e0', g: '#4a4a58', hi: 1.15, s: '#ffe2c0', si: 2, sp: [-10, 7, -16], ex: 1.14 }, 장마_저녁: { h: '#7a8aa8', g: '#20262e', hi: .8, s: '#9aaac0', si: .7, sp: [-8, 12, 6], ex: 1.05 },
+  병원형광등: { h: '#eef4ff', g: '#8a9098', hi: 1.55, s: '#e8f0ff', si: 1.4, sp: [0, 20, 4], ex: 1 }, 밤형광등: { h: '#dfe8ff', g: '#30343e', hi: 1.1, s: '#e8eeff', si: 1.1, sp: [0, 18, 4], ex: 1 }, 체육관빛: { h: '#fff8ec', g: '#6a6050', hi: 1.6, s: '#fff4e0', si: 2, sp: [0, 24, 6], ex: 1.04 },
+  축제등불: { h: '#ffb878', g: '#2a1a30', hi: 1, s: '#ff9a50', si: 1.5, sp: [10, 6, 8], ex: 1.2 }, 불꽃빛: { h: '#ffb8d8', g: '#2a1a3a', hi: .95, s: '#ffd070', si: 1.7, sp: [-6, 16, -14], ex: 1.25 } };
+function light(n) { const k = LIGHTS[n] ? n : /장마|비/.test(n) ? (/저녁|밤/.test(n) ? '장마_저녁' : '장마_오후') : /형광/.test(n) ? '병원형광등' : /등불|제등/.test(n) ? '축제등불' : /불꽃/.test(n) ? '불꽃빛' : /밤|달/.test(n) ? '밤달빛' : /어스름|저녁노을/.test(n) ? '저녁노을_어스름' : /노을|석양/.test(n) ? '오후노을' : /아침/.test(n) ? '아침햇살' : /정오|낮/.test(n) ? '정오햇살' : /벚꽃/.test(n) ? '벚꽃역광' : /실내|저녁/.test(n) ? '저녁실내' : '기본'; const L = LIGHTS[k]; hemi.color.set(L.h); hemi.groundColor.set(L.g); hemi.intensity = L.hi; sun.color.set(L.s); sun.intensity = L.si; sun.position.set(...L.sp); R.toneMappingExposure = L.ex; }
 function place(k, p) { const a = AV[k]; if (!a || !p) return; a.g.position.set(p[0], p[1] || 0, p[2]); a.g.rotation.y = p[3] || 0; a.tgt = null; }
 function walk(k, x, z, ry) { const a = AV[k]; if (a) a.tgt = { p: V3(x, a.g.position.y, z), ry }; }
 
 /* ── 효과: 벚꽃 · 눈 · 불꽃 · 반딧불 ── */
 let parts = null;
 function FXclear() { if (parts) { scene.remove(parts.m); parts = null; } }
-function fx(kind) { FXclear(); if (!kind) return; const n = kind === 'fireworks' ? 600 : 260, geo = new THREE.BufferGeometry(), P = new Float32Array(n * 3), V = [];
+function fx(kind) { FXclear(); if (!kind) return; const n = kind === 'fireworks' ? 600 : kind === 'rain_heavy' ? 900 : kind === 'rain' ? 500 : 260, geo = new THREE.BufferGeometry(), P = new Float32Array(n * 3), V = [];
   for (let i = 0; i < n; i++) { P[i * 3] = (Math.random() - .5) * 50; P[i * 3 + 1] = Math.random() * 25; P[i * 3 + 2] = (Math.random() - .5) * 40; V.push(Math.random()); }
-  geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); const col = { sakura: '#ffb8d0', snow: '#ffffff', fireworks: '#ffd060', firefly: '#d8ff60', confetti: '#ff7ab0', beans: '#c8a060' }[kind] || '#fff';
-  const m = new THREE.Points(geo, new THREE.PointsMaterial({ color: col, size: kind === 'fireworks' ? .35 : .45, transparent: true, opacity: .9, depthWrite: false })); scene.add(m); parts = { m, kind, V, t: 0 }; }
+  geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); const col = { sakura: '#ffb8d0', snow: '#ffffff', fireworks: '#ffd060', firefly: '#d8ff60', confetti: '#ff7ab0', beans: '#c8a060', rain: '#cfdcff', rain_heavy: '#bcd0ff' }[kind] || '#fff';
+  const m = new THREE.Points(geo, new THREE.PointsMaterial({ color: col, size: kind === 'fireworks' ? .35 : /rain/.test(kind) ? .18 : .45, transparent: true, opacity: /rain/.test(kind) ? .7 : .9, depthWrite: false })); scene.add(m); parts = { m, kind, V, t: 0 }; }
 function stepFX(dt) { if (!parts) return; parts.t += dt; const P = parts.m.geometry.attributes.position, k = parts.kind;
   for (let i = 0; i < P.count; i++) { let x = P.getX(i), y = P.getY(i), z = P.getZ(i); const v = parts.V[i];
     if (k === 'fireworks') { const c = Math.floor(i / 100), ph = (parts.t * .5 + c * .37) % 1, cx = ((c * 37) % 7 - 3) * 8, cy = 30 + (c % 3) * 5, a = i * 2.39996, r = ph * 12 * (0.6 + v * .4); x = cx + Math.cos(a) * r; y = cy + Math.sin(a * .7) * r - ph * ph * 6; z = -40 + Math.sin(a) * r * .5; parts.m.material.color.setHSL((c * .17 + .05) % 1, .9, .6); parts.m.material.opacity = 1 - ph; }
     else if (k === 'firefly') { x += S(parts.t + v * 9) * dt; y = 2 + Math.abs(S(parts.t * .5 + v * 7)) * 6; }
+    else if (/rain/.test(k)) { y -= dt * (k === 'rain_heavy' ? 34 : 24) * (.7 + v * .5); x -= dt * 2; if (y < 0) { y = 25; x = (Math.random() - .5) * 50; } }
     else { y -= dt * (k === 'snow' ? 1.5 : 2.2) * (.5 + v); x += S(parts.t + v * 6) * dt * 1.5; if (y < 0) y = 25; }
     P.setXYZ(i, x, y, z); } P.needsUpdate = true; }
 
 /* ── 카메라 연출 ── */
-let shot = 'two', camT = 0, shake = 0;
+let shot = 'two', camT = 0, shake = 0, roll = 0, rollC = 0, fovT = 34, fovRate = 2;
 const camPos = V3(0, 6, 20), camLook = V3(0, 5, 0);
 function shotTarget() { const o = AV.o.g.position, s = AV.s.g.position, mid = o.clone().add(s).multiplyScalar(.5), d = s.clone().sub(o); d.y = 0; const L = Math.max(3, d.length()); d.normalize(); const side = V3(-d.z, 0, d.x);
   const sw = S(camT * .25) * .6; let p, l;
@@ -236,7 +246,7 @@ function shotTarget() { const o = AV.o.g.position, s = AV.s.g.position, mid = o.
   else if (shot === 'sky') { p = mid.clone().addScaledVector(side, 18).add(V3(0, 4, 0)); l = mid.clone().add(V3(0, 18, -20)); }
   else { p = mid.clone().addScaledVector(side, 13 + L * .6).add(V3(sw, 7, 0)); l = mid.clone().add(V3(0, 5.6, 0)); }
   return [p, l]; }
-function stepCam(dt) { camT += dt; const [p, l] = shotTarget(); const k = Math.min(1, dt * 2.6); camPos.lerp(p, k); camLook.lerp(l, k); cam.position.copy(camPos); if (shake > 0) { shake -= dt; cam.position.x += (Math.random() - .5) * shake; cam.position.y += (Math.random() - .5) * shake; } cam.lookAt(camLook); }
+function stepCam(dt) { camT += dt; const [p, l] = shotTarget(); const k = Math.min(1, dt * 2.6); camPos.lerp(p, k); camLook.lerp(l, k); cam.position.copy(camPos); if (shake > 0) { shake -= dt; cam.position.x += (Math.random() - .5) * shake; cam.position.y += (Math.random() - .5) * shake; } cam.lookAt(camLook); rollC += (roll - rollC) * Math.min(1, dt * 6); if (rollC) cam.rotateZ(rollC); if (Math.abs(cam.fov - fovT) > .01) { cam.fov += (fovT - cam.fov) * Math.min(1, dt * fovRate); cam.updateProjectionMatrix(); } }
 
 /* ── 명찰 · 말풍선 위치 ── */
 const tmpV = V3(0, 0, 0);
@@ -251,6 +261,7 @@ const jaVoices = () => { const L = voices.filter(v => v.lang && /^ja/i.test(v.la
 function sayJP(t, who = 's') { return new Promise(res => { if (!voiceOn || !t) return res(); try { const V = VO[who] || VO.s, L = jaVoices(); const u = new SpeechSynthesisUtterance(t.replace(/[〜・『』]/g, ' ').replace(/……/g, '…')); u.lang = 'ja-JP'; if (L.length) u.voice = L[V.v % L.length]; u.pitch = V.p; u.rate = V.r; u.onend = u.onerror = () => res(); speechSynthesis.speak(u); setTimeout(res, 2500 + t.length * 220); } catch (e) { res(); } }); }
 function speak(who, text) { try { speechSynthesis.cancel(); } catch (e) { } if (!voiceOn || who === 'n') return Promise.resolve(); const L = window.JA.japaneseOf(text); return L.reduce((p, t) => p.then(() => sayJP(t, who)), Promise.resolve()); }
 /* ── 화면 UI ── */
+const SPK = { 나: 'n', 유나: 'o', 스즈: 's', 엄마: 'm', 아빠: 'd', 하나: 'h', 미야코: 'k', 선생님: 't', 반친구: 'r', 선배아빠: 'f' }, SPK_RE = /^(선배아빠|선생님|반친구|미야코|유나|스즈|엄마|아빠|하나|나)\s*(?:\[([^\]]*)\])?\s*:\s*/;
 const NAMES = { n: '', o: '한유나', s: '야마시타 스즈', m: '스즈 엄마 (유미코)', d: '스즈 아빠 (다케시)', h: '하나 (스즈 동생, 7살)', k: '시라이시 미야코 선배', t: '다나카 선생님', r: '반 친구', f: '시라이시 아버님' };
 const COLS = { n: '#cfd8ff', o: '#ffd23f', s: '#ff9ab8', m: '#ffb070', d: '#8ac8ff', h: '#ffe27a', k: '#b8a0ff', t: '#9adfb0', r: '#7fe0ff', f: '#c8b090' };
 const box$ = $('#dlg'), nm = $('#dlg .nm'), tx$ = $('#dlg .tx');
@@ -278,7 +289,7 @@ document.addEventListener('click', e => { const j = e.target.closest && e.target
 function showLog() { const w = $('#log'); w.innerHTML = `<div class="lh"><b>📜 대사 기록</b><button data-x>닫기 ✕</button></div><div class="lb">${LOG.length ? LOG.map(([who, h]) => `<div class="lg" data-who="${who}">${NAMES[who] ? `<em style="color:${COLS[who]}">${NAMES[who]}</em>` : ''}<div>${h}</div></div>`).join('') : '<p>아직 기록이 없어요. 스토리를 진행하면 여기에 쌓여요. 일본어를 누르면 뜻·발음이 나오고 읽어 줘요.</p>'}</div>`;
   w.hidden = false; const lb = w.querySelector('.lb'); lb.scrollTop = lb.scrollHeight; w.querySelector('[data-x]').onclick = () => { w.hidden = true; $('#jpop').hidden = true; }; }
 /* 유나의 생존 수첩 */
-const NOTE = { 가족호칭_내남구분_친외가: ['가족 호칭', '내 가족은 낮춤(ちち·はは·あに·あね), 남의 가족은 높임(おとうさん·おかあさん). 친가·외가 구분 없음: 삼촌·외삼촌·고모부·이모부 = おじさん, 숙모·외숙모·고모·이모 = おばさん. 막내 기준으로 통일 (엄마가 큰딸을 おねえちゃん).'], 교복_변화_다양성: ['교복', '대부분 교복을 입음. 남 가쿠란(学ラン)·여 세일러복 → 1980년대 무렵부터 재킷형(블레이저) 증가. 요즘은 학생이 교복을 직접 정하는 학교, 치마·바지 선택, 남녀 공용 교복도.'], 고교생의하루_시간표: ['고교생의 하루', '8:00~8:30 등교 (자전거 통학 많음, 넓은 자전거 주차장) → 12:10 점심 (교실 도시락·식당·급식, 매점에서 간식·학용품) → 3:40 청소 (학생이 당번 정해 직접) → 4:00 동아리 → 7:00 학원 (한 곳에서 여러 과목).'], 부카츠_교사지도_운동부특징: ['동아리 (部活)', '운동부 / 문화부(관악·서예·다도·가루타…, 없으면 새로 만들기도). 운동부: 주 3~5회 자발적, 아침 수업 전·주말에도, 프로 선수가 되기도. 안 하고 바로 집에 가면 귀가부(帰宅部). 교사에게 지도는 업무 부담이지만 평생 이어지는 관계가 되기도. 전국 대회: 운동부 인터하이(7~8월), 문화부 전국 고교 종합 문화제(7월 말~8월 초).'], 성씨_통계_지역유래: ['성씨', '약 10만~30만 종. 많은 성: 사토·스즈키·다카하시·다나카·이토. 귀족·무사만 쓰다가 메이지 유신 이후 서민도. 지형·방향 조합(山下·小川·田中·前田·森), 지방 유래(가고시마 아리무라). 부부는 법률상 같은 성 → 부부 별성 요구 ↑.'] };
+const NOTE = { 가족호칭_내남구분_친외가: ['가족 호칭', '내 가족은 낮춤(ちち·はは·あに·あね), 남의 가족은 높임(おとうさん·おかあさん). 친가·외가 구분 없음: 삼촌·외삼촌·고모부·이모부 = おじさん, 숙모·외숙모·고모·이모 = おばさん. 막내 기준으로 통일 (엄마가 큰딸을 おねえちゃん).'], 교복_변화_다양성: ['교복', '대부분 교복을 입음. 남 가쿠란(学ラン)·여 세일러복 → 1980년대 무렵부터 재킷형(블레이저) 증가. 요즘은 학생이 교복을 직접 정하는 학교, 치마·바지 선택, 남녀 공용 교복도.'], 고교생의하루_시간표: ['고교생의 하루', '8:00~8:30 등교 (자전거 통학 많음, 넓은 자전거 주차장) → 12:10 점심 (교실 도시락·식당·급식, 매점에서 간식·학용품) → 3:40 청소 (학생이 당번 정해 직접) → 4:00 동아리 → 7:00 학원 (한 곳에서 여러 과목).'], 부카츠_교사지도_운동부특징: ['동아리 (部活)', '운동부 / 문화부(관악·서예·다도·가루타…, 없으면 새로 만들기도). 운동부: 주 3~5회 자발적, 아침 수업 전·주말에도, 프로 선수가 되기도. 안 하고 바로 집에 가면 귀가부(帰宅部). 교사에게 지도는 업무 부담이지만 평생 이어지는 관계가 되기도. 전국 대회: 운동부 인터하이(7~8월), 문화부 전국 고교 종합 문화제(7월 말~8월 초).'], 방문예절_체류시간_외투: ['방문 예절', '약속 잡기 → 선물 준비 → 외투는 밖에서 벗어 손에 걸고 초인종 → 신발 코 바깥쪽 → 선물은 쇼핑백에서 꺼내 양손으로 → 문지방·다다미 테두리·방석 밟지 않기 → 화장실은 「トイレ、かりてもいいですか」 → 너무 오래 머물지 않기 → 외투는 현관을 나온 뒤에 입기 → 돌아와서 감사 문자·전화.'], 선물_금기품목_4종: ['선물하면 안 되는 것', '병문안: 화분(根付く=寝付く, 앓아누움)·흰 꽃(죽음)·붉은 꽃(피) / 집들이: 라이터·초·재떨이·붉은 꽃(화재) / 상사: 신발·양말·슬리퍼(밟는다) / 결혼: 칼·가위(인연을 끊음)·도자기·유리(깨짐).'], 인사말_만날때_헤어질때: ['만날 때·헤어질 때 인사', '아침 おはよう(ございます)·낮 こんにちは·저녁 こんばんは. 매일 보는 친구·가족끼리는 こんにちは를 잘 안 씀, 직장에선 시간 상관없이 おはようございます. さようなら = 오래 헤어질 때. 매일 보는 친구엔 じゃあね·またね·また明日·バイバイ, 손윗사람엔 失礼します.'], 계절선물_오추겐_오세이보: ['계절 선물·답례', 'お中元(오추겐) = 7월 중순, お歳暮(오세이보) = 12월. 상사·신세 진 사람에게, 요즘은 백화점·택배로. 선물 이름: プレゼント(생일·크리스마스)·おみやげ(여행·출장)·てみやげ(방문)·おかえし(답례, 받은 것의 1/3~반).'], 연간행사_공휴일: ['연간 행사·공휴일', '1월 1일 설날·둘째 월 성인의 날 / 2월 3일경 세쓰분·11일 건국 기념일·14일 밸런타인·23일 일왕 생일 / 3월 3일 히나마쓰리·14일 화이트데이·21일경 춘분 / 4월 하나미·29일 쇼와의 날 / 5월 3일 헌법 기념일·4일 녹색의 날·5일 어린이날(단고노셋쿠)·둘째 일 어머니의 날 / 6월 셋째 일 아버지의 날 / 7월 7일 다나바타·셋째 월 바다의 날 / 8월 11일 산의 날·15일경 오봉 / 9월 음력 8/15 쓰키미·셋째 월 경로의 날·23일경 추분 / 10월 둘째 월 스포츠의 날·31일 핼러윈 / 11월 3일 문화의 날·15일 시치고산·23일 근로 감사의 날 / 12월 25일 크리스마스·31일 오미소카. 공휴일이 일요일이면 다음 날 대체 휴일, 4/29~5/5 골든위크, 해피 먼데이 제도로 월요일 3일 연휴.'], 고시엔_야구대회: ['고시엔 (甲子園)', '전국 고교 야구 선수권 대회. 100년 넘는 역사, 매년 8월, TV 생중계. 지역 예선 3,000팀 이상 → 대표 학교 출전. 한 번 지면 끝인 토너먼트, 진 팀은 구장의 흙을 담아 감.'], 성씨_통계_지역유래: ['성씨', '약 10만~30만 종. 많은 성: 사토·스즈키·다카하시·다나카·이토. 귀족·무사만 쓰다가 메이지 유신 이후 서민도. 지형·방향 조합(山下·小川·田中·前田·森), 지방 유래(가고시마 아리무라). 부부는 법률상 같은 성 → 부부 별성 요구 ↑.'] };
 function note(k) { SAVE.notes = SAVE.notes || {}; const first = !SAVE.notes[k]; SAVE.notes[k] = 1; save(); const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; const n = document.createElement('div'); n.className = 'nb'; n.innerHTML = `<small>📒 유나의 생존 수첩 ${first ? '· 새 항목' : ''}</small><b>${t}</b>${d ? `<p>${d}</p>` : ''}`; document.body.appendChild(n); setTimeout(() => n.classList.add('off'), 6500); setTimeout(() => n.remove(), 7200); }
 function notebook() { const w = $('#notebook'); const ks = Object.keys(SAVE.notes || {}); w.innerHTML = `<div class="lh"><b>📒 유나의 생존 수첩</b><button data-x>닫기 ✕</button></div><div class="lb">${ks.length ? ks.map(k => { const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; return `<div class="lg"><em>${t}</em><div>${d}</div></div>`; }).join('') : '<p>아직 비어 있어요. 스토리 중에 하나씩 채워져요.</p>'}</div>`; w.hidden = false; w.querySelector('[data-x]').onclick = () => { w.hidden = true; }; }
 
@@ -320,12 +331,12 @@ async function cards(part) { const L = (window.JPWORDS || []).filter(w => !part 
 function heart(dv) { SAVE.aff = Math.max(0, Math.min(100, SAVE.aff + dv)); save(); $('#aff i').style.width = SAVE.aff + '%'; $('#aff b').textContent = SAVE.aff; const f = document.createElement('div'); f.className = 'hp ' + (dv > 0 ? 'up' : 'dn'); f.textContent = (dv > 0 ? '💗 +' : '💔 ') + dv; document.body.appendChild(f); setTimeout(() => f.remove(), 1500); }
 
 /* ── 스토리 진행 ── */
-const CUR = { ep: 0, i: 0, night: false };
+const CUR = { ep: 0, i: 0, night: false, rain: false };
 async function runEp(ep, i0 = 0) {
   CUR.ep = ep; const E = ST[ep]; $('#menu').hidden = true; $('#hud').hidden = false; $('#eptag').textContent = E.t;
   /* 시작 위치까지의 배경·자세를 다시 계산 */
   let bg = E.lines.find(x => x.bg)?.bg || 'room';
-  for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.bg) { bg = x.bg; CUR.night = !!x.night; } }
+  CUR.rain = false; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.bg) { bg = x.bg; CUR.night = !!x.night; CUR.rain = !!x.rain; } }
   setWorld(bg); let lt = '기본'; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.light) lt = x.light; } light(lt); TSPD = 2; TREM = '';
   for (let i = i0; i < E.lines.length; i++) {
     CUR.i = i; SAVE.ep = ep; SAVE.i = i; save(); $('#prog').textContent = `${E.t} · ${Math.round(i / E.lines.length * 100)}%`;
@@ -347,10 +358,13 @@ async function runEp(ep, i0 = 0) {
   await card('🌸 엔딩', '처음으로 돌아가기'); menu();
 }
 async function directive(D) {
-  if (D.bg) { CUR.night = !!D.night; await fade(() => setWorld(D.bg)); }
+  if (D.bg) { CUR.night = !!D.night; CUR.rain = !!D.rain; await fade(() => setWorld(D.bg)); }
   if (D.title) await card(D.title, D.sub || '', true);
   if (D.place) { const p = $('#place'); p.innerHTML = D.place; p.classList.remove('on'); void p.offsetWidth; p.classList.add('on'); }
-  if (D.shot) shot = D.shot;
+  if (D.shot) { if (/^틸트/.test(D.shot)) roll = .2; else if (/^줌인/.test(D.shot)) { fovT = 22; fovRate = /느림/.test(D.shot) ? .35 : 2; } else if (/^줌아웃/.test(D.shot)) { fovT = 34; fovRate = /느림/.test(D.shot) ? .35 : 2; } else { shot = D.shot; roll = 0; fovT = 34; fovRate = 2; } }
+  if (D.flash) { const f = $('#flash'); f.style.background = /검|black/.test(D.flash) ? '#000' : /빨|red/.test(D.flash) ? '#ff3040' : '#fff'; f.style.animationDuration = /느림/.test(D.flash) ? '.9s' : '.35s'; f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
+  if (D.view) $('#view').classList.toggle('on', !/복귀|없음|끔/.test(D.view));
+  if (D.noise) { $('#noise').className = /없음|끔/.test(D.noise) ? '' : /강/.test(D.noise) ? 's2' : 's1'; if (/강/.test(D.noise)) sfx('ring'); }
   if (D.pos) for (const [k, v] of Object.entries(D.pos)) place(k, v);
   if (D.walk) for (const [k, v] of Object.entries(D.walk)) walk(k, v[0], v[1], v[2]);
   if (D.prop) for (const [k, n, on] of D.prop) prop(k, n, on !== false);
@@ -365,7 +379,9 @@ async function directive(D) {
   if (D.tremble) TREM = D.tremble;
   if (D.note) note(D.note);
   if (D.breath) { tx$.innerHTML = ''; nm.hidden = true; await new Promise(r => setTimeout(r, D.breath)); }
-  const sayS = async (face, mot, line, extra) => { setFace(AV.s, face); motion(AV.s, mot); box$.className = 'who-s'; nm.hidden = false; nm.textContent = NAMES.s; nm.style.color = COLS.s; AV.s.talk = 2 + line.length * .05; box$.dataset.who = 's'; const h = fmt(line) + (extra ? window.JA.render(extra) : ''); LOG.push(['s', h]); speak('s', line); await typeOut(h); await tapWait(0); };
+  const sayS = async (face, mot, line, extra) => { let who = 's'; const sp = line.match(SPK_RE); if (sp) { who = SPK[sp[1]]; line = line.slice(sp[0].length); if (sp[2]) { const [f, m] = sp[2].split('/'); if (f) face = f; if (m) mot = m; } }
+    for (const k of ['o', 's']) AV[k].talk = 0; if (AV[who]) { setFace(AV[who], face); motion(AV[who], mot); AV[who].talk = 2 + line.length * .05; }
+    box$.className = 'who-' + who; nm.hidden = !NAMES[who]; nm.textContent = NAMES[who] || ''; nm.style.color = COLS[who] || '#fff'; box$.dataset.who = who; const h = fmt(line) + (extra ? window.JA.render(extra) : ''); LOG.push([who, h]); speak(who, line); await typeOut(h); await tapWait(0); };
   /* 시험 선택지: 정답이면 호감도 크게, 틀려도 스즈가 다정하게 알려 주고 그대로 진행 (복습 목록에 저장) */
   if (D.ask) { const [q, opts, ans, why, okLine, noLine] = D.ask; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = '🎮 ' + fmt(q); const k = await radial(q, opts);
     const tag = 'ask:' + CUR.ep + ':' + CUR.i;
@@ -381,8 +397,16 @@ function fade(fn) { return new Promise(res => { const f = $('#fade'); f.classLis
 function card(t, s, auto2) { return new Promise(res => { const c = $('#card'); c.innerHTML = `<h2>${t}</h2><p>${s}</p>${auto2 ? '' : '<button>계속 ▶</button>'}`; c.hidden = false; 
   const go = () => { c.hidden = true; res(); }; if (auto2) setTimeout(go, 2600); else c.querySelector('button').onclick = go; c.onclick = e => { if (auto2) go(); }; }); }
 /* 효과음 (합성) */
-const SFX_ALIAS = { door_open: 'door', door_slide: 'door', cane_tap: 'tap', footsteps_fast: 'tap', brush_hair: 'tap', bike_bell: 'bell', birds_morning: 'chime', cicada_spring_wind: 'chime', night_crickets: 'chime', evening_chime: 'bell', wind_sakura: 'chime' };
-let AC = null; function sfx(k) { k = SFX_ALIAS[k] || k; try { AC = AC || new AudioContext(); const o = AC.createOscillator(), g = AC.createGain(); o.connect(g); g.connect(AC.destination); const t = AC.currentTime;
+const SFX_ALIAS = { station_crowd: 'crowd', ceramic_clatter: 'clatter', cane_clatter: 'clatter', cloth_rustle: 'rustle', rain_loop: 'rain', rain_heavy: 'rain', rain_heavy_muffled: 'rain_soft', rain_soft: 'rain_soft', slip: 'slip', crash_rain: 'crash', rain_crash_flashback: 'crash', thunder_distant: 'thunder', summer_cicada_night: 'cicada', crowd_cheer: 'cheer', taiko_bon: 'taiko', fireworks_big: 'boom', door_open: 'door', door_slide: 'door', cane_tap: 'tap', footsteps_fast: 'tap', brush_hair: 'tap', bike_bell: 'bell', birds_morning: 'chime', cicada_spring_wind: 'chime', night_crickets: 'chime', evening_chime: 'bell', wind_sakura: 'chime' };
+/* 잡음 계열 효과음: [필터, 주파수, 길이(초), 크기, 올라오는 시간] */
+const NZ = { rain: ['bandpass', 1800, 2.6, .14, .3], rain_soft: ['lowpass', 900, 2.6, .08, .4], crowd: ['bandpass', 700, 2.2, .1, .3], cheer: ['bandpass', 1200, 2.8, .22, .08], rustle: ['highpass', 3000, .6, .07, .05], slip: ['bandpass', 2600, .28, .18, .01], clatter: ['highpass', 2500, .4, .16, .005], crash: ['lowpass', 700, .9, .35, .005], thunder: ['lowpass', 220, 3.2, .4, .5], cicada: ['bandpass', 5200, 2.4, .05, .3], boom: ['lowpass', 420, 1.6, .3, .01] };
+function noiseSfx(k) { const [ft, fq, d, v, at] = NZ[k], t = AC.currentTime, len = Math.ceil(AC.sampleRate * d), b = AC.createBuffer(1, len, AC.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+  const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = b; f.type = ft; f.frequency.value = fq; f.Q.value = k === 'cicada' ? 8 : .7; s.connect(f); f.connect(g); g.connect(AC.destination);
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + at); g.gain.exponentialRampToValueAtTime(.0001, t + d); s.start(t); s.stop(t + d);
+  if (k === 'crash' || k === 'boom') thump(k === 'boom' ? 55 : 80, 0); if (k === 'clatter') tone(1800, .25, 'triangle'); }
+function thump(f, dl) { const t = AC.currentTime + dl, o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + .15); o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.0001, t + .7); o.start(t); o.stop(t + .8); }
+function tone(f, d, type = 'sine', v = .06) { const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.start(t); o.stop(t + d + .05); }
+let AC = null; function sfx(k) { k = SFX_ALIAS[k] || k; try { AC = AC || new AudioContext(); if (NZ[k]) return noiseSfx(k); if (k === 'taiko') { [0, .45, .9].forEach(d => thump(70, d)); return; } if (k === 'ring') return tone(5800, 2.6, 'sine', .02); const o = AC.createOscillator(), g = AC.createGain(); o.connect(g); g.connect(AC.destination); const t = AC.currentTime;
   const S2 = { tap: [[1200, 0], [900, .04]], chime: [[2093, 0], [2637, .12]], ok: [[660, 0], [990, .08]], ng: [[220, 0], [160, .12]], bell: [[1320, 0], [1320, .4]], gong: [[110, 0], [100, 1.2]], door: [[520, 0], [780, .1]], pop: [[400, 0], [900, .05]], clap: [[900, 0], [300, .03]] }[k] || [[440, 0]];
   o.type = k === 'gong' ? 'sine' : k === 'bell' ? 'triangle' : 'square'; S2.forEach(([f, d]) => o.frequency.setValueAtTime(f, t + d)); g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.0001, t + (k === 'gong' ? 2.5 : k === 'bell' ? 1 : .3)); o.start(t); o.stop(t + 2.6); } catch (e) { } }
 
