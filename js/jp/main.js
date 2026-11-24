@@ -428,8 +428,9 @@ function stepCam(dt) { camT += dt; const [p, l] = shotTarget(); const k = Math.m
 
 /* ── 명찰 · 말풍선 위치 ── */
 const tmpV = V3(0, 0, 0);
-function stepTags() { for (const a of [...Object.values(AV), ...Object.values(GUESTS)]) { (a.B ? a.B.head : a.head).getWorldPosition(tmpV); tmpV.y += a.B ? 2.6 : 3 * a.g.scale.y; tmpV.project(cam); const vis = tmpV.z < 1; a.np.style.display = vis ? '' : 'none';
-  a.np.style.transform = `translate(${(tmpV.x * .5 + .5) * innerWidth}px,${(-tmpV.y * .5 + .5) * innerHeight}px) translate(-50%,-100%)`; a.np.classList.toggle('talk', a.talk > 0); } }
+const UIBUSY = () => !$('#menu').hidden || !$('#radial').hidden || !$('#quiz').hidden || document.body.classList.contains('book');
+function stepTags() { for (const a of [...Object.values(AV), ...Object.values(GUESTS)]) { (a.B ? a.B.head : a.head).getWorldPosition(tmpV); tmpV.y += a.B ? 2.6 : 3 * a.g.scale.y; tmpV.project(cam); const vis = tmpV.z < 1 && a === SPEAKER && !UIBUSY(); a.np.classList.toggle('on', vis);
+  a.np.style.transform = `translate(${Math.min(innerWidth - 90, Math.max(90, (tmpV.x * .5 + .5) * innerWidth))}px,${Math.max(112, (-tmpV.y * .5 + .5) * innerHeight)}px) translate(-50%,-100%)`; a.np.classList.toggle('talk', a.talk > 0); } }
 /* ── 조연 캐릭터: 로우폴리로 대충 만든 사람 (엄마·아빠·하나·미야코·선생님·하루토…). 말할 때 나타남 ── */
 const GDEF = {
   m: { s: 1, hair: '#5a3a2a', st: 'bob', top: '#e8a0a8', bot: '#6a5a8a', skirt: 1, apron: '#fbf6e9', tag: '山下 由美子' },
@@ -553,7 +554,7 @@ document.addEventListener('click', e => { const j = e.target.closest && e.target
   if (!j) { if (!e.target.closest('#jpop')) pop.hidden = true; return; } e.stopPropagation();
   const tr = j.closest('.tx, .lg') && j.closest('.tx, .lg').querySelector('.tr'); const mean = j.dataset.m || (tr ? tr.textContent : '');
   pop.innerHTML = `<b>${j.dataset.jp}</b><i>${j.dataset.p}</i>${mean ? `<span>${mean}</span>` : ''}<button data-say>${IC('sound')} 다시 듣기</button>`; pop.hidden = false;
-  const r = j.getBoundingClientRect(); pop.style.left = Math.min(innerWidth - 300, Math.max(8, r.left)) + 'px'; pop.style.top = Math.max(8, r.top - pop.offsetHeight - 10) + 'px';
+  const r = j.getBoundingClientRect(); pop.style.left = Math.min(innerWidth - 300, Math.max(8, r.left)) + 'px'; const dl = j.closest('#dlg') ? Math.min(r.top, $('#dlg').getBoundingClientRect().top) : r.top; pop.style.top = Math.max(60, dl - pop.offsetHeight - 10) + 'px';   /* 자막·이름과 안 겹치게 자막 위로 */
   const who = j.closest('[data-who]') ? j.closest('[data-who]').dataset.who : 's'; stopVoice(); sayJP(j.dataset.jp, who === 'n' ? 's' : who);
   pop.querySelector('[data-say]').onclick = ev => { ev.stopPropagation(); stopVoice(); sayJP(j.dataset.jp, who === 'n' ? 's' : who); }; }, true);
 /* 대사 기록 */
@@ -590,8 +591,8 @@ function buildBook(pages) {
 }
 const setMap = (mesh, tx) => { mesh.material.map = tx || null; mesh.material.needsUpdate = true; };
 function showSpread(B) { setMap(B.L.userData.page, B.pages[B.s * 2]); setMap(B.Rt.userData.page, B.pages[B.s * 2 + 1]); bookUI(); }
-function bookTerms() { const B = BOOK, w = $('#nbterms'); if (!B || !B.zoom || !B.fns) { w.hidden = true; return; } const f = B.fns[B.s * 2 + (B.zoom < 0 ? 0 : 1)]; const T = f && f.terms;
-  if (!T || !T.length) { w.hidden = true; return; } w.innerHTML = `<div class="th">${IC('sound')} ${f.title} · 일본어 <small>누르면 읽어 줘요</small></div><div class="tl">${T.map(x => `<div class="tr2">${window.JA.render('「' + x + '」')}</div>`).join('')}</div>`; w.hidden = false; w.classList.toggle('left', B.zoom > 0); }
+function bookTerms() { const B = BOOK, w = $('#nbterms'); if (B) B.pw = 0; if (!B || !B.zoom || !B.fns) { w.hidden = true; return; } const f = B.fns[B.s * 2 + (B.zoom < 0 ? 0 : 1)]; const T = f && f.terms;
+  if (!T || !T.length) { w.hidden = true; return; } w.innerHTML = `<div class="th">${IC('sound')} ${f.title} · 일본어 <small>누르면 읽어 줘요</small></div><div class="tl">${T.map(x => `<div class="tr2">${window.JA.render('「' + x + '」')}</div>`).join('')}</div>`; w.hidden = false; w.classList.toggle('left', B.zoom > 0); B.pw = w.offsetWidth + 26; }
 function bookUI() { const B = BOOK; if (!B) return; bookTerms(); const n = Math.ceil(B.pages.length / 2); $('#nbui').innerHTML = `<button data-b="-1" ${B.s ? '' : 'disabled'}>${IC('left')} 앞장</button><span>${B.s + 1} / ${n}</span><button data-b="1" ${B.s < n - 1 ? '' : 'disabled'}>뒷장 ${IC('right')}</button><button data-z="1">${B.zoom ? IC('book') + ' 펼쳐 보기' : IC('eye') + ' 크게 보기'}</button>`;
   $('#nbui').onclick = e => { const b = e.target.closest('[data-b]'); if (b) bookTurn(+b.dataset.b); if (e.target.closest('[data-z]')) bookZoom(BOOK.zoom ? 0 : 1); }; }
 function bookZoom(z) { if (!BOOK || BOOK.open < 1) return; BOOK.zoom = z; bookUI(); }
@@ -605,8 +606,13 @@ function stepBook(dt) { const B = BOOK; B.t += dt;
   B.Rt.rotation.y = (-PI + .06) * (1 - Math.min(1, Math.max(0, B.open * 1.6 - .4))) - .09 * Math.min(1, B.open * 1.6);
   B.G.position.y = -4.5 * (1 - e) + S(B.t * 1.3) * .03 * (B.zoom ? .2 : 1); B.G.rotation.z = (S(B.t * .9) * .012 - .02) * (B.zoom ? .2 : 1);
   /* 크게 보기: 한쪽 페이지를 화면 가득 */
-  const tn = Math.tan(uiCam.fov * PI / 360), dd = uiCam.position.z, zs = B.zoom ? Math.min(2.4, dd * tn * 2 * .9 / 3, dd * tn * uiCam.aspect * 2 * .92 / 2.2) : 1, kz = Math.min(1, dt * 5);
-  B.G.scale.setScalar(B.G.scale.x + (zs - B.G.scale.x) * kz); B.G.position.x += ((B.zoom ? -B.zoom * 1.07 * zs : 0) - B.G.position.x) * kz; B.G.rotation.x += ((B.zoom ? -.04 : -.32) - B.G.rotation.x) * kz;
+  /* 크게 보기 자리: 위 닫기 버튼·아래 쪽수 버튼·옆 일본어 목록과 겹치지 않는 빈 칸 안에 페이지를 맞춤 */
+  const tn = Math.tan(uiCam.fov * PI / 360), dd = uiCam.position.z, HW = dd * tn * uiCam.aspect, HH = dd * tn, kz = Math.min(1, dt * 5);
+  const pw = B.zoom ? (B.pw || 0) : 0, mg = 14, top = 66, bot = 78, aw = innerWidth - pw - mg * 2, ah = innerHeight - top - bot;
+  const zs = B.zoom ? Math.min(2.4, ah / innerHeight * 2 * HH / 3.3, aw / innerWidth * 2 * HW / 2.2) : 1;
+  const cx = (B.zoom > 0 ? pw : 0) + mg + aw / 2, cxw = (cx / innerWidth * 2 - 1) * HW, cyw = B.zoom ? -((top + ah / 2) / innerHeight * 2 - 1) * HH : 0;
+  B.zy = (B.zy || 0) + (cyw - (B.zy || 0)) * kz; B.G.position.y += B.zy;
+  B.G.scale.setScalar(B.G.scale.x + (zs - B.G.scale.x) * kz); B.G.position.x += ((B.zoom ? cxw - B.zoom * 1.07 * zs : 0) - B.G.position.x) * kz; B.G.rotation.x += ((B.zoom ? -.04 : -.32) - B.G.rotation.x) * kz;
   if (B.anim) { const a = B.anim; a.k = Math.min(1, a.k + dt * 2.2); const q = a.k < .5 ? 2 * a.k * a.k : 1 - Math.pow(-2 * a.k + 2, 2) / 2; B.flip.rotation.y = a.from + (a.to - a.from) * q; if (a.k >= 1) { a.done(); B.flip.visible = false; B.anim = null; } }
   if (B.closing && B.open <= 0) { uiScene.remove(B.G); B.pages.forEach(p => p && p.dispose()); BOOK = null; document.body.classList.remove('book'); $('#nbui').hidden = $('#nbx').hidden = $('#nbterms').hidden = true; $('#jpop').hidden = true; if (B.fromMenu) $('#menu').hidden = false; } }
 function fitBook() { const tn = Math.tan(uiCam.fov * PI / 360), d = Math.max(2.65 / (tn * uiCam.aspect), 2.05 / tn) + .2; uiCam.position.set(0, .15, d); uiCam.lookAt(0, -.05, 0); }

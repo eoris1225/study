@@ -21,7 +21,7 @@ ruby{ruby-position:over}rt{font-size:.5em;font-weight:500;letter-spacing:0;opaci
 .tape{position:relative}.tape::before{content:'';position:absolute;left:38%;top:-11px;width:58px;height:19px;background:rgba(255,232,150,.78);border-left:2px dotted rgba(0,0,0,.12);border-right:2px dotted rgba(0,0,0,.12);transform:rotate(-5deg)}
 /* 머리 위 이름 */
 #np{position:fixed;inset:0;pointer-events:none;z-index:5}
-.np{position:absolute;left:0;top:0;text-align:center;white-space:nowrap;color:#fff;text-shadow:var(--ol)}
+.np{position:absolute;left:0;top:0;text-align:center;white-space:nowrap;color:#fff;text-shadow:var(--ol);opacity:0;transition:opacity .2s}.np.on{opacity:1}
 .np b{display:block;font:700 19px var(--hand);color:var(--c)}.np small{display:block;font:12px 'Noto Sans JP';opacity:.85}
 .np .mic{position:absolute;right:-28px;top:0;color:var(--c);opacity:0;font-size:20px}.np.talk .mic{opacity:1;animation:mic .45s steps(2) infinite}@keyframes mic{50%{transform:translateY(-3px) rotate(-8deg)}}
 /* 위쪽 버튼 */
@@ -85,11 +85,11 @@ body.book #menu,body.book #hud,body.book #dlg,body.book #np,body.book #place,bod
 .nb.off{opacity:0;translate:30px 0}.nb small{display:flex;gap:4px;align-items:center;font:700 15px var(--hand);color:#a0522d}.nb b{display:block;font:700 22px var(--hand)}.nb p{margin:4px 0 0;font:14.5px/1.5 var(--read)}
 @keyframes nbin{from{opacity:0;translate:40px 0}}
 /* 선택지: 종이 쪽지 */
-#radial{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.42);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px}
+#radial{position:fixed;inset:0;z-index:30;background:rgba(10,8,20,.62);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px}
 #radial .rq{max-width:min(820px,94vw);text-align:center;font:700 clamp(21px,2.8vw,29px)/1.4 var(--hand);color:#fff;text-shadow:var(--ol2)}#radial .rq .ic{color:#fff;margin-right:6px}
-#radial .slips{display:flex;flex-direction:column;gap:12px;width:min(620px,94vw)}
+#radial .slips{display:flex;flex-direction:column;gap:16px;width:min(620px,94vw)}
 #radial .slips button{display:flex;gap:10px;align-items:baseline;text-align:left;background:var(--paper);border:2px solid var(--ink);border-radius:var(--cut);padding:9px 14px;font:18px/1.45 'Gowun Dodum';box-shadow:var(--sh)}
-#radial .slips button:nth-child(1){transform:rotate(-1.1deg)}#radial .slips button:nth-child(2){transform:rotate(.9deg);margin-left:16px}#radial .slips button:nth-child(3){transform:rotate(-.5deg);margin-left:-6px}#radial .slips button:nth-child(4){transform:rotate(1.3deg);margin-left:8px}
+#radial .slips button:nth-child(odd){transform:rotate(-.35deg)}#radial .slips button:nth-child(even){transform:rotate(.35deg)}
 #radial .slips button:hover{background:#fff1a8}
 #radial .slips em{font:700 25px/1 var(--hand);font-style:normal;color:#c2185b;min-width:1.1em}
 /* 교과서 문제: 공책 종이 */
@@ -130,7 +130,8 @@ body.book #menu,body.book #hud,body.book #dlg,body.book #np,body.book #place,bod
 #menu .cr{font:12.5px var(--read);opacity:.55;margin-top:12px}
 .toast{position:fixed;left:50%;top:18%;transform:translateX(-50%) rotate(-1.5deg);z-index:50;display:flex;gap:6px;align-items:center;background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--cut);padding:8px 18px;box-shadow:var(--sh);font:700 22px var(--hand)}
 .hp{position:fixed;right:34px;top:58px;z-index:50;display:flex;gap:3px;align-items:center;font:700 26px var(--hand);text-shadow:var(--ol);animation:hp 1.5s forwards}.hp.up{color:var(--pink)}.hp.dn{color:#9aa8e8}.hp .ic{color:#000}@keyframes hp{to{translate:0 -40px;opacity:0}}
-@media (max-width:700px){#menu{justify-content:center;padding:10px}#menu .mc{padding-left:44px}#dlg{bottom:10px}#aff span{width:50px}#prog{display:none}#eptag{display:none}#hud button{min-width:38px;height:36px}}
+#aff{white-space:nowrap}
+@media (max-width:700px){#hud{gap:5px;padding:8px}#nbui{gap:6px;bottom:10px;max-width:calc(100vw - 12px)}#nbui button{font-size:15px;padding:5px 8px}#nbui span{min-width:40px;font-size:16px}#nbx{top:8px;right:8px}#jpop{width:min(270px,calc(100vw - 16px))}#menu{justify-content:center;padding:10px}#menu .mc{padding-left:44px}#dlg{bottom:10px}#aff span{width:50px}#prog{display:none}#eptag{display:none}#hud button{min-width:38px;height:36px}}
 </style></head><body>
 <canvas id="cv"></canvas><div id="np"></div>
 <div id="hud" hidden><button id="bm" title="메뉴"></button><span id="eptag"></span><span id="prog"></span><button id="blog" title="대사 기록"></button><button id="bnote" title="생존 수첩"></button><button id="bshot" title="카메라"></button><button id="bauto"></button><div id="aff"><span><i></i></span><b></b></div></div>
@@ -140,5 +141,5 @@ body.book #menu,body.book #hud,body.book #dlg,body.book #np,body.book #place,bod
 <div id="boot">불러오는 중…</div>
 <script src="js/jp/icons.js?v=1"></script><script src="js/jp/notebook.js?v=2"></script><script src="js/jp/words.js?v=1"></script><script src="js/jp/yomi.js?v=3"></script><script src="js/jp/voice.js?v=2"></script><script src="js/jp/ja.js?v=3"></script><script src="js/jp/story.js?v=12"></script><script src="js/jp/quiz.js?v=2"></script>
 <script type="importmap">{"imports":{"three":"./js/vendor/three.module.min.js"}}</script>
-<script type="module" src="js/jp/main.js?v=14"></script>
+<script type="module" src="js/jp/main.js?v=16"></script>
 </body></html>
