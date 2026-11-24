@@ -91,4 +91,10 @@ function build() {
   const js = `'use strict';\n/* 이 파일은 docs/jp/대본.txt 에서 자동으로 만들어져요 (node tools/jp_script.js build). 대본을 고치려면 대본.txt를 고치세요. */\nwindow.JPSTORY = ${JSON.stringify(ST, null, 1)};\n`;
   fs.writeFileSync(JS, js); console.log('→', JS, ST.length, '에피소드', ST.reduce((a, e) => a + e.lines.length, 0), '줄');
 }
-({ export: exportTxt, build })[process.argv[2]] ? ({ export: exportTxt, build })[process.argv[2]]() : console.log('사용법: node tools/jp_script.js export | build');
+/* 게임에 나오는 일본어 문구를 전부 모음 → tools/jp_yomi.py 가 읽기(후리가나)·발음을 만듦 */
+function texts() { global.window = {}; for (const f of ['js/jp/words.js', 'js/jp/ja.js', 'js/jp/story.js', 'js/jp/quiz.js']) { delete require.cache[path.join(ROOT, f)]; require(path.join(ROOT, f)); }
+  const S = new Set(), walk = v => { if (typeof v === 'string') window.JA.japaneseOf(v).forEach(x => S.add(x)); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(window.JPSTORY); walk(window.JPQUIZ); (window.JPWORDS || []).forEach(w => w[0].split('・').forEach(x => S.add(x.trim())));
+  fs.writeFileSync(path.join(ROOT, 'tools/.jp_texts.json'), JSON.stringify([...S])); console.log('→ tools/.jp_texts.json', S.size, '개'); }
+const CMD = { export: exportTxt, build, texts };
+CMD[process.argv[2]] ? CMD[process.argv[2]]() : console.log('사용법: node tools/jp_script.js export | build | texts');

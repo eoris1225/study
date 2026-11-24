@@ -1,6 +1,6 @@
 'use strict';
 /* 일본어 → 한글 발음 + 대사 속 일본어 표시.
-   대본 표기: 「일본어」, 「일본어|뜻」, 「漢字{かな}|뜻」  (한자는 {읽기}를 주거나 READ 사전에서 찾음) */
+   대본 표기: 「일본어」, 「일본어|뜻」, 「漢字{かな}|뜻」  (읽기는 {읽기} > js/jp/yomi.js(형태소 분석) > READ 사전 순) */
 (() => {
 const C = { '': 11, k: 15, g: 0, s: 9, z: 12, t: 16, d: 3, n: 2, h: 18, b: 7, p: 17, m: 6, r: 5, ch: 14, j: 12, sh: 9, f: 17, w: 11, y: 11, ts: 14 };
 const V = { a: 0, i: 20, u: 13, e: 5, o: 8, ya: 2, yu: 17, yo: 12, wa: 9, eu: 18 };
@@ -10,7 +10,7 @@ Object.assign(K, { し: ['sh', 'i'], ち: ['ch', 'i'], つ: ['ts', 'eu'], す: [
 const SMALL = { ゃ: 'ya', ゅ: 'yu', ょ: 'yo' };
 const syl = (c, v, f = 0) => String.fromCharCode(0xAC00 + (C[c] * 21 + V[v]) * 28 + f);
 const toHira = s => s.replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-function kana2hangul(src) {
+function kana2hangul(src, exact) { /* exact: 형태소 분석 발음(장음은 이미 ー로 표시됨) → 모음 합치기 추측 안 함 */
   const s = toHira(src).replace(/んにちは/g, 'んにちわ').replace(/んばんは/g, 'んばんわ'); const out = []; // [c, v, final] 또는 문자열
   for (let i = 0; i < s.length; i++) { const ch = s[i], nx = s[i + 1];
     if (ch === 'ん') { out.push({ fin: 'n' }); continue; }
@@ -20,7 +20,7 @@ function kana2hangul(src) {
       if (nx && SMALL[nx]) { v = SMALL[nx]; i++; }
       else if (nx && 'ぁぃぅぇぉ'.includes(nx) && 'ふてでうちしじつヴ'.includes(ch)) { v = { ぁ: 'a', ぃ: 'i', ぅ: 'u', ぇ: 'e', ぉ: 'o' }[nx]; if (c === 'h' && ch === 'ふ') c = 'f'; i++; }
       const pv = out.length && Array.isArray(out[out.length - 1]) ? out[out.length - 1][1] : null;
-      if (c === '' && pv && (v === pv[pv.length - 1] || (v === 'u' && pv.endsWith('o')) || (v === 'i' && pv === 'e') || (v === 'u' && pv === 'yu'))) { out.push('-'); continue; }
+      if (!exact && c === '' && pv && (v === pv[pv.length - 1] || (v === 'u' && pv.endsWith('o')) || (v === 'i' && pv === 'e') || (v === 'u' && pv === 'yu'))) { out.push('-'); continue; }
       out.push([c, v]); continue; }
     out.push(ch === '、' ? ', ' : ch === '。' ? '. ' : ch); }
   let res = '';
@@ -46,8 +46,11 @@ function render(text) {
   text = text.replace(/「([^」]*)」/g, (a, b) => '「' + (/『/.test(b) ? inner(b) : b) + '」');
   return text.replace(/「([^」|{]+)(?:\{([^}]+)\})?(?:\|([^」]+))?」/g, (all, jp, rd, mean) => {
     if (!/[぀-ヿ一-鿿]/.test(jp)) return '「' + jp + (mean ? '' : '') + '」';
-    const m = mean || meaningOf(jp); const p = pron(jp, rd);
-    return `<span class="jp" data-jp="${jp}" data-p="${p}" data-m="${(m || '').replace(/"/g, '&quot;')}"><span class="jj">${jp}</span><span class="jk">${p}</span></span>`; }); }
+    const m = mean || meaningOf(jp), Y = (window.JPYOMI || {})[jp];
+    /* 후리가나: 직접 준 {읽기} > 형태소 분석 결과(yomi.js) > 없음.  발음: 같은 순서, 없으면 옛 사전 */
+    const disp = rd ? (/[一-鿿]/.test(jp) ? `<ruby>${jp}<rt>${rd}</rt></ruby>` : jp) : Y ? Y[0].replace(/⟦([^⟧]+)⟧\{([^}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>') : jp;
+    const p = rd ? pron(jp, rd) : Y ? kana2hangul(Y[1], true).replace(/\s+/g, ' ').trim() : pron(jp);
+    return `<span class="jp${jp.length > 10 ? ' long' : ''}" data-jp="${jp}" data-p="${p}" data-m="${(m || '').replace(/"/g, '&quot;')}"><span class="jj">${disp}</span><span class="jk">${p}</span></span>`; }); }
 function japaneseOf(text) { const L = []; text = text.replace(/「([^」]*)」/g, (a, b) => '「' + (/『/.test(b) ? inner(b) : b) + '」'); text.replace(/「([^」|{]+)(?:\{[^}]+\})?(?:\|[^」]+)?」/g, (a, jp) => { if (/[぀-ヿ一-鿿]/.test(jp)) L.push(jp); }); return L; }
 window.JA = { kana2hangul, pron, render, japaneseOf, meaningOf };
 })();
