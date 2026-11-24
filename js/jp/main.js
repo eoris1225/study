@@ -1,4 +1,4 @@
-/* 일본 문화 — 「스즈 소리, 온나 목소리」  VRChat 상황극 스타일 스토리 학습
+/* 일본 문화 — 「스즈 소리, 유나 목소리」  VRChat 상황극 스타일 스토리 학습
    모델: KB Poka Blind Girl / Blondy (Kilerbomb, 무료·수정 허용 라이선스, models/LICENSE_KB_Poka.txt) */
 import * as THREE from 'three';
 import { FBXLoader } from '../vendor/jsm/loaders/FBXLoader.js';
@@ -36,7 +36,7 @@ const FACES = {
 const AV = {};
 const DEF = {
   s: { fbx: 'models/blindy/BlindGirl_PrimaryOutfitOnly_NoStencilMesh.fbx', face: 'models/blindy/Blindgirl_faces_NoAlpha.png', body: 'models/blindy/bodyo.png', hair: 'models/blindy/hairdo.png', name: '야마시타 스즈', tag: '山下 鈴', col: '#ff9ab8' },
-  o: { fbx: 'models/blondy/Blondy_NoStencilMesh.fbx', face: 'models/blondy/BlondyFaces_eyes.png', body: 'models/blondy/bodyo.png', hair: 'models/blondy/hairdo.png', name: '한온나 (나)', tag: 'Han Onna', col: '#ffd23f' }
+  o: { fbx: 'models/blondy/Blondy_NoStencilMesh.fbx', face: 'models/blondy/BlondyFaces_eyes.png', body: 'models/blondy/bodyo.png', hair: 'models/blondy/hairdo.png', name: '한유나 (나)', tag: 'Han Yuna', col: '#ffd23f' }
 };
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 async function loadAvatar(k) {
@@ -254,7 +254,7 @@ function speak(who, html) { return new Promise(res => { if (!voiceOn) return res
   next(); setTimeout(fin, 3000 + t.length * 160); }); }
 
 /* ── 화면 UI ── */
-const NAMES = { n: '', o: '한온나', s: '야마시타 스즈', m: '스즈 엄마 (유미코)', d: '스즈 아빠 (다케시)', h: '하나 (스즈 동생, 7살)', k: '시라이시 미야코 선배', t: '다나카 선생님', r: '렌 (가루타부 1학년)' };
+const NAMES = { n: '', o: '한유나', s: '야마시타 스즈', m: '스즈 엄마 (유미코)', d: '스즈 아빠 (다케시)', h: '하나 (스즈 동생, 7살)', k: '시라이시 미야코 선배', t: '다나카 선생님', r: '렌 (가루타부 1학년)' };
 const COLS = { n: '#cfd8ff', o: '#ffd23f', s: '#ff9ab8', m: '#ffb070', d: '#8ac8ff', h: '#ffe27a', k: '#b8a0ff', t: '#9adfb0', r: '#7fe0ff' };
 const box$ = $('#dlg'), nm = $('#dlg .nm'), tx$ = $('#dlg .tx');
 let typing = null, auto = true; try { auto = localStorage.getItem('jp_auto') !== '0'; } catch (e) { }
@@ -265,9 +265,9 @@ let waitTap = null;
 function tapWait(ms) { return new Promise(res => { let t = null; const go = () => { clearTimeout(t); box$.onclick = null; waitTap = null; res(); }; waitTap = go; box$.onclick = e => { if (e.target.closest('button')) return; go(); }; if (auto && ms) t = setTimeout(go, ms); }); }
 document.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && waitTap && !$('#menu').offsetParent) { e.preventDefault(); waitTap(); } });
 
-/* 액션 메뉴 (VRChat 원형 메뉴) — 온나의 선택 */
+/* 액션 메뉴 (VRChat 원형 메뉴) — 유나의 선택 */
 function radial(q, opts) { return new Promise(res => { const w = $('#radial'); const n = opts.length; const ord = opts.map((_, i) => i).sort(() => Math.random() - .5);
-  w.innerHTML = `<div class="rq">${q}</div><div class="ring">${ord.map((k, j) => { const a = -PI / 2 + j * 2 * PI / n; return `<button data-k="${k}" style="--x:${Math.cos(a) * 150}px;--y:${Math.sin(a) * 150}px">${opts[k]}</button>`; }).join('')}<div class="hub">🎮<small>온나의 선택</small></div></div>`;
+  w.innerHTML = `<div class="rq">${q}</div><div class="ring">${ord.map((k, j) => { const a = -PI / 2 + j * 2 * PI / n; return `<button data-k="${k}" style="--x:${Math.cos(a) * 150}px;--y:${Math.sin(a) * 150}px">${opts[k]}</button>`; }).join('')}<div class="hub">🎮<small>유나의 선택</small></div></div>`;
   w.hidden = false; w.onclick = e => { const b = e.target.closest('[data-k]'); if (!b) return; w.hidden = true; res(+b.dataset.k); }; }); }
 
 /* ── 교과서 확인 문제 (월드 안 퀴즈 보드) ── */
@@ -343,8 +343,8 @@ let AC = null; function sfx(k) { try { AC = AC || new AudioContext(); const o = 
 let STOP = false;
 function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $('#hud').hidden = true; $('#quiz').hidden = true; $('#radial').hidden = true; const m = $('#menu'); m.hidden = false;
   setWorld('street'); fx('sakura'); shot = 'wide'; place('s', [2.5, 0, 0, -.4]); place('o', [-2.5, 0, 0, .4]); setFace(AV.s, 'happy'); setFace(AV.o, 'smile'); motion(AV.o, 'wave');
-  m.innerHTML = `<div class="mc"><h1>스즈 소리, 온나 목소리<small>鈴の音、オンナの声 — 일본 문화 4·5·6과 스토리</small></h1>
-  <p class="lead">한국에서 온 교환학생 <b style="color:#ffd23f">한온나</b>(나)와 앞을 보지 못하는 일본 소녀 <b style="color:#ff9ab8">야마시타 스즈</b>의 1년. 내가 고르는 선택지가 곧 시험 문제!</p>
+  m.innerHTML = `<div class="mc"><h1>스즈 소리, 유나 목소리<small>鈴の音、ユナの声 — 일본 문화 4·5·6과 스토리</small></h1>
+  <p class="lead">한국에서 온 교환학생 <b style="color:#ffd23f">한유나</b>(나)와 앞을 보지 못하는 일본 소녀 <b style="color:#ff9ab8">야마시타 스즈</b>의 1년. 내가 고르는 선택지가 곧 시험 문제!</p>
   <div class="aff">💗 스즈 호감도 <b>${SAVE.aff}</b></div>
   <button class="pri big" data-go="cont">${SAVE.ep || SAVE.i ? '▶ 이어서 — ' + (ST[Math.min(SAVE.ep, ST.length - 1)] || ST[0]).t : '▶ 처음부터 시작'}</button>
   <div class="eps">${ST.map((e, i) => `<button data-ep="${i}"><b>${e.t}</b><small>${e.d || ''}</small></button>`).join('')}</div>
