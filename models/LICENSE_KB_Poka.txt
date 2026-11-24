@@ -1,0 +1,35 @@
+TERMS OF USE (License):
+This license has been updated as of December 1, 2024 to reflect the covered assets now being free, no purchase required.
+
+This license covers everything in the included unitypackage files, excluding AudioLink and VRLabs World Constraint which are public, MIT licensed items. You can find more information about these items on their github pages.
+https://github.com/llealloo/vrc-udon-audio-link
+https://github.com/VRLabs/World-Constraint
+
+You may NOT:
+• Redistribute these assets with intent to profit (directly reselling these avatars)
+• Create and sell merchandise of the characters Blindy and Blondy without direct, explicit permission
+• Claim ownership of the original assets or their design
+You MAY:
+• Modify these assets in any way you like
+• Use these assets for any platform you like
+• Publish "public" avatars in VRChat using these assets
+• Stream using these assets (using the models as a vtuber avatar, for example)
+
+使用条件（ライセンス）：
+このライセンスは2024年12月1日に更新されました。
+
+このライセンスは、AudioLinkとVRLabs World Constraintを除く、含まれるunitypackageファイルのすべてをカバーします。これらのアイテムの詳細については、それらのgithubページで見つけることができます。
+https://github.com/llealloo/vrc-udon-audio-link
+https://github.com/VRLabs/World-Constraint
+
+禁止事項
+- 営利目的でこれらのアセットを再配布すること（これらのアバターを直接転売すること）。
+- BlindyとBlondyのキャラクターグッズを作成し、明示的な許可なく販売すること。
+- オリジナルアセットまたはそのデザインの所有権を主張すること。
+あなたは
+- これらのアセットを好きなように変更すること。
+- これらのアセットを好きなプラットフォームで使用すること。
+- これらのアセットを使用して、VRChatで「公開」アバターを公開する。
+- これらのアセットを使ってストリームを流す（例えば、モデルをvtuberのアバターとして使うなど）
+
+DeepL.com（無料版）で翻訳しました。

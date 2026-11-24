@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스즈 소리, 온나 목소리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=Noto+Sans+JP:wght@700;900&display=swap">
+<style>
+:root{--ink:#fff8f0;--pink:#ff9ab8;--gold:#ffd23f;--panel:rgba(18,14,26,.86)}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:#111;color:var(--ink);font-family:'Gowun Dodum',sans-serif;-webkit-user-select:none;user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+#boot{position:fixed;inset:0;display:grid;place-items:center;font:20px Jua,sans-serif;background:#0d0b14;z-index:99}
+button{font-family:inherit;cursor:pointer}
+/* VRChat 풍 네임플레이트 */
+#np{position:fixed;inset:0;pointer-events:none;z-index:5}
+.np{position:absolute;left:0;top:0;padding:4px 12px 5px;border-radius:9px;background:rgba(10,10,16,.72);border:2px solid var(--c);text-align:center;white-space:nowrap;box-shadow:0 0 12px color-mix(in srgb,var(--c) 50%,transparent)}
+.np b{display:block;font:15px Jua,sans-serif;color:#fff}.np small{display:block;font-size:11px;opacity:.75;font-family:'Noto Sans JP'}
+.np .mic{position:absolute;left:-12px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:#2a2a36;border:2px solid var(--c);opacity:.3}
+.np.talk .mic{opacity:1;background:var(--c);animation:mic .5s infinite alternate}@keyframes mic{to{transform:scale(1.25)}}
+/* HUD */
+#hud{position:fixed;left:0;right:0;top:0;padding:10px 12px;display:flex;gap:8px;align-items:center;z-index:10;pointer-events:none}
+#hud>*{pointer-events:auto}
+#hud button{background:var(--panel);border:1.5px solid #ffffff44;color:#fff;border-radius:10px;padding:8px 12px;font:15px Jua,sans-serif}
+#eptag{font:15px Jua,sans-serif;background:var(--panel);padding:8px 12px;border-radius:10px;border:1.5px solid var(--pink)}
+#prog{font-size:12px;opacity:.7}
+#aff{margin-left:auto;display:flex;align-items:center;gap:6px;background:var(--panel);padding:6px 10px;border-radius:10px;font:14px Jua,sans-serif}
+#aff span{width:90px;height:8px;border-radius:5px;background:#ffffff22;overflow:hidden;display:block}#aff i{display:block;height:100%;background:linear-gradient(90deg,#ff7ab0,#ffd0e0);transition:width .5s}
+#place{position:fixed;left:16px;top:62px;z-index:9;font:18px Jua,sans-serif;background:var(--panel);border-left:4px solid var(--gold);padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none}
+#place.on{animation:pl 5s forwards}@keyframes pl{0%{opacity:0;transform:translateX(-20px)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:.0}}
+#guest{position:fixed;right:14px;top:62px;z-index:9;background:var(--panel);padding:8px 12px;border-radius:10px;font:15px Jua,sans-serif}#guest i{color:var(--c);font-style:normal}#guest small{display:block;font:11px sans-serif;opacity:.6}
+/* 대사창 */
+#dlg{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);width:min(940px,94vw);min-height:110px;z-index:10;background:var(--panel);border:2px solid #ffffff30;border-radius:18px;padding:14px 20px 16px;box-shadow:0 10px 40px #000a;backdrop-filter:blur(6px);cursor:pointer}
+#dlg.who-s{border-color:var(--pink)}#dlg.who-o{border-color:var(--gold)}#dlg.who-n{border-color:#8aa0ff66;background:rgba(10,12,30,.82)}
+#dlg .nm{font:19px Jua,sans-serif;margin-bottom:4px}
+#dlg .tx{font-size:clamp(17px,2.2vw,22px);line-height:1.6;min-height:2.4em}
+#dlg.who-n .tx{font-style:italic;color:#dfe4ff}
+#dlg .tx b{color:var(--gold)}#dlg .tx em{color:var(--pink);font-style:normal;font-family:'Noto Sans JP'}
+#dlg .why{display:block;margin-top:8px;font-size:15.5px;font-style:normal;background:#2a2440;border-radius:10px;padding:8px 12px;color:#e8ecff;line-height:1.6}
+/* 원형 액션 메뉴 */
+#radial{position:fixed;inset:0;z-index:30;background:radial-gradient(circle,rgba(0,0,0,.25),rgba(0,0,0,.7));display:grid;place-items:center}
+#radial[hidden]{display:none}
+#radial .rq{position:absolute;top:8%;left:50%;transform:translateX(-50%);width:min(820px,92vw);text-align:center;font:clamp(19px,2.6vw,26px) Jua,sans-serif;background:var(--panel);padding:12px 18px;border-radius:14px;border:2px solid var(--gold)}
+#radial .ring{position:relative;width:360px;height:360px;border-radius:50%;background:rgba(20,18,32,.85);border:3px solid #ffffff33;box-shadow:0 0 0 60px rgba(20,18,32,.35)}
+#radial .ring button{position:absolute;left:50%;top:50%;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y)));width:150px;min-height:64px;padding:8px;border-radius:16px;border:2px solid #ffd23f88;background:#2a2238;color:#fff;font:15px/1.35 'Gowun Dodum';box-shadow:0 4px 12px #0008}
+#radial .ring button:hover,#radial .ring button:active{background:#5a3a6a;border-color:var(--gold)}
+#radial .hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:90px;height:90px;border-radius:50%;background:#ffd23f;color:#2a1a08;display:grid;place-items:center;font:28px Jua;text-align:center}#radial .hub small{display:block;font-size:11px;margin-top:-18px}
+@media (max-width:700px){#radial .ring{transform:scale(.82)}}
+/* 퀴즈 보드 */
+#quiz{position:fixed;inset:0;z-index:31;display:grid;place-items:center;background:rgba(0,0,0,.45)}#quiz[hidden]{display:none}
+#quiz .qb{width:min(720px,94vw);max-height:90vh;overflow:auto;background:#f8f4ea;color:#2a2218;border-radius:16px;border:6px solid #7a5530;padding:16px 20px;box-shadow:0 20px 60px #000c}
+#quiz .qh{display:flex;justify-content:space-between;font:18px Jua;color:#7a3a20}#quiz .qs{font-size:12px;opacity:.6;margin:2px 0 8px}
+#quiz .qq{font-size:19px;line-height:1.6;margin-bottom:10px}
+#quiz .qo{display:grid;gap:8px}#quiz .qo button{text-align:left;padding:12px 14px;font-size:17px;border-radius:12px;border:2px solid #c8b090;background:#fff;color:#2a2218}
+#quiz .qo button.right{background:#c8f0b0;border-color:#4a9a2a}#quiz .qo button.wrong{background:#ffc8c8;border-color:#c33}
+#quiz .qx{margin-top:10px;border-radius:10px;padding:10px 12px;font-size:16px;line-height:1.6}#quiz .qx.ok{background:#e0f6d0}#quiz .qx.no{background:#ffe0e0}
+#quiz .nx{display:block;margin:10px 0 0 auto;padding:10px 18px;font:17px Jua;border-radius:10px;border:0;background:#7a5530;color:#fff}
+/* 카드·메뉴 */
+#card{position:fixed;inset:0;z-index:40;display:grid;place-content:center;text-align:center;background:radial-gradient(circle,#2a1a3add,#0a0812f2)}#card[hidden]{display:none}
+#card h2{font:clamp(30px,5vw,54px) Jua;margin:0 0 10px;color:#ffe9f0;text-shadow:0 0 30px #ff7ab0}#card p{font-size:18px;opacity:.85}#card button{margin-top:16px;padding:12px 26px;font:20px Jua;border-radius:14px;border:0;background:var(--gold);color:#2a1a08}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .5s;z-index:35}#fade.on{opacity:1}
+#menu{position:fixed;inset:0;z-index:20;overflow:auto;display:flex;justify-content:flex-end;padding:12px}#menu[hidden]{display:none}
+#menu .mc{width:min(520px,100%);background:var(--panel);border-radius:18px;padding:18px;border:2px solid #ff9ab855;backdrop-filter:blur(6px);height:max-content}
+#menu h1{font:28px Jua;margin:0 0 6px;color:#ffe9f0}#menu h1 small{display:block;font:13px 'Noto Sans JP';opacity:.7;margin-top:4px}
+#menu .lead{font-size:15px;line-height:1.6}#menu .aff{font:15px Jua;margin:6px 0 10px}
+#menu .big{display:block;width:100%;padding:14px;font:20px Jua;border-radius:14px;border:0;background:linear-gradient(90deg,#ff9ab8,#ffd23f);color:#2a1a08;margin-bottom:12px}
+#menu .eps{display:grid;gap:6px}#menu .eps button{text-align:left;background:#2a2238;border:1.5px solid #ffffff22;color:#fff;border-radius:12px;padding:9px 12px}#menu .eps b{font:16px Jua;display:block}#menu .eps small{opacity:.7;font-size:12px}
+#menu .qz{grid-template-columns:1fr 1fr}#menu h3{font:17px Jua;margin:14px 0 6px}
+#menu .opt{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}#menu .opt button{flex:1;padding:10px;border-radius:10px;border:1.5px solid #ffffff33;background:#1e1a2a;color:#fff;font:14px Jua}
+#menu .cr{font-size:11px;opacity:.5;margin-top:10px}
+.toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:50;background:var(--panel);border:2px solid var(--gold);padding:12px 18px;border-radius:12px;font:18px Jua}
+.hp{position:fixed;right:30px;top:60px;z-index:50;font:22px Jua;animation:hp 1.5s forwards}.hp.up{color:#ff9ab8}.hp.dn{color:#8a9aff}@keyframes hp{to{transform:translateY(-40px);opacity:0}}
+@media (max-width:700px){#menu{justify-content:center}#dlg{bottom:8px;padding:10px 14px}#aff span{width:50px}}
+</style></head><body>
+<canvas id="cv"></canvas><div id="np"></div>
+<div id="hud" hidden><button id="bm">☰ 메뉴</button><span id="eptag"></span><span id="prog"></span><button id="bshot" title="카메라">🎥</button><button id="bauto"></button><div id="aff">💗<span><i></i></span><b></b></div></div>
+<div id="place"></div><div id="guest" hidden></div>
+<div id="dlg" class="who-n"><div class="nm"></div><div class="tx"></div></div>
+<div id="radial" hidden></div><div id="quiz" hidden></div><div id="card" hidden></div><div id="fade"></div><div id="menu" hidden></div>
+<div id="boot">불러오는 중…</div>
+<script src="js/jp/story.js?v=1"></script><script src="js/jp/quiz.js?v=1"></script>
+<script type="importmap">{"imports":{"three":"./js/vendor/three.module.min.js"}}</script>
+<script type="module" src="js/jp/main.js?v=1"></script>
+</body></html>
