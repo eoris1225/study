@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { FBXLoader } from '../vendor/jsm/loaders/FBXLoader.js';
 
 const $ = s => document.querySelector(s);
+const IC = (n, o) => window.ICON(n, o);
 const ST = window.JPSTORY, QB = window.JPQUIZ;
 const SAVEK = 'jp_story_v1';
 let SAVE = { ep: 0, i: 0, aff: 50, right: {}, done: {}, miss: {}, words: {} }; try { Object.assign(SAVE, JSON.parse(localStorage.getItem(SAVEK)) || {}); } catch (e) { }
@@ -17,7 +18,7 @@ const cam = new THREE.PerspectiveCamera(34, 1, .1, 400);
 const hemi = new THREE.HemisphereLight('#ffffff', '#6a5a50', 1.6); scene.add(hemi);
 const sun = new THREE.DirectionalLight('#fff2e0', 2.2); sun.position.set(8, 18, 12); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
 Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20 }); scene.add(sun);
-function resize() { const w = innerWidth, h = innerHeight; R.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); } addEventListener('resize', resize); resize();
+function resize() { const w = innerWidth, h = innerHeight; R.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); try { uiCam.aspect = w / h; uiCam.updateProjectionMatrix(); fitBook(); } catch (e) { } } addEventListener('resize', resize); resize();
 
 /* ── 텍스처 도우미 ── */
 const TL = new THREE.TextureLoader();
@@ -49,7 +50,7 @@ async function loadAvatar(k) {
   const rest = {}; for (const [n, b] of Object.entries(B)) rest[n] = { l: b.quaternion.clone(), w: rq.clone().multiply(b.getWorldQuaternion(new THREE.Quaternion())), p: b.position.clone() };
   const a = { k, g, o, B, rest, ft, face: 'n', faceT: 0, mot: 'idle', motT: 0, prev: null, prevT: 0, blend: 1, tgt: null, walkT: 0, props: {}, talk: 0, cell: 0 };
   /* 명찰 (VRChat 네임플레이트) */
-  const np = document.createElement('div'); np.className = 'np'; np.innerHTML = `<b>${d.name}</b><small>${d.tag}</small><i class="mic"></i>`; np.style.setProperty('--c', d.col); $('#np').appendChild(np); a.np = np;
+  const np = document.createElement('div'); np.className = 'np'; np.innerHTML = `<b>${d.name}</b><small>${d.tag}</small><i class="mic">${IC('talk')}</i>`; np.style.setProperty('--c', d.col); $('#np').appendChild(np); a.np = np;
   AV[k] = a; return a;
 }
 function setFace(a, f) { f = FACES[a.k][f] !== undefined ? f : (FACE_ALIAS[f] || f); const i = FACES[a.k][f] ?? FACES[a.k].n; a.cell = i; a.face = f; a.ft.offset.set((i % 4) * .25, .75 - Math.floor(i / 4) * .25); }
@@ -60,7 +61,7 @@ function applyPose(a, P) {
     qT.copy(r.w).invert().multiply(qW).multiply(r.w); b.quaternion.copy(r.l).multiply(qT); }
 }
 /* 포즈 합치기 */
-const add = (A, Bp, w = 1) => { for (const [k, v] of Object.entries(Bp)) { const o = A[k] || (A[k] = [0, 0, 0]); for (let i = 0; i < 3; i++) o[i] += (v[i] || 0) * w; } return A; };
+const add = (A, Bp, w = 1) => { for (const [k, v0] of Object.entries(Bp)) { const v = typeof v0 === 'number' ? [v0] : v0; const o = A[k] || (A[k] = [0, 0, 0]); for (let i = 0; i < 3; i++) o[i] += (v[i] || 0) * w; } return A; };
 const S = Math.sin, PI = Math.PI;
 const ARMS_DOWN = { upperarm_L: [0, 0, -.95], upperarm_R: [0, 0, .95], forearm_L: [-.15, 0, -.1], forearm_R: [-.15, 0, .1] };
 /* 동작: t(초) → 포즈 */
@@ -102,6 +103,7 @@ const MOT = {
   grip_sleeve: t => ({ upperarm_R: [-.85, 0, .1], forearm_R: [-.6, -.35, 0], upperarm_L: [-.3, 0, .2], forearm_L: [-.9, .5, 0], head: [.22, 0, .06], spine1: [.08, 0, 0] }),
   lean_in: t => { const k = Math.min(1, t * 2); return { spine1: [.25 * k, 0, 0], spine2: [.15 * k, 0, 0], head: [-.05, 0, .08 * k], upperarm_L: [-1.2 * k, 0, .3], upperarm_R: [-1.2 * k, 0, -.3], forearm_L: [-.6 * k, .45, 0], forearm_R: [-.6 * k, -.45, 0] }; },
   flinch_sound: t => ({ upperarm_L: [-.4, 0, .5], upperarm_R: [-.4, 0, -.5], forearm_L: [-2, .6, 0], forearm_R: [-2, -.6, 0], head: [.3, 0, 0], spine2: [.15, 0, 0], shoulder_L: [0, 0, .12], shoulder_R: [0, 0, -.12], _sh: S(t * 22) * .015 }),
+  crouch_bury: t => { const k = Math.min(1, t * 2.5); return { upper_leg_L: [-1.9 * k, 0, .15 * k], upper_leg_R: [-1.9 * k, 0, -.15 * k], lower__leg_L: [2.4 * k, 0, 0], lower__leg_R: [2.4 * k, 0, 0], spine1: [.55 * k, 0, 0], spine2: [.35 * k, 0, 0], head: [.5 * k, 0, 0], upperarm_L: [-.9 * k, 0, .35], upperarm_R: [-.9 * k, 0, -.35], forearm_L: [-1.6 * k, .6, 0], forearm_R: [-1.6 * k, -.6, 0], _y: -2.1 * k, _sh: S(t * 16) * .012 }; },
   stretch: t => ({ upperarm_L: [0, 0, 1.9], upperarm_R: [0, 0, -1.9], forearm_L: [0, 0, .6], forearm_R: [0, 0, -.6], spine1: [-.1, 0, S(t * 2) * .1] })
 };
 function bow(t, d) { const k = t < .6 ? t / .6 : t < 1.8 ? 1 : Math.max(0, 1 - (t - 1.8) / .6); return { spine1: [d * k * .6, 0, 0], spine2: [d * k * .4, 0, 0], head: [.1 * k, 0, 0], upperarm_L: [-.2 * k, 0, .1], upperarm_R: [-.2 * k, 0, -.1], forearm_L: [-.3 * k, .3 * k, 0], forearm_R: [-.3 * k, -.3 * k, 0] }; }
@@ -120,7 +122,7 @@ function stepAvatar(a, dt, T) {
     else { const sp = (a.k === 's' ? 3.2 : 5) * dt; g.position.addScaledVector(d.normalize(), Math.min(sp, L)); const ry = Math.atan2(d.x, d.z); g.rotation.y += ((((ry - g.rotation.y) % (2 * PI)) + 3 * PI) % (2 * PI) - PI) * Math.min(1, dt * 8);
       a.walkT += dt * 7; add(P, { upper_leg_L: [S(a.walkT) * .45, 0, 0], upper_leg_R: [-S(a.walkT) * .45, 0, 0], lower__leg_L: [-Math.max(0, -S(a.walkT)) * .6, 0, 0], lower__leg_R: [-Math.max(0, S(a.walkT)) * .6, 0, 0], upperarm_L: [-S(a.walkT) * .25, 0, 0], upperarm_R: [S(a.walkT) * .25, 0, 0] }); wy = Math.abs(S(a.walkT)) * .12; } }
   const y = (P._y ? P._y[0] : 0) + wy; const sh = P._sh ? P._sh[0] : 0; delete P._y; delete P._sh;
-  a.o.position.set(sh, y, 0); applyPose(a, P);
+  a.o.position.set(sh, y, 0); a.dy = y < 0 ? y * 1.15 : 0; applyPose(a, P);
   /* 깜빡임 */
   a.faceT -= dt; if (a.faceT < 0) { const base = a.face; if (FACES[a.k][base] !== undefined && ['n', 'smile', 'worry', 'oh', 'smug', 'mad', 'pout', 'sad', 'meh', 'think'].includes(base)) { a.ft.offset.set(.25, .75); setTimeout(() => setFace(a, a.face), 110); } a.faceT = 2.5 + Math.random() * 3; }
   if (a.talk > 0) a.talk -= dt;
@@ -213,6 +215,8 @@ const LIGHTS = { 벚꽃역광: { h: '#ffe6f0', g: '#8a6a7a', hi: 1.5, s: '#ffd0c
   오후햇살: { h: '#fff0d8', g: '#7a6450', hi: 1.7, s: '#ffe0a8', si: 2.6, sp: [14, 14, 8], ex: 1.12 }, 오후실내: { h: '#ffe8c8', g: '#6a5038', hi: 1.4, s: '#ffd090', si: 2, sp: [14, 10, 6], ex: 1.06 },
   장마_오후: { h: '#b8c8d8', g: '#4a5058', hi: 1.1, s: '#c8d4e0', si: 1, sp: [-6, 12, 8], ex: 1 }, 장마_역광: { h: '#c8d0e0', g: '#4a4a58', hi: 1.15, s: '#ffe2c0', si: 2, sp: [-10, 7, -16], ex: 1.14 }, 장마_저녁: { h: '#7a8aa8', g: '#20262e', hi: .8, s: '#9aaac0', si: .7, sp: [-8, 12, 6], ex: 1.05 },
   병원형광등: { h: '#eef4ff', g: '#8a9098', hi: 1.55, s: '#e8f0ff', si: 1.4, sp: [0, 20, 4], ex: 1 }, 밤형광등: { h: '#dfe8ff', g: '#30343e', hi: 1.1, s: '#e8eeff', si: 1.1, sp: [0, 18, 4], ex: 1 }, 체육관빛: { h: '#fff8ec', g: '#6a6050', hi: 1.6, s: '#fff4e0', si: 2, sp: [0, 24, 6], ex: 1.04 },
+  겨울오후: { h: '#e8eef8', g: '#5a5a68', hi: 1.4, s: '#fff0dc', si: 1.6, sp: [12, 10, 8], ex: 1.05 }, 고타쓰: { h: '#ffb880', g: '#2a1a18', hi: .85, s: '#ff9a5a', si: 1.3, sp: [4, 4, 8], ex: 1.2 }, 겨울아침: { h: '#f4f8ff', g: '#8a8c98', hi: 1.75, s: '#ffffff', si: 2.2, sp: [10, 12, 10], ex: 1.12 },
+  겨울저녁: { h: '#8a9ac8', g: '#28283a', hi: .95, s: '#ffb880', si: 1.1, sp: [-12, 5, 6], ex: 1.12 }, 겨울흐림: { h: '#c8ccd4', g: '#4a4c54', hi: 1.25, s: '#d8dce4', si: .9, sp: [0, 18, 6], ex: 1 }, 오후노을_저채도: { h: '#c8b8a8', g: '#3a3430', hi: 1, s: '#e0a880', si: 1.2, sp: [18, 5, 4], ex: 1.02 },
   축제등불: { h: '#ffb878', g: '#2a1a30', hi: 1, s: '#ff9a50', si: 1.5, sp: [10, 6, 8], ex: 1.2 }, 불꽃빛: { h: '#ffb8d8', g: '#2a1a3a', hi: .95, s: '#ffd070', si: 1.7, sp: [-6, 16, -14], ex: 1.25 } };
 function light(n) { const k = LIGHTS[n] ? n : /장마|비/.test(n) ? (/저녁|밤/.test(n) ? '장마_저녁' : '장마_오후') : /형광/.test(n) ? '병원형광등' : /등불|제등/.test(n) ? '축제등불' : /불꽃/.test(n) ? '불꽃빛' : /밤|달/.test(n) ? '밤달빛' : /어스름|저녁노을/.test(n) ? '저녁노을_어스름' : /노을|석양/.test(n) ? '오후노을' : /아침/.test(n) ? '아침햇살' : /정오|낮/.test(n) ? '정오햇살' : /벚꽃/.test(n) ? '벚꽃역광' : /실내|저녁/.test(n) ? '저녁실내' : '기본'; const L = LIGHTS[k]; hemi.color.set(L.h); hemi.groundColor.set(L.g); hemi.intensity = L.hi; sun.color.set(L.s); sun.intensity = L.si; sun.position.set(...L.sp); R.toneMappingExposure = L.ex; }
 function place(k, p) { const a = AV[k]; if (!a || !p) return; a.g.position.set(p[0], p[1] || 0, p[2]); a.g.rotation.y = p[3] || 0; a.tgt = null; }
@@ -240,11 +244,14 @@ function shotTarget() { const o = AV.o.g.position, s = AV.s.g.position, mid = o.
   const sw = S(camT * .25) * .6; let p, l;
   if (shot === 'suzu') { p = o.clone().addScaledVector(d, -2.2).addScaledVector(side, 4.2).add(V3(0, 7.7, 0)); l = s.clone().add(V3(0, 6.8, 0)); }
   else if (shot === 'onna') { p = s.clone().addScaledVector(d, 2.2).addScaledVector(side, 4.2).add(V3(0, 7.7, 0)); l = o.clone().add(V3(0, 6.8, 0)); }
-  else if (shot === 'close') { p = s.clone().addScaledVector(d, -2.6).addScaledVector(side, 3).add(V3(sw * .5, 7.3, 0)); l = s.clone().add(V3(0, 6.9, 0)); }
-  else if (shot === 'closeo') { p = o.clone().addScaledVector(d, 2.6).addScaledVector(side, 3).add(V3(sw * .5, 7.3, 0)); l = o.clone().add(V3(0, 6.9, 0)); }
+  else if (shot === 'close') { const dy = AV.s.dy || 0; p = s.clone().addScaledVector(d, -2.6).addScaledVector(side, 3).add(V3(sw * .5, 7.3 + dy * .8, 0)); l = s.clone().add(V3(0, 6.9 + dy, 0)); }
+  else if (shot === 'closeo') { const dy = AV.o.dy || 0; p = o.clone().addScaledVector(d, 2.6).addScaledVector(side, 3).add(V3(sw * .5, 7.3 + dy * .8, 0)); l = o.clone().add(V3(0, 6.9 + dy, 0)); }
   else if (shot === 'wide') { p = mid.clone().addScaledVector(side, 26 + L).add(V3(sw * 4, 12, 0)); l = mid.clone().add(V3(0, 4, 0)); }
   else if (shot === 'sky') { p = mid.clone().addScaledVector(side, 18).add(V3(0, 4, 0)); l = mid.clone().add(V3(0, 18, -20)); }
   else { p = mid.clone().addScaledVector(side, 13 + L * .6).add(V3(sw, 7, 0)); l = mid.clone().add(V3(0, 5.6, 0)); }
+  /* 세로 화면(폰)에서는 뒤로 물러나서 둘 다 보이게, 쪼그려 앉으면 클로즈업도 조금 물러남 */
+  let f = cam.aspect < 1 ? Math.min(2, .8 / cam.aspect) : 1; if ((shot === 'close' && (AV.s.dy || 0) < -1) || (shot === 'closeo' && (AV.o.dy || 0) < -1)) f *= 1.5;
+  if (f !== 1) p = l.clone().add(p.clone().sub(l).multiplyScalar(f));
   return [p, l]; }
 function stepCam(dt) { camT += dt; const [p, l] = shotTarget(); const k = Math.min(1, dt * 2.6); camPos.lerp(p, k); camLook.lerp(l, k); cam.position.copy(camPos); if (shake > 0) { shake -= dt; cam.position.x += (Math.random() - .5) * shake; cam.position.y += (Math.random() - .5) * shake; } cam.lookAt(camLook); rollC += (roll - rollC) * Math.min(1, dt * 6); if (rollC) cam.rotateZ(rollC); if (Math.abs(cam.fov - fovT) > .01) { cam.fov += (fovT - cam.fov) * Math.min(1, dt * fovRate); cam.updateProjectionMatrix(); } }
 
@@ -261,9 +268,9 @@ const jaVoices = () => { const L = voices.filter(v => v.lang && /^ja/i.test(v.la
 function sayJP(t, who = 's') { return new Promise(res => { if (!voiceOn || !t) return res(); try { const V = VO[who] || VO.s, L = jaVoices(); const u = new SpeechSynthesisUtterance(t.replace(/[〜・『』]/g, ' ').replace(/……/g, '…')); u.lang = 'ja-JP'; if (L.length) u.voice = L[V.v % L.length]; u.pitch = V.p; u.rate = V.r; u.onend = u.onerror = () => res(); speechSynthesis.speak(u); setTimeout(res, 2500 + t.length * 220); } catch (e) { res(); } }); }
 function speak(who, text) { try { speechSynthesis.cancel(); } catch (e) { } if (!voiceOn || who === 'n') return Promise.resolve(); const L = window.JA.japaneseOf(text); return L.reduce((p, t) => p.then(() => sayJP(t, who)), Promise.resolve()); }
 /* ── 화면 UI ── */
-const SPK = { 나: 'n', 유나: 'o', 스즈: 's', 엄마: 'm', 아빠: 'd', 하나: 'h', 미야코: 'k', 선생님: 't', 반친구: 'r', 선배아빠: 'f' }, SPK_RE = /^(선배아빠|선생님|반친구|미야코|유나|스즈|엄마|아빠|하나|나)\s*(?:\[([^\]]*)\])?\s*:\s*/;
-const NAMES = { n: '', o: '한유나', s: '야마시타 스즈', m: '스즈 엄마 (유미코)', d: '스즈 아빠 (다케시)', h: '하나 (스즈 동생, 7살)', k: '시라이시 미야코 선배', t: '다나카 선생님', r: '반 친구', f: '시라이시 아버님' };
-const COLS = { n: '#cfd8ff', o: '#ffd23f', s: '#ff9ab8', m: '#ffb070', d: '#8ac8ff', h: '#ffe27a', k: '#b8a0ff', t: '#9adfb0', r: '#7fe0ff', f: '#c8b090' };
+const SPK = { 하루토: 'u', 나: 'n', 유나: 'o', 스즈: 's', 엄마: 'm', 아빠: 'd', 하나: 'h', 미야코: 'k', 선생님: 't', 반친구: 'r', 선배아빠: 'f' }, SPK_RE = /^(하루토|선배아빠|선생님|반친구|미야코|유나|스즈|엄마|아빠|하나|나)\s*(?:\[([^\]]*)\])?\s*:\s*/;
+const NAMES = { n: '', o: '한유나', s: '야마시타 스즈', m: '스즈 엄마 (유미코)', d: '스즈 아빠 (다케시)', h: '하나 (스즈 동생, 7살)', k: '시라이시 미야코 선배', t: '다나카 선생님', r: '반 친구', f: '시라이시 아버님', u: '타카하시 하루토 선배' };
+const COLS = { n: '#cfd8ff', o: '#ffd23f', s: '#ff9ab8', m: '#ffb070', d: '#8ac8ff', h: '#ffe27a', k: '#b8a0ff', t: '#9adfb0', r: '#7fe0ff', f: '#c8b090', u: '#8fd0a8' };
 const box$ = $('#dlg'), nm = $('#dlg .nm'), tx$ = $('#dlg .tx');
 let typing = null, auto = false; try { auto = localStorage.getItem('jp_auto') === '1'; } catch (e) { }
 let TSPD = 2, TREM = '';
@@ -273,41 +280,119 @@ function typeOut(html) { return new Promise(res => { clearInterval(typing); cons
   typing = setInterval(() => { n += TSPD; if (n >= total) { clearInterval(typing); typing = null; tx$.innerHTML = html; res(); return; } tx$.innerHTML = cutHTML(html, n); }, TSPD === 1 ? 38 : 22); tx$.onclick = () => { if (typing) { clearInterval(typing); typing = null; tx$.innerHTML = html; res(); } }; }); }
 function cutHTML(h, n) { let out = '', c = 0, inTag = false; for (const ch of h) { if (ch === '<') inTag = true; if (inTag) { out += ch; if (ch === '>') inTag = false; continue; } if (c >= n) break; out += ch; c++; } return out; }
 let waitTap = null;
-function tapWait(ms) { return new Promise(res => { let t = null; const go = () => { clearTimeout(t); waitTap = null; res(); }; waitTap = go; if (auto && ms) t = setTimeout(go, ms); }); }
+function tapWait(ms) { return new Promise(res => { let t = null; const go = () => { clearTimeout(t); waitTap = null; res(); }; waitTap = go; if (auto && ms) t = setTimeout(function tick() { if (BOOK) t = setTimeout(tick, 500); else go(); }, ms); }); }
 const BLOCK = '#hud, #radial, #quiz, #menu, #card, #log, #jpop, #notebook, .jp, button, select';
-document.addEventListener('pointerup', e => { if (e.target.closest && e.target.closest(BLOCK)) return; if (typing) { tx$.click(); return; } if (waitTap) waitTap(); });
-document.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && waitTap && $('#menu').hidden) { e.preventDefault(); if (typing) tx$.click(); else waitTap(); } });
+document.addEventListener('pointerup', e => { if (BOOK) { if (!(e.target.closest && e.target.closest('#nbui, #nbx'))) bookTurn(e.clientX < innerWidth / 2 ? -1 : 1); return; } if (e.target.closest && e.target.closest(BLOCK)) return; if (typing) { tx$.click(); return; } if (waitTap) waitTap(); });
+document.addEventListener('keydown', e => { if (BOOK) { if (e.key === 'ArrowLeft') bookTurn(-1); else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') bookTurn(1); else if (e.key === 'Escape') closeBook(); e.preventDefault(); return; } if ((e.key === ' ' || e.key === 'Enter') && waitTap && $('#menu').hidden) { e.preventDefault(); if (typing) tx$.click(); else waitTap(); } });
 /* 일본어 누르면: 뜻 · 발음 · 읽어 주기 */
 document.addEventListener('click', e => { const j = e.target.closest && e.target.closest('.jp'); const pop = $('#jpop');
   if (!j) { if (!e.target.closest('#jpop')) pop.hidden = true; return; } e.stopPropagation();
   const tr = j.closest('.tx, .lg') && j.closest('.tx, .lg').querySelector('.tr'); const mean = j.dataset.m || (tr ? tr.textContent : '');
-  pop.innerHTML = `<b>${j.dataset.jp}</b><i>${j.dataset.p}</i>${mean ? `<span>${mean}</span>` : ''}<button data-say>🔊 다시 듣기</button>`; pop.hidden = false;
+  pop.innerHTML = `<b>${j.dataset.jp}</b><i>${j.dataset.p}</i>${mean ? `<span>${mean}</span>` : ''}<button data-say>${IC('sound')} 다시 듣기</button>`; pop.hidden = false;
   const r = j.getBoundingClientRect(); pop.style.left = Math.min(innerWidth - 300, Math.max(8, r.left)) + 'px'; pop.style.top = Math.max(8, r.top - pop.offsetHeight - 10) + 'px';
   const who = j.closest('[data-who]') ? j.closest('[data-who]').dataset.who : 's'; try { speechSynthesis.cancel(); } catch (x) { } sayJP(j.dataset.jp, who === 'n' ? 's' : who);
   pop.querySelector('[data-say]').onclick = ev => { ev.stopPropagation(); try { speechSynthesis.cancel(); } catch (x) { } sayJP(j.dataset.jp, who === 'n' ? 's' : who); }; }, true);
 /* 대사 기록 */
-function showLog() { const w = $('#log'); w.innerHTML = `<div class="lh"><b>📜 대사 기록</b><button data-x>닫기 ✕</button></div><div class="lb">${LOG.length ? LOG.map(([who, h]) => `<div class="lg" data-who="${who}">${NAMES[who] ? `<em style="color:${COLS[who]}">${NAMES[who]}</em>` : ''}<div>${h}</div></div>`).join('') : '<p>아직 기록이 없어요. 스토리를 진행하면 여기에 쌓여요. 일본어를 누르면 뜻·발음이 나오고 읽어 줘요.</p>'}</div>`;
+function showLog() { const w = $('#log'); w.innerHTML = `<div class="lh"><b>${IC('log')} 대사 기록</b><button class="xb" data-x>${IC('x')} 닫기</button></div><div class="lb">${LOG.length ? LOG.map(([who, h]) => `<div class="lg" data-who="${who}">${NAMES[who] ? `<em style="color:${COLS[who]}">${NAMES[who]}</em>` : ''}<div>${h}</div></div>`).join('') : '<p>아직 기록이 없어요. 스토리를 진행하면 여기에 쌓여요. 일본어를 누르면 뜻·발음이 나오고 읽어 줘요.</p>'}</div>`;
   w.hidden = false; const lb = w.querySelector('.lb'); lb.scrollTop = lb.scrollHeight; w.querySelector('[data-x]').onclick = () => { w.hidden = true; $('#jpop').hidden = true; }; }
 /* 유나의 생존 수첩 */
-const NOTE = { 가족호칭_내남구분_친외가: ['가족 호칭', '내 가족은 낮춤(ちち·はは·あに·あね), 남의 가족은 높임(おとうさん·おかあさん). 친가·외가 구분 없음: 삼촌·외삼촌·고모부·이모부 = おじさん, 숙모·외숙모·고모·이모 = おばさん. 막내 기준으로 통일 (엄마가 큰딸을 おねえちゃん).'], 교복_변화_다양성: ['교복', '대부분 교복을 입음. 남 가쿠란(学ラン)·여 세일러복 → 1980년대 무렵부터 재킷형(블레이저) 증가. 요즘은 학생이 교복을 직접 정하는 학교, 치마·바지 선택, 남녀 공용 교복도.'], 고교생의하루_시간표: ['고교생의 하루', '8:00~8:30 등교 (자전거 통학 많음, 넓은 자전거 주차장) → 12:10 점심 (교실 도시락·식당·급식, 매점에서 간식·학용품) → 3:40 청소 (학생이 당번 정해 직접) → 4:00 동아리 → 7:00 학원 (한 곳에서 여러 과목).'], 부카츠_교사지도_운동부특징: ['동아리 (部活)', '운동부 / 문화부(관악·서예·다도·가루타…, 없으면 새로 만들기도). 운동부: 주 3~5회 자발적, 아침 수업 전·주말에도, 프로 선수가 되기도. 안 하고 바로 집에 가면 귀가부(帰宅部). 교사에게 지도는 업무 부담이지만 평생 이어지는 관계가 되기도. 전국 대회: 운동부 인터하이(7~8월), 문화부 전국 고교 종합 문화제(7월 말~8월 초).'], 방문예절_체류시간_외투: ['방문 예절', '약속 잡기 → 선물 준비 → 외투는 밖에서 벗어 손에 걸고 초인종 → 신발 코 바깥쪽 → 선물은 쇼핑백에서 꺼내 양손으로 → 문지방·다다미 테두리·방석 밟지 않기 → 화장실은 「トイレ、かりてもいいですか」 → 너무 오래 머물지 않기 → 외투는 현관을 나온 뒤에 입기 → 돌아와서 감사 문자·전화.'], 선물_금기품목_4종: ['선물하면 안 되는 것', '병문안: 화분(根付く=寝付く, 앓아누움)·흰 꽃(죽음)·붉은 꽃(피) / 집들이: 라이터·초·재떨이·붉은 꽃(화재) / 상사: 신발·양말·슬리퍼(밟는다) / 결혼: 칼·가위(인연을 끊음)·도자기·유리(깨짐).'], 인사말_만날때_헤어질때: ['만날 때·헤어질 때 인사', '아침 おはよう(ございます)·낮 こんにちは·저녁 こんばんは. 매일 보는 친구·가족끼리는 こんにちは를 잘 안 씀, 직장에선 시간 상관없이 おはようございます. さようなら = 오래 헤어질 때. 매일 보는 친구엔 じゃあね·またね·また明日·バイバイ, 손윗사람엔 失礼します.'], 계절선물_오추겐_오세이보: ['계절 선물·답례', 'お中元(오추겐) = 7월 중순, お歳暮(오세이보) = 12월. 상사·신세 진 사람에게, 요즘은 백화점·택배로. 선물 이름: プレゼント(생일·크리스마스)·おみやげ(여행·출장)·てみやげ(방문)·おかえし(답례, 받은 것의 1/3~반).'], 연간행사_공휴일: ['연간 행사·공휴일', '1월 1일 설날·둘째 월 성인의 날 / 2월 3일경 세쓰분·11일 건국 기념일·14일 밸런타인·23일 일왕 생일 / 3월 3일 히나마쓰리·14일 화이트데이·21일경 춘분 / 4월 하나미·29일 쇼와의 날 / 5월 3일 헌법 기념일·4일 녹색의 날·5일 어린이날(단고노셋쿠)·둘째 일 어머니의 날 / 6월 셋째 일 아버지의 날 / 7월 7일 다나바타·셋째 월 바다의 날 / 8월 11일 산의 날·15일경 오봉 / 9월 음력 8/15 쓰키미·셋째 월 경로의 날·23일경 추분 / 10월 둘째 월 스포츠의 날·31일 핼러윈 / 11월 3일 문화의 날·15일 시치고산·23일 근로 감사의 날 / 12월 25일 크리스마스·31일 오미소카. 공휴일이 일요일이면 다음 날 대체 휴일, 4/29~5/5 골든위크, 해피 먼데이 제도로 월요일 3일 연휴.'], 고시엔_야구대회: ['고시엔 (甲子園)', '전국 고교 야구 선수권 대회. 100년 넘는 역사, 매년 8월, TV 생중계. 지역 예선 3,000팀 이상 → 대표 학교 출전. 한 번 지면 끝인 토너먼트, 진 팀은 구장의 흙을 담아 감.'], 성씨_통계_지역유래: ['성씨', '약 10만~30만 종. 많은 성: 사토·스즈키·다카하시·다나카·이토. 귀족·무사만 쓰다가 메이지 유신 이후 서민도. 지형·방향 조합(山下·小川·田中·前田·森), 지방 유래(가고시마 아리무라). 부부는 법률상 같은 성 → 부부 별성 요구 ↑.'] };
-function note(k) { SAVE.notes = SAVE.notes || {}; const first = !SAVE.notes[k]; SAVE.notes[k] = 1; save(); const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; const n = document.createElement('div'); n.className = 'nb'; n.innerHTML = `<small>📒 유나의 생존 수첩 ${first ? '· 새 항목' : ''}</small><b>${t}</b>${d ? `<p>${d}</p>` : ''}`; document.body.appendChild(n); setTimeout(() => n.classList.add('off'), 6500); setTimeout(() => n.remove(), 7200); }
-function notebook() { const w = $('#notebook'); const ks = Object.keys(SAVE.notes || {}); w.innerHTML = `<div class="lh"><b>📒 유나의 생존 수첩</b><button data-x>닫기 ✕</button></div><div class="lb">${ks.length ? ks.map(k => { const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; return `<div class="lg"><em>${t}</em><div>${d}</div></div>`; }).join('') : '<p>아직 비어 있어요. 스토리 중에 하나씩 채워져요.</p>'}</div>`; w.hidden = false; w.querySelector('[data-x]').onclick = () => { w.hidden = true; }; }
+const NOTE = { 가족호칭_내남구분_친외가: ['가족 호칭', '내 가족은 낮춤(ちち·はは·あに·あね), 남의 가족은 높임(おとうさん·おかあさん). 친가·외가 구분 없음: 삼촌·외삼촌·고모부·이모부 = おじさん, 숙모·외숙모·고모·이모 = おばさん. 막내 기준으로 통일 (엄마가 큰딸을 おねえちゃん).'], 교복_변화_다양성: ['교복', '대부분 교복을 입음. 남 가쿠란(学ラン)·여 세일러복 → 1980년대 무렵부터 재킷형(블레이저) 증가. 요즘은 학생이 교복을 직접 정하는 학교, 치마·바지 선택, 남녀 공용 교복도.'], 고교생의하루_시간표: ['고교생의 하루', '8:00~8:30 등교 (자전거 통학 많음, 넓은 자전거 주차장) → 12:10 점심 (교실 도시락·식당·급식, 매점에서 간식·학용품) → 3:40 청소 (학생이 당번 정해 직접) → 4:00 동아리 → 7:00 학원 (한 곳에서 여러 과목).'], 부카츠_교사지도_운동부특징: ['동아리 (部活)', '운동부 / 문화부(관악·서예·다도·가루타…, 없으면 새로 만들기도). 운동부: 주 3~5회 자발적, 아침 수업 전·주말에도, 프로 선수가 되기도. 안 하고 바로 집에 가면 귀가부(帰宅部). 교사에게 지도는 업무 부담이지만 평생 이어지는 관계가 되기도. 전국 대회: 운동부 인터하이(7~8월), 문화부 전국 고교 종합 문화제(7월 말~8월 초).'], 방문예절_체류시간_외투: ['방문 예절', '약속 잡기 → 선물 준비 → 외투는 밖에서 벗어 손에 걸고 초인종 → 신발 코 바깥쪽 → 선물은 쇼핑백에서 꺼내 양손으로 → 문지방·다다미 테두리·방석 밟지 않기 → 화장실은 「トイレ、かりてもいいですか」 → 너무 오래 머물지 않기 → 외투는 현관을 나온 뒤에 입기 → 돌아와서 감사 문자·전화.'], 선물_금기품목_4종: ['선물하면 안 되는 것', '병문안: 화분(根付く=寝付く, 앓아누움)·흰 꽃(죽음)·붉은 꽃(피) / 집들이: 라이터·초·재떨이·붉은 꽃(화재) / 상사: 신발·양말·슬리퍼(밟는다) / 결혼: 칼·가위(인연을 끊음)·도자기·유리(깨짐).'], 인사말_만날때_헤어질때: ['만날 때·헤어질 때 인사', '아침 おはよう(ございます)·낮 こんにちは·저녁 こんばんは. 매일 보는 친구·가족끼리는 こんにちは를 잘 안 씀, 직장에선 시간 상관없이 おはようございます. さようなら = 오래 헤어질 때. 매일 보는 친구엔 じゃあね·またね·また明日·バイバイ, 손윗사람엔 失礼します.'], 계절선물_오추겐_오세이보: ['계절 선물·답례', 'お中元(오추겐) = 7월 중순, お歳暮(오세이보) = 12월. 상사·신세 진 사람에게, 요즘은 백화점·택배로. 선물 이름: プレゼント(생일·크리스마스)·おみやげ(여행·출장)·てみやげ(방문)·おかえし(답례, 받은 것의 1/3~반).'], 연하장_인사말_앞면세로쓰기: ['연하장', '12/15~25에 넣으면 1월 1일에 배달. 1949년 복권(추첨 번호) 붙은 연하 엽서 시작, 100년 넘는 풍습. 앞면은 세로쓰기(받는 사람 우편번호·주소·이름, 보내는 사람). 인사말: あけましておめでとうございます / 昨年はたいへんお世話になりました / よい一年になりますように / 今年もどうぞよろしくおねがいします. よいおとしを는 연말 인사라 쓰면 안 됨.'], 설음식_오세치재료뜻_오조니_나나쿠사가유: ['설 음식', '오세치: 찬합, 설날 3일간, 연말에 미리 (요즘 백화점·호텔). 새우 장수, 밤조림 풍작, 긴톤 금전운, 검은콩 건강·근면, 홍백 어묵 축하, 청어알 자손 번영, 다시마 좋은 운. 오조니: 간토 네모 구운 떡+맑은 장국 / 간사이 둥근 떡+된장. 1월 7일 나나쿠사가유(7가지 봄나물 죽).'], 설장식_가도마쓰_시메카자리_가가미모치: ['설 장식', '도시가미사마를 맞이하려고: 대문 옆·현관 입구에 가도마쓰(門松), 현관에 시메카자리(무병장수, 신이 깃듦), 집 안에 둥근 거울 모양 찹쌀떡 가가미모치(鏡餅).'], 하쓰모데_대화단어_배열문장: ['하쓰모데 대화', '先生、あけましておめでとうございます。/ れんが いつも お世話に なって おります。/ れん君は いつも いっしょうけんめい 練習して いますよ。/ 次の 大会も がんばろうね。/ はい、がんばります。今年も よろしく おねがいします。 단어: ご~(존경 접두어)·~部·いつも·お世話になる·いっしょうけんめい·練習·次·大会·がんばる·今年.'], 해피먼데이_4대공휴일: ['성인의 날·해피 먼데이', '성인의 날: 원래 1/15 → 2000년부터 1월 둘째 월요일. 해피 먼데이 제도(월요일로 옮겨 3일 연휴): 성인의 날·바다의 날(7월 셋째 월)·경로의 날(9월 셋째 월)·스포츠의 날(10월 둘째 월). 2022년 4월부터 성인 18세(지자체 행사는 20세 기준 많음). 남자 정장, 여자 후리소데(비싸서 대여).'], 월별공휴일_어머니아버지의날_총정리: ['어머니의 날·아버지의 날', '일본은 어머니의 날(5월 둘째 일요일)과 아버지의 날(6월 셋째 일요일)이 따로 있다(미국·캐나다·중국도). 어린이 행사: 히나마쓰리 3/3 → 단고노셋쿠 5/5 → 시치고산 11/15.'], 연간행사_공휴일: ['연간 행사·공휴일', '1월 1일 설날·둘째 월 성인의 날 / 2월 3일경 세쓰분·11일 건국 기념일·14일 밸런타인·23일 일왕 생일 / 3월 3일 히나마쓰리·14일 화이트데이·21일경 춘분 / 4월 하나미·29일 쇼와의 날 / 5월 3일 헌법 기념일·4일 녹색의 날·5일 어린이날(단고노셋쿠)·둘째 일 어머니의 날 / 6월 셋째 일 아버지의 날 / 7월 7일 다나바타·셋째 월 바다의 날 / 8월 11일 산의 날·15일경 오봉 / 9월 음력 8/15 쓰키미·셋째 월 경로의 날·23일경 추분 / 10월 둘째 월 스포츠의 날·31일 핼러윈 / 11월 3일 문화의 날·15일 시치고산·23일 근로 감사의 날 / 12월 25일 크리스마스·31일 오미소카. 공휴일이 일요일이면 다음 날 대체 휴일, 4/29~5/5 골든위크, 해피 먼데이 제도로 월요일 3일 연휴.'], 고시엔_야구대회: ['고시엔 (甲子園)', '전국 고교 야구 선수권 대회. 100년 넘는 역사, 매년 8월, TV 생중계. 지역 예선 3,000팀 이상 → 대표 학교 출전. 한 번 지면 끝인 토너먼트, 진 팀은 구장의 흙을 담아 감.'], 성씨_통계_지역유래: ['성씨', '약 10만~30만 종. 많은 성: 사토·스즈키·다카하시·다나카·이토. 귀족·무사만 쓰다가 메이지 유신 이후 서민도. 지형·방향 조합(山下·小川·田中·前田·森), 지방 유래(가고시마 아리무라). 부부는 법률상 같은 성 → 부부 별성 요구 ↑.'] };
+function note(k) { SAVE.notes = SAVE.notes || {}; const first = !SAVE.notes[k]; SAVE.notes[k] = 1; save(); const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; const n = document.createElement('div'); n.className = 'nb tape'; n.innerHTML = `<small>${IC('note')} 유나의 생존 수첩 ${first ? '· 새 항목' : ''}</small><b>${t}</b>${d ? `<p>${d}</p>` : ''}`; document.body.appendChild(n); setTimeout(() => n.classList.add('off'), 6500); setTimeout(() => n.remove(), 7200); }
+/* ── 3D 생존 수첩: 로우폴리 공책을 화면 앞에 띄워서 한 장씩 넘겨 봄 ── */
+const uiScene = new THREE.Scene(), uiCam = new THREE.PerspectiveCamera(32, 1, .1, 60);
+uiScene.add(new THREE.HemisphereLight('#ffffff', '#7a7060', 1.6)); { const l = new THREE.DirectionalLight('#fff4e0', 1.5); l.position.set(-3, 5, 6); uiScene.add(l); }
+{ const dim = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: .55, depthWrite: false })); dim.position.z = -8; uiScene.add(dim); }
+let BOOK = null;
+const LM = c => new THREE.MeshLambertMaterial({ color: c, flatShading: true });
+const rnd = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
+const HAND = "Gaegu, 'Gowun Dodum', sans-serif";
+function paperBG(g, w, h, seed) { const r = rnd(seed + 11); g.fillStyle = '#fbf6e9'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#c9d7ee'; g.lineWidth = 2; for (let y = 100; y < h - 34; y += 40) { g.beginPath(); g.moveTo(8, y + r() * 2 - 1); g.lineTo(w - 8, y + r() * 2 - 1); g.stroke(); }
+  g.strokeStyle = '#e98a8a'; g.beginPath(); g.moveTo(58, 0); g.lineTo(56 + r() * 4, h); g.stroke();
+  g.fillStyle = 'rgba(120,90,40,.06)'; for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(r() * w, r() * h, 20 + r() * 50, 0, 7); g.fill(); } }
+function wrap(g, text, maxW) { const out = []; for (const para of String(text).split('\n')) { let line = '';
+  for (const word of para.split(/(\s+)/)) { if (!word) continue; const t2 = line + word; if (g.measureText(t2).width <= maxW) { line = t2; continue; }
+    if (line.trim()) out.push(line.trimEnd()); line = word.trimStart();
+    while (g.measureText(line).width > maxW) { let k = line.length; while (k > 1 && g.measureText(line.slice(0, k)).width > maxW) k--; out.push(line.slice(0, k)); line = line.slice(k); } }
+  if (line.trim()) out.push(line.trimEnd()); } return out; }
+function scribble(g, pts, r) { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo : g.moveTo).call(g, x + (r() - .5) * 3, y + (r() - .5) * 3)); g.stroke(); }
+function drawEntry(g, w, h, title, body, num, seed) { paperBG(g, w, h, seed); const r = rnd(seed + 3);
+  g.font = `700 42px ${HAND}`; const tw = Math.min(g.measureText(title).width, w - 90);
+  g.save(); g.translate(66, 64); g.rotate(-.025); g.fillStyle = 'rgba(255,212,60,.6)'; g.fillRect(-4, -4, tw + 14, 28); g.restore();
+  g.fillStyle = '#23202c'; g.fillText(title, 70, 78, w - 90);
+  let fs = 28, lines = []; const maxH = h - 170;
+  for (; fs >= 16; fs--) { g.font = `${fs}px ${HAND}`; lines = wrap(g, body.replace(/ \/ /g, '\n'), w - 104); if (lines.length * fs * 1.42 <= maxH) break; }
+  g.fillStyle = '#2b2d48'; lines.forEach((l, i) => g.fillText(l, 72, 132 + i * fs * 1.42));
+  g.strokeStyle = '#23202c'; g.lineWidth = 3; scribble(g, [[w - 92, h - 70], [w - 70, h - 52], [w - 40, h - 96]], r);
+  g.font = `22px ${HAND}`; g.fillStyle = '#8a8a8a'; g.fillText(`- ${num} -`, w / 2 - 22, h - 22); }
+function drawIntro(g, w, h, n, N) { paperBG(g, w, h, 5); const r = rnd(9);
+  g.fillStyle = '#23202c'; g.save(); g.translate(82, 140); g.rotate(-.05); g.font = `700 58px ${HAND}`; g.fillText('유나의', 0, 0); g.fillText('생존 수첩', 14, 64); g.restore();
+  g.font = `30px ${HAND}`; g.fillText(`모은 항목  ${n} / ${N}`, 86, 300); g.font = `25px ${HAND}`; g.fillStyle = '#4a4a66';
+  wrap(g, '일본에서 1년. 이것만 외우면 산다. 시험에도 나옴!!', w - 120).forEach((l, i) => g.fillText(l, 86, 350 + i * 34));
+  g.strokeStyle = '#23202c'; g.lineWidth = 4; const cx = 250, cy = 540;   /* 대충 그린 고양이 */
+  scribble(g, Array.from({ length: 19 }, (_, i) => [cx + Math.cos(i / 18 * 6.283) * 78, cy + Math.sin(i / 18 * 6.283) * 62]), r);
+  scribble(g, [[cx - 66, cy - 30], [cx - 58, cy - 96], [cx - 22, cy - 58]], r); scribble(g, [[cx + 66, cy - 30], [cx + 58, cy - 96], [cx + 22, cy - 58]], r);
+  g.fillStyle = '#23202c'; g.beginPath(); g.arc(cx - 26, cy - 6, 6, 0, 7); g.arc(cx + 26, cy - 6, 6, 0, 7); g.fill();
+  scribble(g, [[cx - 8, cy + 14], [cx, cy + 22], [cx + 8, cy + 14]], r); [[-1, 0], [-1, 14], [1, 0], [1, 14]].forEach(([s, d]) => scribble(g, [[cx + s * 40, cy + 12 + d], [cx + s * 96, cy + 4 + d * 1.6]], r));
+  g.font = `24px ${HAND}`; g.fillText('바보 고양이 (나 아님)', cx - 100, cy + 104);
+  g.fillStyle = '#8a8a8a'; g.font = `21px ${HAND}`; g.fillText('← → 넘기기 · 화면 양쪽 눌러도 됨', 74, h - 26); }
+function drawEmpty(g, w, h) { paperBG(g, w, h, 13); g.fillStyle = '#6a6a80'; g.font = `30px ${HAND}`; wrap(g, '아직 텅 빔. 스토리를 하다 보면 한 장씩 채워짐.', w - 120).forEach((l, i) => g.fillText(l, 80, 170 + i * 40)); }
+function buildBook(pages) {
+  const G = new THREE.Group(), W = 2.15, H = 3, cover = LM('#a84a38'), edge = LM('#ece4cf');
+  const pm = () => new THREE.MeshLambertMaterial({ color: '#ffffff' });
+  const half = side => { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.BoxGeometry(W + .12, H + .16, .07), cover); c.position.set(side * (W / 2 + .03), 0, -.1); g.add(c);
+    const st = new THREE.Mesh(new THREE.BoxGeometry(W, H, .1), edge); st.position.set(side * W / 2, 0, -.02); g.add(st);
+    const pg = new THREE.Mesh(new THREE.PlaneGeometry(W - .05, H - .05), pm()); pg.position.set(side * W / 2, 0, .035); g.add(pg); g.userData.page = pg; return g; };
+  const L = half(-1), Rt = half(1); L.rotation.y = .09;
+  const spine = new THREE.Mesh(new THREE.CylinderGeometry(.1, .1, H + .16, 5), cover); spine.position.z = -.11;
+  const label = new THREE.Mesh(new THREE.PlaneGeometry(1.3, .5), new THREE.MeshLambertMaterial({ map: ctex(260, 100, (g, w, h) => { g.fillStyle = '#fbf6e9'; g.fillRect(0, 0, w, h); g.strokeStyle = '#23202c'; g.lineWidth = 4; g.strokeRect(5, 5, w - 10, h - 10); g.fillStyle = '#23202c'; g.font = `700 44px ${HAND}`; g.fillText('생존 수첩', 26, 66); }) }));
+  label.position.set(W / 2, .6, -.14); label.rotation.y = PI; Rt.add(label);
+  const flip = new THREE.Group(), fa = new THREE.Mesh(new THREE.PlaneGeometry(W - .05, H - .05), pm()), fb = new THREE.Mesh(new THREE.PlaneGeometry(W - .05, H - .05), pm());
+  fa.position.x = W / 2; fb.position.x = W / 2; fb.rotation.y = PI; fb.position.z = -.002; flip.add(fa, fb); flip.position.z = .05; flip.visible = false;
+  G.add(L, Rt, spine, flip); G.rotation.x = -.32;
+  return { G, L, Rt, flip, fa, fb, pages, s: 0, t: 0, open: 0, closing: false, anim: null };
+}
+const setMap = (mesh, tx) => { mesh.material.map = tx || null; mesh.material.needsUpdate = true; };
+function showSpread(B) { setMap(B.L.userData.page, B.pages[B.s * 2]); setMap(B.Rt.userData.page, B.pages[B.s * 2 + 1]); bookUI(); }
+function bookUI() { const B = BOOK; if (!B) return; const n = Math.ceil(B.pages.length / 2); $('#nbui').innerHTML = `<button data-b="-1" ${B.s ? '' : 'disabled'}>${IC('left')} 앞장</button><span>${B.s + 1} / ${n}</span><button data-b="1" ${B.s < n - 1 ? '' : 'disabled'}>뒷장 ${IC('right')}</button>`;
+  $('#nbui').onclick = e => { const b = e.target.closest('[data-b]'); if (b) bookTurn(+b.dataset.b); }; }
+function bookTurn(d) { const B = BOOK; if (!B || B.anim || B.closing || B.open < 1) return; const n = Math.ceil(B.pages.length / 2), s2 = B.s + d; if (s2 < 0 || s2 >= n) return;
+  sfx('rustle'); const P = B.pages;
+  if (d > 0) { setMap(B.fa, P[B.s * 2 + 1]); setMap(B.fb, P[s2 * 2]); setMap(B.Rt.userData.page, P[s2 * 2 + 1]); B.anim = { from: 0, to: -PI, k: 0, done: () => setMap(B.L.userData.page, P[s2 * 2]) }; }
+  else { setMap(B.fb, P[B.s * 2]); setMap(B.fa, P[s2 * 2 + 1]); setMap(B.L.userData.page, P[s2 * 2]); B.anim = { from: -PI, to: 0, k: 0, done: () => setMap(B.Rt.userData.page, P[s2 * 2 + 1]) }; }
+  B.flip.visible = true; B.flip.rotation.y = B.anim.from; B.s = s2; bookUI(); }
+function stepBook(dt) { const B = BOOK; B.t += dt;
+  B.open = B.closing ? Math.max(0, B.open - dt * 2.4) : Math.min(1, B.open + dt * 1.8); const e = 1 - Math.pow(1 - B.open, 3);
+  B.Rt.rotation.y = (-PI + .06) * (1 - Math.min(1, Math.max(0, B.open * 1.6 - .4))) - .09 * Math.min(1, B.open * 1.6);
+  B.G.position.y = -4.5 * (1 - e) + S(B.t * 1.3) * .03; B.G.rotation.z = S(B.t * .9) * .012 - .02;
+  if (B.anim) { const a = B.anim; a.k = Math.min(1, a.k + dt * 2.2); const q = a.k < .5 ? 2 * a.k * a.k : 1 - Math.pow(-2 * a.k + 2, 2) / 2; B.flip.rotation.y = a.from + (a.to - a.from) * q; if (a.k >= 1) { a.done(); B.flip.visible = false; B.anim = null; } }
+  if (B.closing && B.open <= 0) { uiScene.remove(B.G); B.pages.forEach(p => p && p.dispose()); BOOK = null; document.body.classList.remove('book'); $('#nbui').hidden = $('#nbx').hidden = true; if (B.fromMenu) $('#menu').hidden = false; } }
+function fitBook() { const tn = Math.tan(uiCam.fov * PI / 360), d = Math.max(2.65 / (tn * uiCam.aspect), 2.05 / tn) + .2; uiCam.position.set(0, .15, d); uiCam.lookAt(0, -.05, 0); }
+async function notebook(fromMenu) { if (BOOK) return; try { await Promise.all([document.fonts.load(`700 42px Gaegu`), document.fonts.load(`28px Gaegu`)]); } catch (e) { }
+  const ks = Object.keys(SAVE.notes || {}), N = Object.keys(NOTE).length; const pages = [ctex(512, 720, (g, w, h) => drawIntro(g, w, h, ks.length, N))];
+  if (!ks.length) pages.push(ctex(512, 720, drawEmpty)); ks.forEach((k, i) => { const [tt, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; pages.push(ctex(512, 720, (g, w, h) => drawEntry(g, w, h, tt, d, i + 1, i * 7 + 3))); });
+  if (pages.length % 2) pages.push(ctex(512, 720, (g, w, h) => paperBG(g, w, h, 99)));
+  pages.forEach(p => { p.anisotropy = 4; });
+  BOOK = buildBook(pages); BOOK.fromMenu = !!fromMenu; uiScene.add(BOOK.G); showSpread(BOOK); uiCam.aspect = innerWidth / innerHeight; uiCam.updateProjectionMatrix(); fitBook(); sfx('rustle');
+  document.body.classList.add('book'); if (fromMenu) $('#menu').hidden = true;
+  $('#nbui').hidden = false; const x = $('#nbx'); x.innerHTML = `<button class="xb">${IC('x')} 닫기</button>`; x.hidden = false; x.onclick = () => closeBook(); }
+function closeBook() { if (BOOK && !BOOK.closing) { BOOK.closing = true; sfx('rustle'); } }
 
 /* 액션 메뉴 (VRChat 원형 메뉴) — 유나의 선택 */
 function radial(q, opts) { return new Promise(res => { const w = $('#radial'); const n = opts.length; const ord = opts.map((_, i) => i).sort(() => Math.random() - .5);
-  w.innerHTML = `<div class="rq">${fmt(q)}</div><div class="ring">${ord.map((k, j) => { const a = -PI / 2 + j * 2 * PI / n; return `<button data-k="${k}" style="--x:${Math.cos(a) * 150}px;--y:${Math.sin(a) * 150}px">${window.JA.render(opts[k]).replace(/class="jp"/g, 'class="jpo"')}</button>`; }).join('')}<div class="hub">🎮<small>유나의 선택</small></div></div>`;
-  w.hidden = false; w.onclick = e => { const b = e.target.closest('[data-k]'); if (!b) return; w.hidden = true; res(+b.dataset.k); }; }); }
+  w.innerHTML = `<div class="rq">${IC('ask')}${fmt(q)}</div><div class="slips">${ord.map((k, j) => `<button data-k="${k}"><em>${j + 1}.</em><span>${window.JA.render(opts[k]).replace(/class="jp"/g, 'class="jpo"')}</span></button>`).join('')}</div>`;
+  w.hidden = false; box$.style.visibility = 'hidden'; w.onclick = e => { const b = e.target.closest('[data-k]'); if (!b) return; w.hidden = true; box$.style.visibility = ''; res(+b.dataset.k); }; }); }
 
 /* ── 교과서 확인 문제 (월드 안 퀴즈 보드) ── */
 async function quiz(id) {
   const set = QB[id]; if (!set) return; const w = $('#quiz'); let right = 0;
   for (let i = 0; i < set.qs.length; i++) { const q = set.qs[i];
     const ord = q.o.map((_, k) => k); if (!q.keep) ord.sort(() => Math.random() - .5);
-    w.innerHTML = `<div class="qb"><div class="qh"><b>📝 ${set.t}</b><span>${i + 1} / ${set.qs.length}</span></div><div class="qs">${set.src || ''}</div><div class="qq">${q.q}</div><div class="qo">${ord.map(k => `<button data-k="${k}">${q.o[k]}</button>`).join('')}</div><div class="qx"></div></div>`;
+    w.innerHTML = `<div class="qb"><div class="qh"><b>${IC('pencil')} ${set.t}</b><span>${i + 1} / ${set.qs.length}</span></div><div class="qs">${set.src || ''}</div><div class="qq">${q.q}</div><div class="qo">${ord.map(k => `<button data-k="${k}">${q.o[k]}</button>`).join('')}</div><div class="qx"></div></div>`;
     w.hidden = false;
     const ok = await new Promise(res => { let tries = 0; w.onclick = e => { const b = e.target.closest('[data-k]'); if (!b || b.disabled) return; const k = +b.dataset.k, x = w.querySelector('.qx');
-      if (k === q.a) { b.classList.add('right'); w.querySelectorAll('[data-k]').forEach(z => z.disabled = true); x.className = 'qx ok'; x.innerHTML = `⭕ 정답! ${q.e || ''}<button class="nx">다음 ▶</button>`; react(true); x.querySelector('.nx').onclick = () => res(tries === 0); }
-      else { tries++; b.classList.add('wrong'); b.disabled = true; react(false); if (tries >= 2 || q.o.length <= 2) { w.querySelectorAll('[data-k]').forEach(z => z.disabled = true); w.querySelector(`[data-k="${q.a}"]`).classList.add('right'); x.className = 'qx no'; x.innerHTML = `정답은 <b>${q.o[q.a]}</b>. ${q.e || ''}<button class="nx">다음 ▶</button>`; x.querySelector('.nx').onclick = () => res(false); } else { x.className = 'qx no'; x.innerHTML = '아깝다! 한 번 더 골라 봐.'; } } }; });
+      if (k === q.a) { b.classList.add('right'); w.querySelectorAll('[data-k]').forEach(z => z.disabled = true); x.className = 'qx ok'; x.innerHTML = `${IC('o')} 정답! ${q.e || ''}<button class="nx">다음 ${IC('right')}</button>`; react(true); x.querySelector('.nx').onclick = () => res(tries === 0); }
+      else { tries++; b.classList.add('wrong'); b.disabled = true; react(false); if (tries >= 2 || q.o.length <= 2) { w.querySelectorAll('[data-k]').forEach(z => z.disabled = true); w.querySelector(`[data-k="${q.a}"]`).classList.add('right'); x.className = 'qx no'; x.innerHTML = `${IC('x')} 정답은 <b>${q.o[q.a]}</b>. ${q.e || ''}<button class="nx">다음 ${IC('right')}</button>`; x.querySelector('.nx').onclick = () => res(false); } else { x.className = 'qx no'; x.innerHTML = '아깝다! 한 번 더 골라 봐.'; } } }; });
     if (ok) right++; SAVE.right[id + ':' + i] = ok ? 1 : 0; save(); }
   w.hidden = true; SAVE.done[id] = right + '/' + set.qs.length; save(); toast(`${set.t}: ${right} / ${set.qs.length}`); }
 function react(ok) { const s = AV.s; if (!s) return; setFace(s, ok ? 'happy' : 'worry'); motion(s, ok ? 'clap' : 'tilt'); setTimeout(() => { motion(s, 'idle'); setFace(s, 'n'); }, 1600); }
@@ -319,16 +404,16 @@ function showWords(html) { hideWords(); const t = html.replace(/<[^>]+>/g, '').r
   hit.forEach(({ w }) => { SAVE.words[w[0]] = (SAVE.words[w[0]] || 0) + 1; }); save();
   d.onclick = e => { const b = e.target.closest('[data-jp]'); if (b) { e.stopPropagation(); sayJP(b.dataset.jp); } }; }
 function hideWords() { box$.querySelectorAll('.jw').forEach(x => x.remove()); }
-/* 🗂 일본어 외우기: 카드 (뜻 → 일본어), 모르는 카드는 다시 나옴 */
+/* 일본어 외우기: 카드 (뜻 → 일본어), 모르는 카드는 다시 나옴 */
 async function cards(part) { const L = (window.JPWORDS || []).filter(w => !part || w[4] === part); const deck = L.slice().sort(() => Math.random() - .5); const w$ = $('#quiz'); let known = 0;
   while (deck.length) { const w = deck.shift();
-    w$.innerHTML = `<div class="qb fc"><div class="qh"><b>🗂 일본어 외우기 ${part ? part + '과' : '전체'}</b><span>남은 카드 ${deck.length + 1} · 외움 ${known}</span></div><div class="fq">${w[2]}</div><div class="ft">💡 ${w[3]}</div><div class="fa" hidden><b>${w[0]}</b><i>${w[1]}</i></div><div class="qo"><button data-a="show">👀 정답 보기 (누르면 읽어 줌)</button></div><button class="nx" data-a="x">그만하기</button></div>`; w$.hidden = false;
+    w$.innerHTML = `<div class="qb fc"><div class="qh"><b>${IC('cards')} 일본어 외우기 ${part ? part + '과' : '전체'}</b><span>남은 카드 ${deck.length + 1} · 외움 ${known}</span></div><div class="fq">${w[2]}</div><div class="ft">${IC('bulb')} ${w[3]}</div><div class="fa" hidden><b>${w[0]}</b><i>${w[1]}</i></div><div class="qo"><button data-a="show">${IC('eye')} 정답 보기 (누르면 읽어 줌)</button></div><button class="nx" data-a="x">그만하기</button></div>`; w$.hidden = false;
     const r = await new Promise(res => { w$.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; const a = b.dataset.a;
-      if (a === 'show') { w$.querySelector('.fa').hidden = false; sayJP(w[0]); w$.querySelector('.qo').innerHTML = '<button data-a="ok">⭕ 외웠어</button><button data-a="no">🔁 한 번 더</button><button data-a="say">🔊 다시 듣기</button>'; }
+      if (a === 'show') { w$.querySelector('.fa').hidden = false; sayJP(w[0]); w$.querySelector('.qo').innerHTML = `<button data-a="ok">${IC('check')} 외웠어</button><button data-a="no">${IC('again')} 한 번 더</button><button data-a="say">${IC('sound')} 다시 듣기</button>`; }
       else if (a === 'say') sayJP(w[0]); else res(a); }; });
     if (r === 'x') break; if (r === 'ok') known++; else deck.splice(Math.min(deck.length, 3), 0, w); }
-  w$.hidden = true; toast(`🗂 외운 카드 ${known}개`); }
-function heart(dv) { SAVE.aff = Math.max(0, Math.min(100, SAVE.aff + dv)); save(); $('#aff i').style.width = SAVE.aff + '%'; $('#aff b').textContent = SAVE.aff; const f = document.createElement('div'); f.className = 'hp ' + (dv > 0 ? 'up' : 'dn'); f.textContent = (dv > 0 ? '💗 +' : '💔 ') + dv; document.body.appendChild(f); setTimeout(() => f.remove(), 1500); }
+  w$.hidden = true; toast(`${IC('cards')} 외운 카드 ${known}개`); }
+function heart(dv) { SAVE.aff = Math.max(0, Math.min(100, SAVE.aff + dv)); save(); $('#aff i').style.width = SAVE.aff + '%'; $('#aff b').textContent = SAVE.aff; const f = document.createElement('div'); f.className = 'hp ' + (dv > 0 ? 'up' : 'dn'); f.innerHTML = IC(dv > 0 ? 'heart' : 'broken') + (dv > 0 ? '+' : '') + dv; document.body.appendChild(f); setTimeout(() => f.remove(), 1500); }
 
 /* ── 스토리 진행 ── */
 const CUR = { ep: 0, i: 0, night: false, rain: false };
@@ -339,14 +424,14 @@ async function runEp(ep, i0 = 0) {
   CUR.rain = false; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.bg) { bg = x.bg; CUR.night = !!x.night; CUR.rain = !!x.rain; } }
   setWorld(bg); let lt = '기본'; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.light) lt = x.light; } light(lt); TSPD = 2; TREM = '';
   for (let i = i0; i < E.lines.length; i++) {
-    CUR.i = i; SAVE.ep = ep; SAVE.i = i; save(); $('#prog').textContent = `${E.t} · ${Math.round(i / E.lines.length * 100)}%`;
+    CUR.i = i; SAVE.ep = ep; SAVE.i = i; save(); $('#prog').textContent = `${Math.round(i / E.lines.length * 100)}%`;
     const L = E.lines[i]; if (STOP) return;
     if (!Array.isArray(L)) { await directive(L); continue; }
     const [who, face, mot, text, tr] = L;
     for (const k of ['o', 's']) AV[k].talk = 0;
     if (AV[who]) { if (face) setFace(AV[who], face); if (mot) motion(AV[who], mot); AV[who].talk = 2 + text.length * .05; }
     box$.className = 'who-' + who; nm.textContent = NAMES[who] || ''; nm.style.color = COLS[who] || '#fff'; nm.hidden = !NAMES[who];
-    if (who !== 'n' && !AV[who]) { $('#guest').hidden = false; $('#guest').innerHTML = `<i style="--c:${COLS[who]}">●</i> ${NAMES[who]} <small>음성 참가 중 · 아바타 로딩…</small>`; } else $('#guest').hidden = true;
+    if (who !== 'n' && !AV[who]) { $('#guest').hidden = false; $('#guest').innerHTML = `<i style="color:${COLS[who]}">${IC('talk')}</i> ${NAMES[who]} <small>음성 참가 중 · 아바타 로딩…</small>`; } else $('#guest').hidden = true;
     const html = fmt(text, tr); box$.dataset.who = who; tx$.classList.toggle('trem1', TREM === '약함'); tx$.classList.toggle('trem2', TREM === '강함'); TREM = '';
     LOG.push([who, html]); if (LOG.length > 300) LOG.shift();
     const sp = speak(who, text); await typeOut(html);
@@ -355,12 +440,12 @@ async function runEp(ep, i0 = 0) {
   }
   SAVE.ep = ep + 1; SAVE.i = 0; save();
   if (ep + 1 < ST.length) { await card(`${E.t} 끝`, '다음 에피소드로 →'); return runEp(ep + 1, 0); }
-  await card('🌸 엔딩', '처음으로 돌아가기'); menu();
+  await card('엔딩', '처음으로 돌아가기'); menu();
 }
 async function directive(D) {
   if (D.bg) { CUR.night = !!D.night; CUR.rain = !!D.rain; await fade(() => setWorld(D.bg)); }
   if (D.title) await card(D.title, D.sub || '', true);
-  if (D.place) { const p = $('#place'); p.innerHTML = D.place; p.classList.remove('on'); void p.offsetWidth; p.classList.add('on'); }
+  if (D.place) { const p = $('#place'); p.className = 'tape'; p.innerHTML = IC('pin') + '<span>' + D.place.replace(/^📍\s*/, '') + '</span>'; p.classList.remove('on'); void p.offsetWidth; p.classList.add('on'); }
   if (D.shot) { if (/^틸트/.test(D.shot)) roll = .2; else if (/^줌인/.test(D.shot)) { fovT = 22; fovRate = /느림/.test(D.shot) ? .35 : 2; } else if (/^줌아웃/.test(D.shot)) { fovT = 34; fovRate = /느림/.test(D.shot) ? .35 : 2; } else { shot = D.shot; roll = 0; fovT = 34; fovRate = 2; } }
   if (D.flash) { const f = $('#flash'); f.style.background = /검|black/.test(D.flash) ? '#000' : /빨|red/.test(D.flash) ? '#ff3040' : '#fff'; f.style.animationDuration = /느림/.test(D.flash) ? '.9s' : '.35s'; f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
   if (D.view) $('#view').classList.toggle('on', !/복귀|없음|끔/.test(D.view));
@@ -383,46 +468,46 @@ async function directive(D) {
     for (const k of ['o', 's']) AV[k].talk = 0; if (AV[who]) { setFace(AV[who], face); motion(AV[who], mot); AV[who].talk = 2 + line.length * .05; }
     box$.className = 'who-' + who; nm.hidden = !NAMES[who]; nm.textContent = NAMES[who] || ''; nm.style.color = COLS[who] || '#fff'; box$.dataset.who = who; const h = fmt(line) + (extra ? window.JA.render(extra) : ''); LOG.push([who, h]); speak(who, line); await typeOut(h); await tapWait(0); };
   /* 시험 선택지: 정답이면 호감도 크게, 틀려도 스즈가 다정하게 알려 주고 그대로 진행 (복습 목록에 저장) */
-  if (D.ask) { const [q, opts, ans, why, okLine, noLine] = D.ask; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = '🎮 ' + fmt(q); const k = await radial(q, opts);
+  if (D.ask) { const [q, opts, ans, why, okLine, noLine] = D.ask; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = IC('ask') + ' ' + fmt(q); const k = await radial(q, opts);
     const tag = 'ask:' + CUR.ep + ':' + CUR.i;
-    if (k === ans) { heart(+3); sfx('ok'); delete SAVE.miss[tag]; save(); await sayS('happy', 'nod', okLine || '정답!', `<span class="why">📘 ${why}</span>`); }
-    else { heart(+1); sfx('pop'); SAVE.miss[tag] = [q, opts[ans], why]; save(); await sayS('smile', 'tilt', (noLine || '음, 그건 이렇게 하는 거야.'), `<span class="why">🌱 정답은 <b>${opts[ans]}</b><br>📘 ${why}</span>`); }
+    if (k === ans) { heart(+3); sfx('ok'); delete SAVE.miss[tag]; save(); await sayS('happy', 'nod', okLine || '정답!', `<span class="why">${IC('book')} ${why}</span>`); }
+    else { heart(+1); sfx('pop'); SAVE.miss[tag] = [q, opts[ans], why]; save(); await sayS('smile', 'tilt', (noLine || '음, 그건 이렇게 하는 거야.'), `<span class="why">${IC('sprout')} 정답은 <b>${opts[ans]}</b><br>${IC('book')} ${why}</span>`); }
     motion(AV.s, 'idle'); }
   /* 관계 선택지: 어느 쪽을 골라도 좋은 장면 + 배울 거리 */
-  if (D.pick) { const [q, opts, learn] = D.pick; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = '💗 ' + fmt(q); const k = await radial(q, opts.map(o => o[0]));
-    const [, face, mot, line, by] = opts[k]; heart(+2); sfx('ok'); if (by) motion(AV.o, by); await sayS(face, mot, line, learn ? `<span class="why">📘 ${learn}</span>` : ''); motion(AV.s, 'idle'); }
+  if (D.pick) { const [q, opts, learn] = D.pick; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = IC('heart') + ' ' + fmt(q); const k = await radial(q, opts.map(o => o[0]));
+    const [, face, mot, line, by] = opts[k]; heart(+2); sfx('ok'); if (by) motion(AV.o, by); await sayS(face, mot, line, learn ? `<span class="why">${IC('book')} ${learn}</span>` : ''); motion(AV.s, 'idle'); }
   if (D.quiz) await quiz(D.quiz);
 }
 function fade(fn) { return new Promise(res => { const f = $('#fade'); f.classList.add('on'); setTimeout(() => { fn(); f.classList.remove('on'); setTimeout(res, 500); }, 500); }); }
-function card(t, s, auto2) { return new Promise(res => { const c = $('#card'); c.innerHTML = `<h2>${t}</h2><p>${s}</p>${auto2 ? '' : '<button>계속 ▶</button>'}`; c.hidden = false; 
+function card(t, s, auto2) { return new Promise(res => { const c = $('#card'); c.innerHTML = `<h2>${t}</h2><p>${s}</p>${auto2 ? '' : `<button>계속 ${IC('right')}</button>`}`; c.hidden = false; 
   const go = () => { c.hidden = true; res(); }; if (auto2) setTimeout(go, 2600); else c.querySelector('button').onclick = go; c.onclick = e => { if (auto2) go(); }; }); }
 /* 효과음 (합성) */
-const SFX_ALIAS = { station_crowd: 'crowd', ceramic_clatter: 'clatter', cane_clatter: 'clatter', cloth_rustle: 'rustle', rain_loop: 'rain', rain_heavy: 'rain', rain_heavy_muffled: 'rain_soft', rain_soft: 'rain_soft', slip: 'slip', crash_rain: 'crash', rain_crash_flashback: 'crash', thunder_distant: 'thunder', summer_cicada_night: 'cicada', crowd_cheer: 'cheer', taiko_bon: 'taiko', fireworks_big: 'boom', door_open: 'door', door_slide: 'door', cane_tap: 'tap', footsteps_fast: 'tap', brush_hair: 'tap', bike_bell: 'bell', birds_morning: 'chime', cicada_spring_wind: 'chime', night_crickets: 'chime', evening_chime: 'bell', wind_sakura: 'chime' };
+const SFX_ALIAS = { broom_clean: 'rustle', paper_rustle: 'rustle', tv_soft_snow: 'rain_soft', shrine_bell_crowd: 'crowd', room_chatter: 'crowd', school_chime_crowd: 'crowd', airport_announce: 'crowd', cane_drop: 'clatter', footsteps_run: 'steps', heartbeat_fast: 'heart', knee_drop: 'thud', door_slam: 'thud', station_crowd: 'crowd', ceramic_clatter: 'clatter', cane_clatter: 'clatter', cloth_rustle: 'rustle', rain_loop: 'rain', rain_heavy: 'rain', rain_heavy_muffled: 'rain_soft', rain_soft: 'rain_soft', slip: 'slip', crash_rain: 'crash', rain_crash_flashback: 'crash', thunder_distant: 'thunder', summer_cicada_night: 'cicada', crowd_cheer: 'cheer', taiko_bon: 'taiko', fireworks_big: 'boom', door_open: 'door', door_slide: 'door', cane_tap: 'tap', footsteps_fast: 'tap', brush_hair: 'tap', bike_bell: 'bell', birds_morning: 'chime', cicada_spring_wind: 'chime', night_crickets: 'chime', evening_chime: 'bell', wind_sakura: 'chime' };
 /* 잡음 계열 효과음: [필터, 주파수, 길이(초), 크기, 올라오는 시간] */
-const NZ = { rain: ['bandpass', 1800, 2.6, .14, .3], rain_soft: ['lowpass', 900, 2.6, .08, .4], crowd: ['bandpass', 700, 2.2, .1, .3], cheer: ['bandpass', 1200, 2.8, .22, .08], rustle: ['highpass', 3000, .6, .07, .05], slip: ['bandpass', 2600, .28, .18, .01], clatter: ['highpass', 2500, .4, .16, .005], crash: ['lowpass', 700, .9, .35, .005], thunder: ['lowpass', 220, 3.2, .4, .5], cicada: ['bandpass', 5200, 2.4, .05, .3], boom: ['lowpass', 420, 1.6, .3, .01] };
+const NZ = { rain: ['bandpass', 1800, 2.6, .14, .3], rain_soft: ['lowpass', 900, 2.6, .08, .4], crowd: ['bandpass', 700, 2.2, .1, .3], cheer: ['bandpass', 1200, 2.8, .22, .08], rustle: ['highpass', 3000, .6, .07, .05], slip: ['bandpass', 2600, .28, .18, .01], clatter: ['highpass', 2500, .4, .16, .005], crash: ['lowpass', 700, .9, .35, .005], thunder: ['lowpass', 220, 3.2, .4, .5], cicada: ['bandpass', 5200, 2.4, .05, .3], boom: ['lowpass', 420, 1.6, .3, .01], thud: ['lowpass', 300, .5, .3, .005] };
 function noiseSfx(k) { const [ft, fq, d, v, at] = NZ[k], t = AC.currentTime, len = Math.ceil(AC.sampleRate * d), b = AC.createBuffer(1, len, AC.sampleRate), ch = b.getChannelData(0); for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
   const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = b; f.type = ft; f.frequency.value = fq; f.Q.value = k === 'cicada' ? 8 : .7; s.connect(f); f.connect(g); g.connect(AC.destination);
   g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + at); g.gain.exponentialRampToValueAtTime(.0001, t + d); s.start(t); s.stop(t + d);
-  if (k === 'crash' || k === 'boom') thump(k === 'boom' ? 55 : 80, 0); if (k === 'clatter') tone(1800, .25, 'triangle'); }
+  if (k === 'crash' || k === 'boom' || k === 'thud') thump(k === 'boom' ? 55 : 80, 0); if (k === 'clatter') tone(1800, .25, 'triangle'); }
 function thump(f, dl) { const t = AC.currentTime + dl, o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + .15); o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.0001, t + .7); o.start(t); o.stop(t + .8); }
 function tone(f, d, type = 'sine', v = .06) { const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f; o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.start(t); o.stop(t + d + .05); }
-let AC = null; function sfx(k) { k = SFX_ALIAS[k] || k; try { AC = AC || new AudioContext(); if (NZ[k]) return noiseSfx(k); if (k === 'taiko') { [0, .45, .9].forEach(d => thump(70, d)); return; } if (k === 'ring') return tone(5800, 2.6, 'sine', .02); const o = AC.createOscillator(), g = AC.createGain(); o.connect(g); g.connect(AC.destination); const t = AC.currentTime;
+let AC = null; function sfx(k) { k = SFX_ALIAS[k] || k; try { AC = AC || new AudioContext(); if (NZ[k]) return noiseSfx(k); if (k === 'taiko') { [0, .45, .9].forEach(d => thump(70, d)); return; } if (k === 'heart') { [0, .16, .55, .71, 1.1, 1.26, 1.65, 1.81].forEach(d => thump(50, d)); return; } if (k === 'steps') { [0, .18, .36, .54, .72, .9].forEach(d => setTimeout(() => noiseSfx('rustle'), d * 1000)); return; } if (k === 'ring') return tone(5800, 2.6, 'sine', .02); const o = AC.createOscillator(), g = AC.createGain(); o.connect(g); g.connect(AC.destination); const t = AC.currentTime;
   const S2 = { tap: [[1200, 0], [900, .04]], chime: [[2093, 0], [2637, .12]], ok: [[660, 0], [990, .08]], ng: [[220, 0], [160, .12]], bell: [[1320, 0], [1320, .4]], gong: [[110, 0], [100, 1.2]], door: [[520, 0], [780, .1]], pop: [[400, 0], [900, .05]], clap: [[900, 0], [300, .03]] }[k] || [[440, 0]];
   o.type = k === 'gong' ? 'sine' : k === 'bell' ? 'triangle' : 'square'; S2.forEach(([f, d]) => o.frequency.setValueAtTime(f, t + d)); g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.0001, t + (k === 'gong' ? 2.5 : k === 'bell' ? 1 : .3)); o.start(t); o.stop(t + 2.6); } catch (e) { } }
 
 /* ── 메뉴 ── */
 let STOP = false;
-function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $('#hud').hidden = true; $('#quiz').hidden = true; $('#radial').hidden = true; const m = $('#menu'); m.hidden = false; tx$.innerHTML = ''; nm.hidden = true; hideWords();
+function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $('#hud').hidden = true; $('#quiz').hidden = true; $('#radial').hidden = true; box$.style.visibility = ''; const m = $('#menu'); m.hidden = false; tx$.innerHTML = ''; nm.hidden = true; hideWords();
   setWorld('street'); fx('sakura'); shot = 'wide'; place('s', [2.5, 0, 0, -.4]); place('o', [-2.5, 0, 0, .4]); setFace(AV.s, 'happy'); setFace(AV.o, 'smile'); motion(AV.o, 'wave');
   m.innerHTML = `<div class="mc"><h1>스즈 소리, 유나 목소리<small>鈴の音、ユナの声 — 일본 문화 4·5·6과 스토리</small></h1>
-  <p class="lead">한국에서 온 교환학생 <b style="color:#ffd23f">한유나</b>(나)와 앞을 보지 못하는 일본 소녀 <b style="color:#ff9ab8">야마시타 스즈</b>의 1년. 내가 고르는 선택지가 곧 시험 문제!</p>
-  <div class="aff">💗 스즈 호감도 <b>${SAVE.aff}</b></div>
-  <button class="pri big" data-go="cont">${SAVE.ep || SAVE.i ? '▶ 이어서 — ' + (ST[Math.min(SAVE.ep, ST.length - 1)] || ST[0]).t : '▶ 처음부터 시작'}</button>
+  <p class="lead">한국에서 온 교환학생 <b class="yu">한유나</b>(나)와 앞을 보지 못하는 일본 소녀 <b class="su">야마시타 스즈</b>의 1년. 내가 고르는 선택지가 곧 시험 문제!</p>
+  <div class="aff">${IC('heart')} 스즈 호감도 <b>${SAVE.aff}</b></div>
+  <button class="pri big" data-go="cont">${IC('play')}${SAVE.ep || SAVE.i ? '이어서 — ' + (ST[Math.min(SAVE.ep, ST.length - 1)] || ST[0]).t : '처음부터 시작'}</button>
   <div class="eps">${ST.map((e, i) => `<button data-ep="${i}"><b>${e.t}</b><small>${e.d || ''}</small></button>`).join('')}</div>
-  <h3>🗂 일본어 외우기 <small style="font:12px sans-serif;opacity:.7">뜻 보고 떠올리기 → 소리로 확인</small></h3><div class="eps qz"><button data-cd="4"><b>4과 표현</b><small>인사·방문·선물·가족</small></button><button data-cd="5"><b>5과 표현</b><small>학교·호칭</small></button><button data-cd="6"><b>6과 표현</b><small>연중행사·축하</small></button><button data-cd="0"><b>전체 섞기</b><small>${(window.JPWORDS || []).length}개</small></button></div>
-  ${Object.keys(SAVE.miss).length ? `<h3>🌱 스토리에서 놓친 문제 ${Object.keys(SAVE.miss).length}개</h3><div class="eps"><button data-mi="1"><b>다시 보기</b><small>틀렸던 선택지만 모아서</small></button></div>` : ''}
-  <h3>📝 교과서 문제만 풀기</h3><div class="eps qz">${Object.entries(QB).filter(([k]) => k[0] !== '_').map(([k, v]) => `<button data-q="${k}"><b>${v.t}</b><small>${SAVE.done[k] ? '최근 ' + SAVE.done[k] : v.qs.length + '문제'}</small></button>`).join('')}</div>
-  <div class="opt"><button data-o="log">📜 대사 기록</button><button data-o="note">📒 생존 수첩</button></div><div class="opt"><button data-o="voice">${voiceOn ? '🔊 일본어 음성 켜짐' : '🔇 일본어 음성 꺼짐'}</button><button data-o="auto">${auto ? '⏩ 자동 넘김' : '👆 눌러서 넘김'}</button><button data-o="home">🏠 홈</button></div>
+  <h3>${IC('cards')} 일본어 외우기 <small>뜻 보고 떠올리기 → 소리로 확인</small></h3><div class="eps qz"><button data-cd="4"><b>4과 표현</b><small>인사·방문·선물·가족</small></button><button data-cd="5"><b>5과 표현</b><small>학교·호칭</small></button><button data-cd="6"><b>6과 표현</b><small>연중행사·축하</small></button><button data-cd="0"><b>전체 섞기</b><small>${(window.JPWORDS || []).length}개</small></button></div>
+  ${Object.keys(SAVE.miss).length ? `<h3>${IC('sprout')} 스토리에서 놓친 문제 ${Object.keys(SAVE.miss).length}개</h3><div class="eps"><button data-mi="1"><b>다시 보기</b><small>틀렸던 선택지만 모아서</small></button></div>` : ''}
+  <h3>${IC('pencil')} 교과서 문제만 풀기</h3><div class="eps qz">${Object.entries(QB).filter(([k]) => k[0] !== '_').map(([k, v]) => `<button data-q="${k}"><b>${v.t}</b><small>${SAVE.done[k] ? '최근 ' + SAVE.done[k] : v.qs.length + '문제'}</small></button>`).join('')}</div>
+  <div class="opt"><button data-o="log">${IC('log')} 대사 기록</button><button data-o="note">${IC('note')} 생존 수첩</button></div><div class="opt"><button data-o="voice">${voiceOn ? IC('sound') + ' 일본어 음성 켜짐' : IC('mute') + ' 일본어 음성 꺼짐'}</button><button data-o="auto">${auto ? IC('auto') + ' 자동 넘김' : IC('tap') + ' 눌러서 넘김'}</button><button data-o="home">${IC('home')} 홈</button></div>
   <p class="cr">3D 모델: Kilerbomb “Poka” Blind Girl · Blondy (무료 라이선스, 비영리 사용)</p></div>`;
   m.onclick = async e => { const b = e.target.closest('button'); if (!b) return; AC = AC || new (window.AudioContext || window.webkitAudioContext)();
     if (b.dataset.go) { STOP = false; return runEp(Math.min(SAVE.ep, ST.length - 1), SAVE.ep < ST.length ? SAVE.i : 0); }
@@ -433,22 +518,24 @@ function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $
     if (b.dataset.o === 'voice') { voiceOn = !voiceOn; try { localStorage.setItem('jp_voice', voiceOn ? '1' : '0'); } catch (e) { } if (voiceOn) sayJP('はじめまして。すずです。', 's'); return menu(); }
     if (b.dataset.o === 'auto') { auto = !auto; try { localStorage.setItem('jp_auto', auto ? '1' : '0'); } catch (e) { } return menu(); }
     if (b.dataset.o === 'log') return showLog();
-    if (b.dataset.o === 'note') return notebook();
+    if (b.dataset.o === 'note') return notebook(true);
     if (b.dataset.o === 'home') location.href = 'index.html'; };
 }
+$('#bm').innerHTML = IC('menu'); $('#blog').innerHTML = IC('log'); $('#bnote').innerHTML = IC('note'); $('#bshot').innerHTML = IC('cam'); $('#aff').insertAdjacentHTML('afterbegin', IC('heart'));
 $('#bm').onclick = () => menu();
-$('#bauto').onclick = () => { auto = !auto; $('#bauto').textContent = auto ? '⏩ 자동' : '👆 수동'; try { localStorage.setItem('jp_auto', auto ? '1' : '0'); } catch (e) { } };
-$('#bauto').textContent = auto ? '⏩ 자동' : '👆 수동';
+const autoLabel = () => { $('#bauto').innerHTML = auto ? IC('auto') + '자동' : IC('tap') + '수동'; };
+$('#bauto').onclick = () => { auto = !auto; autoLabel(); try { localStorage.setItem('jp_auto', auto ? '1' : '0'); } catch (e) { } };
+autoLabel();
 $('#blog').onclick = () => showLog(); $('#bnote').onclick = () => notebook();
 $('#bshot').onclick = () => { const L = ['two', 'suzu', 'onna', 'close', 'wide']; shot = L[(L.indexOf(shot) + 1) % L.length]; };
 $('#aff i').style.width = SAVE.aff + '%'; $('#aff b').textContent = SAVE.aff;
 
 /* ── 루프 ── */
 const clock = new THREE.Clock(); let T = 0;
-function loop() { const dt = Math.min(.05, clock.getDelta()); T += dt; for (const a of Object.values(AV)) stepAvatar(a, dt, T); stepFX(dt); stepCam(dt); R.render(scene, cam); stepTags(); requestAnimationFrame(loop); }
+function loop() { const dt = Math.min(.05, clock.getDelta()); T += dt; for (const a of Object.values(AV)) stepAvatar(a, dt, T); stepFX(dt); stepCam(dt); R.render(scene, cam); if (BOOK) { stepBook(dt); R.autoClear = false; R.clearDepth(); R.render(uiScene, uiCam); R.autoClear = true; } stepTags(); requestAnimationFrame(loop); }
 (async () => {
-  $('#boot').textContent = '아바타 불러오는 중… (VRChat 월드 접속 중)';
+  $('#boot').textContent = '불러오는 중…';
   await Promise.all([loadAvatar('s'), loadAvatar('o')]); setFace(AV.s, 'n'); setFace(AV.o, 'n');
   $('#boot').remove(); loop(); menu();
-  window.__JP = { AV, motion, setFace, setWorld, shot: s => shot = s, runEp, quiz, fx };
+  window.__JP = { AV, motion, setFace, setWorld, shot: s => shot = s, runEp, quiz, fx, book: () => BOOK };
 })().catch(e => { $('#boot').textContent = '불러오기 실패: ' + e.message; console.error(e); });

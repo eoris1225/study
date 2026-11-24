@@ -4,7 +4,7 @@
    node tools/jp_script.js build    → js/jp/story.js    (고친 대본.txt를 게임에 넣기) */
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), TXT = path.join(ROOT, 'docs/jp/대본.txt'), JS = path.join(ROOT, 'js/jp/story.js');
-const WHO = { n: '나', o: '유나', s: '스즈', m: '엄마', d: '아빠', h: '하나', k: '미야코', t: '선생님', r: '반친구', f: '선배아빠' };
+const WHO = { n: '나', o: '유나', s: '스즈', m: '엄마', d: '아빠', h: '하나', k: '미야코', t: '선생님', r: '반친구', f: '선배아빠', u: '하루토' };
 const OHW = Object.fromEntries(Object.entries(WHO).map(([k, v]) => [v, k]));
 const CHAR = { o: '유나', s: '스즈' }, RCHAR = { 유나: 'o', 스즈: 's' };
 
@@ -60,7 +60,7 @@ function build() {
     if (l.startsWith('@')) { const sp = l.indexOf(' '), cmd = sp < 0 ? l.slice(1) : l.slice(1, sp), arg = sp < 0 ? '' : l.slice(sp + 1).trim(), a = arg.split(/\s+/); let D = {}; const argC = arg.replace(/\s*\([^)]*\)\s*$/, '');
       if (cmd === '배경') { D.bg = a[0]; if (a.includes('밤')) D.night = true; if (a.includes('장마') || a.includes('비')) D.rain = true; }
       else if (cmd === '제목') { const [t, s] = arg.split(' / '); D.title = t; if (s) D.sub = s; }
-      else if (cmd === '장소') D.place = '📍 ' + arg;
+      else if (cmd === '장소') D.place = arg;
       else if (cmd === '카메라') D.shot = argC;
       else if (cmd === '효과') D.fx = argC === '없음' ? null : argC;
       else if (cmd === '흔들림') D.shake = +arg;
