@@ -773,7 +773,7 @@ function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $
   <h3>${IC('cards')} 일본어 외우기 <small>뜻 보고 떠올리기 → 소리로 확인</small></h3><div class="eps qz"><button data-cd="4"><b>4과 표현</b><small>인사·방문·선물·가족</small></button><button data-cd="5"><b>5과 표현</b><small>학교·호칭</small></button><button data-cd="6"><b>6과 표현</b><small>연중행사·축하</small></button><button data-cd="0"><b>전체 섞기</b><small>${(window.JPWORDS || []).length}개</small></button></div>
   ${Object.keys(SAVE.miss).length ? `<h3>${IC('sprout')} 스토리에서 놓친 문제 ${Object.keys(SAVE.miss).length}개</h3><div class="eps"><button data-mi="1"><b>다시 보기</b><small>틀렸던 선택지만 모아서</small></button></div>` : ''}
   <h3>${IC('pencil')} 교과서 문제만 풀기</h3><div class="eps qz">${Object.entries(QB).filter(([k]) => k[0] !== '_').map(([k, v]) => `<button data-q="${k}"><b>${v.t}</b><small>${SAVE.done[k] ? '최근 ' + SAVE.done[k] : v.qs.length + '문제'}</small></button>`).join('')}</div>
-  <div class="opt"><button data-o="log">${IC('log')} 대사 기록</button><button data-o="note">${IC('note')} 생존 수첩</button></div><div class="opt"><button data-o="voice">${voiceOn ? IC('sound') + ' 일본어 음성 켜짐' : IC('mute') + ' 일본어 음성 꺼짐'}</button><button data-o="auto">${auto ? IC('auto') + ' 자동 넘김' : IC('tap') + ' 눌러서 넘김'}</button><button data-o="home">${IC('home')} 홈</button></div>
+  <div class="opt"><button data-o="log">${IC('log')} 대사 기록</button><button data-o="note">${IC('note')} 생존 수첩</button><button data-o="print">${IC('pencil')} 1시간 자습 프린트</button></div><div class="opt"><button data-o="voice">${voiceOn ? IC('sound') + ' 일본어 음성 켜짐' : IC('mute') + ' 일본어 음성 꺼짐'}</button><button data-o="auto">${auto ? IC('auto') + ' 자동 넘김' : IC('tap') + ' 눌러서 넘김'}</button><button data-o="home">${IC('home')} 홈</button></div>
   <p class="cr">3D 모델: Kilerbomb “Poka” Blind Girl · Blondy (무료 라이선스, 비영리 사용)<br>음성: ${(window.JPVOICE_CREDIT || []).map(n => 'VOICEVOX:' + n).join(' / ')}</p></div>`;
   m.onclick = async e => { const b = e.target.closest('button'); if (!b) return; AC = AC || new (window.AudioContext || window.webkitAudioContext)();
     if (b.dataset.go) { STOP = false; return runEp(Math.min(SAVE.ep, ST.length - 1), SAVE.ep < ST.length ? SAVE.i : 0); }
@@ -781,7 +781,7 @@ function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $
     if (b.dataset.q) { m.hidden = true; await quiz(b.dataset.q); return menu(); }
     if (b.dataset.cd) { m.hidden = true; await cards(+b.dataset.cd); return menu(); }
     if (b.dataset.mi) { m.hidden = true; QB._miss = { t: '스토리에서 놓친 문제', qs: Object.values(SAVE.miss).map(([q, a, e]) => { const wrongs = Object.values(SAVE.miss).map(x => x[1]).filter(x => x !== a).sort(() => Math.random() - .5).slice(0, 2); return { q, o: [a, ...wrongs], a: 0, e }; }) }; await quiz('_miss'); delete QB._miss; return menu(); }
-    if (b.dataset.o === 'voice') { voiceOn = !voiceOn; try { localStorage.setItem('jp_voice', voiceOn ? '1' : '0'); } catch (e) { } if (voiceOn) sayJP('はじめまして。すずです。', 's'); return menu(); }
+    if (b.dataset.o === 'print') return void window.open('japan_print.html', '_blank'); if (b.dataset.o === 'voice') { voiceOn = !voiceOn; try { localStorage.setItem('jp_voice', voiceOn ? '1' : '0'); } catch (e) { } if (voiceOn) sayJP('はじめまして。すずです。', 's'); return menu(); }
     if (b.dataset.o === 'auto') { auto = !auto; try { localStorage.setItem('jp_auto', auto ? '1' : '0'); } catch (e) { } return menu(); }
     if (b.dataset.o === 'log') return showLog();
     if (b.dataset.o === 'note') return notebook(true);
