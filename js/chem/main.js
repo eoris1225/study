@@ -234,7 +234,7 @@ function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); 
    <div class="row"><select data-sec>${SECS.map((x, i) => `<option value="${i}" ${cur && x === cur ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button data-from>여기부터</button></div>
    <h3>📝 교과서 문제 <small>${doneN}/${allQ.length} 풀이</small></h3>
    <div class="grid"><button data-u="III">Ⅲ 문제 전부 (${unitQ('III').length})</button><button data-u="IV">Ⅳ 문제 전부 (${unitQ('IV').length})</button>${wrong.length ? `<button data-w>🔁 틀린 문제 (${wrong.length})</button>` : ''}</div>
-   <div class="grid" style="margin-top:6px"><button data-cards style="grid-column:1/-1">📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
+   <div class="grid" style="margin-top:6px"><button data-print style="grid-column:1/-1">🖨️ 1시간 자습 프린트 <small>공식표 · 빈칸 · 실전 문제 · 정답</small></button><button data-cards style="grid-column:1/-1">📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
    <h3>⚡ 스피드 런 <small>90초 · ❤️×3 · 확인 질문 + 빈칸 총출동</small></h3>
    <div class="grid"><button data-boss="III">Ⅲ 보스전 <small>최고 ${(SAVE.best || {}).III || 0}</small></button><button data-boss="IV">Ⅳ 보스전 <small>최고 ${(SAVE.best || {}).IV || 0}</small></button></div>
    <p class="tip">🎮 3D 미션 ${Object.keys(SAVE.mis || {}).length} / ${Object.keys(MIS).length} 달성 · Lv ${lvl()} · ⭐ ${SAVE.xp || 0} XP</p>
@@ -245,6 +245,7 @@ function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); 
     if (b.dataset.from !== undefined) return run({ i: +m.querySelector('[data-sec]').value, st: 0 });
     if (b.dataset.u) return solveList(unitQ(b.dataset.u), b.textContent);
     if (b.dataset.boss) return boss(b.dataset.boss);
+    if (b.dataset.print !== undefined) return void window.open('chem_print.html', '_blank');
     if (b.dataset.cards !== undefined) { m.hidden = true; $('#top').hidden = false; topbar('📚 문제풀이 개념 카드'); return cardsPage('', true).then(() => menu()); }
     if (b.dataset.w !== undefined) return solveList(wrong, '틀린 문제 다시');
     if (b.dataset.home !== undefined) location.href = 'index.html'; };
