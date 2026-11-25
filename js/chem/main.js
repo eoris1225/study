@@ -1,5 +1,6 @@
 /* 화학 개념 강의: 교과서 순서 · 3D 무대 · 확인 질문 · 교과서 문제(사진) · 펜 필기 · 진행 저장 */
 import { show, has, view } from './stage.js?v=2';
+import * as HAM from './ham.js?v=2';
 const $ = s => document.querySelector(s);
 const C = window.CHEM, Q = window.CHEMQ;
 const KEY = 'chem_v1';
@@ -11,7 +12,16 @@ const SECS = []; C.forEach((u, ui) => u.ch.forEach((c, ci) => c.secs.forEach((s,
 const card = $('#card'), head = $('#card .hd'), body = $('#card .bd'), foot = $('#card .ft');
 
 /* 레이아웃: 카드 옆 빈 공간에 3D */
-function layout() { const port = innerWidth < 820 || innerHeight > innerWidth; document.body.classList.toggle('port', port); if (card.hidden) return view(0, 0); const r = card.getBoundingClientRect(); if (port) view(0, (innerHeight - r.top) / 2); else view((innerWidth - r.left) / 2, 0); }
+function layout() { const port = innerWidth < 820 || innerHeight > innerWidth; document.body.classList.toggle('port', port);
+  const sub = $('#sub'), fp = $('#figp'), ctl = $('#ctl'), hc = $('#ham'), menuOn = !$('#menu').hidden; let hp;
+  ctl.style.bottom = ''; ctl.style.left = '';
+  if (menuOn) { hp = port ? null : [Math.max(10, (innerWidth - 560) / 2 - 170), innerHeight * .5 - 200, 340, 400]; view(0, 0); }
+  else if (!card.hidden) { const r = card.getBoundingClientRect(); if (port) { view(0, (innerHeight - r.top) / 2); hp = [innerWidth - 112, 100, 104, 124]; } else { view((innerWidth - r.left) / 2, 0); hp = [8, innerHeight - 196, 150, 180]; ctl.style.left = '166px'; } }
+  else if (!sub.hidden) { const sr = sub.getBoundingClientRect(), subH = innerHeight - sr.top; ctl.style.bottom = (subH + 10) + 'px'; let ox = 0, oy = subH / 2;
+    if (!fp.hidden) { const fr = fp.getBoundingClientRect(); if (port) oy -= fr.bottom / 2 - 20; else ox = (innerWidth - fr.left) / 2; } view(ox, oy);
+    const w = port ? 104 : 150, h = port ? 124 : 180; hp = bigHam ? (port ? [innerWidth / 2 - 130, sr.top - 330, 260, 310] : [innerWidth / 2 - 170, Math.max(50, sr.top - 400), 340, 400]) : [sr.left + (port ? 2 : 6), sr.top - h * .42, w, h];  if (!bigHam) ctl.style.left = (hp[0] + hp[2] + 4) + 'px'; }
+  else view(0, 0);
+  if (hp) { hc.hidden = false; Object.assign(hc.style, { left: hp[0] + 'px', top: hp[1] + 'px', width: hp[2] + 'px', height: hp[3] + 'px' }); HAM.size(); const hb = $('#hb'); hb.style.left = Math.min(hp[0] + hp[2] * .55, innerWidth - 170) + 'px'; hb.style.top = Math.max(50, hp[1] - 8) + 'px'; } else hc.hidden = true; }
 addEventListener('resize', layout);
 function fig(name) { return name ? `<div class="fig"><img src="img/chem/${name}.jpg" alt="교과서 그림"><button class="zb" data-z>🔍 크게</button></div>` : ''; }
 body.addEventListener('click', e => { const z = e.target.closest('[data-z]'); if (z) { e.stopPropagation(); window.__zoomfig && window.__zoomfig(z.parentNode.querySelector('img')); } });
@@ -29,7 +39,10 @@ function pop(t, x, y) { const d = document.createElement('div'); d.className = '
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1900); }
 function confetti(n = 46) { for (let i = 0; i < n; i++) { const d = document.createElement('i'); d.className = 'cf'; d.style.left = Math.random() * 100 + 'vw'; d.style.background = `hsl(${Math.random() * 360},90%,62%)`; d.style.animationDuration = (1.1 + Math.random()) + 's'; d.style.animationDelay = Math.random() * .3 + 's'; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); } }
 function gain(n, x, y) { const mult = 1 + Math.min(4, Math.floor(combo / 3)) * .5, v = Math.round(n * mult), before = lvl(); SAVE.xp = (SAVE.xp || 0) + v; save(); hud(); pop(`+${v} XP`, x, y); if (lvl() > before) { toast(`🎉 레벨 업! <b>Lv ${lvl()}</b>`); confetti(); sfx.win(); } }
-function hit(ok, el, n = 10) { const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null; if (ok) { combo++; sfx.ok(); gain(n, r && r.left + r.width / 2, r && r.top); if (combo % 5 === 0) { confetti(30); toast(`🔥 <b>${combo} 콤보!</b> XP 배율 ×${(1 + Math.min(4, Math.floor(combo / 3)) * .5).toFixed(1)}`); } }
+const OKS = ['찍! 정답!', '역시 내 파트너!', '좋았어!', '천재 아냐?', '찍찍찍!'], NOS = ['앗, 다시!', '찍… 괜찮아', '함정이었어!', '한 번 더 보자', '으앗'];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+let hbT = null; function bubble(t) { const hb = $('#hb'); if ($('#ham').hidden) return; hb.textContent = t; hb.hidden = false; hb.classList.remove('in'); void hb.offsetWidth; hb.classList.add('in'); clearTimeout(hbT); hbT = setTimeout(() => hb.hidden = true, 1600); }
+function hit(ok, el, n = 10) { HAM.feel(ok ? 'joy' : 'sad', 1300); if (!card.hidden) bubble(ok ? pick(OKS) : pick(NOS)); const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : null; if (ok) { combo++; sfx.ok(); gain(n, r && r.left + r.width / 2, r && r.top); if (combo % 5 === 0) { confetti(30); toast(`🔥 <b>${combo} 콤보!</b> XP 배율 ×${(1 + Math.min(4, Math.floor(combo / 3)) * .5).toFixed(1)}`); } }
   else { combo = 0; sfx.no(); hud(); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); } }
 
 /* ── 3D 미션: 직접 조작해서 목표 달성 ── */
@@ -49,11 +62,11 @@ const MIS = {
 let misT = null;
 function mission(key) { const el = $('#mis'); clearInterval(misT); const m = MIS[key]; if (!m) { el.hidden = true; return; } const ok0 = SAVE.mis && SAVE.mis[key]; el.hidden = false; el.className = ok0 ? 'done' : '';
   el.innerHTML = ok0 ? `🎮 미션 완료 ✅ <span>${m[0]}</span>` : `🎮 <b>미션</b> ${m[0]} <span>+50 XP</span>`; if (ok0) return;
-  misT = setInterval(() => { const s = window.__chemState || {}; if (s.key !== key) return; let ok = false; try { ok = !!m[1](s); } catch (e) { } if (!ok) return; clearInterval(misT); (SAVE.mis = SAVE.mis || {})[key] = 1; save(); el.className = 'done pulse'; el.innerHTML = `🎮 <b>미션 성공!</b> ${m[0]} ✅`; sfx.win(); confetti(); gain(50); }, 250); }
+  misT = setInterval(() => { const s = window.__chemState || {}; if (s.key !== key) return; let ok = false; try { ok = !!m[1](s); } catch (e) { } if (!ok) return; clearInterval(misT); (SAVE.mis = SAVE.mis || {})[key] = 1; save(); el.className = 'done pulse'; el.innerHTML = `🎮 <b>미션 성공!</b> ${m[0]} ✅`; sfx.win(); confetti(); gain(50); HAM.feel('joy', 2200); bubble('미션 성공! 찍찍!'); }, 250); }
 function noMission() { clearInterval(misT); $('#mis').hidden = true; }
 
 /* ── ⚡ 빈칸 러시: 학습지 빈칸을 칩으로 빠르게 ── */
-function blanks(list, t) { return new Promise(async res => { head.innerHTML = `<b>⚡ 빈칸 러시</b><span>${t}</span>`; let good = 0;
+function blanks(list, t) { return new Promise(async res => { card.hidden = false; layout(); head.innerHTML = `<b>⚡ 빈칸 러시</b><span>${t}</span>`; let good = 0;
   for (let n = 0; n < list.length; n++) { const [sent, ans, wr] = list[n], opts = shuffle([ans, ...wr]); const t0 = Date.now();
     body.innerHTML = `<div class="bar"><i style="width:${n / list.length * 100}%"></i></div><p class="hint">${n + 1} / ${list.length} · 빨리 맞히면 보너스 ⚡</p><p class="bl">${sent.replace('___', '<span class="slot">?</span>')}</p><div class="chips">${opts.map(o => `<button>${o}</button>`).join('')}</div><div class="fb"></div>`; setFoot('');
     await new Promise(r2 => { let miss = 0; body.querySelector('.chips').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; const slot = body.querySelector('.slot');
@@ -65,7 +78,7 @@ function blanks(list, t) { return new Promise(async res => { head.innerHTML = `<
 
 /* ── ⚡ 스피드 런 보스: 90초 · 하트 3개 ── */
 let bossTok = null;
-function boss(uid) { const tok = bossTok = {}; noMission(); $('#menu').hidden = true; $('#top').hidden = false; card.hidden = false; show('collision'); layout(); topbar(`⚡ 스피드 런 · ${uid}`);
+function boss(uid) { const tok = bossTok = {}; noMission(); subOff(); $('#menu').hidden = true; $('#top').hidden = false; card.hidden = false; show('collision'); layout(); topbar(`⚡ 스피드 런 · ${uid}`);
   const pool = shuffle(SECS.filter(x => x.u.id === uid).flatMap(x => [...(x.s.ask || []).map(q => [q[0], q[1], q[2], q[3]]), ...(x.s.blanks || []).map(([s, a, w]) => [s.replace('___', '<b>＿＿</b>'), [a, ...w], 0, ''])]));
   let i = 0, okN = 0, score = 0, lives = 3, tl = 90, run = true; combo = 0; hud();
   const bar = () => head.innerHTML = `<b>⚡ 스피드 런</b><span>⏱ ${Math.ceil(tl)}초 · ${'❤️'.repeat(lives)}${'🖤'.repeat(3 - lives)} · ${score}점</span>`;
@@ -80,28 +93,63 @@ function boss(uid) { const tok = bossTok = {}; noMission(); $('#menu').hidden = 
       else { b.classList.add('no'); hit(false); lives--; bar(); if (lives <= 0) setTimeout(end, 700); else setTimeout(next, 900); } }; };
   next(); }
 
-/* ── 개념 진행 ── */
+/* ── 스토리: 대본(docs/chem/대본.txt) · 영화 자막 · 아무 데나 탭하면 다음 ── */
+const STORY = {};
+try { const txt = await (await fetch(encodeURI('docs/chem/대본.txt') + '?v=1')).text(); let cur = null;
+  for (const raw of txt.split('\n')) { const l = raw.trim(); if (!l || l.startsWith('#')) continue; let m;
+    if ((m = l.match(/^===\s*(.+?)\s*===$/))) { cur = STORY[m[1].replace(/\s*\|\s*/, '|')] = []; continue; } if (!cur) continue;
+    if ((m = l.match(/^\[지문\]\s*(.*)$/))) cur.push({ who: '지문', text: m[1] });
+    else if ((m = l.match(/^([^:()\[]{1,8}?)\s*(?:\(([^)]*)\))?\s*:\s*(.+)$/))) cur.push({ who: m[1].trim(), mood: m[2], text: m[3] }); } } catch (e) { }
+let adv = null, pd = null;
+addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY }; }, true);
+addEventListener('pointerup', e => { if (!adv || !pd || $('#sub').hidden) return; if (Math.hypot(e.clientX - pd.x, e.clientY - pd.y) > 10) return; if (e.target.closest('button,input,select,label,a,#ctl,#gph,#top,#card,#menu,#mis,#zoomfig')) return; adv('next'); });
+addEventListener('keydown', e => { if (!adv || $('#sub').hidden) return; if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); adv('next'); } else if (e.key === 'ArrowLeft' && !$('#sub [data-sback]').hidden) adv('prev'); });
+function subOn() { const sub = $('#sub'); if (sub.hidden) { sub.hidden = false; card.hidden = true; document.body.classList.add('story'); } }
+function subOff() { adv = null; $('#sub').hidden = true; document.body.classList.remove('story'); figShow(null); }
+function figShow(f) { const fp = $('#figp'); if (!f) { fp.hidden = true; return; } if (fp.dataset.f !== f) { fp.dataset.f = f; fp.innerHTML = `<img src="img/chem/${f}.jpg" alt="교과서 그림"><button class="zb" data-z>🔍 크게</button>`; fp.querySelector('img').onload = layout; } fp.hidden = false; }
+$('#figp').addEventListener('click', e => { if (e.target.closest('[data-z]')) window.__zoomfig && window.__zoomfig($('#figp img')); });
+function line(L, o = {}) { const sub = $('#sub'); subOn(); const who = L.who; sub.className = who === '지문' ? 'nar' : who === '햄토리' ? 'ham' : 'me';
+  sub.querySelector('.who').textContent = who === '지문' ? '' : who; const tx = sub.querySelector('.tx'); tx.innerHTML = L.text; tx.classList.remove('in'); void tx.offsetWidth; tx.classList.add('in');
+  sub.querySelector('.op').innerHTML = ''; sub.querySelector('[data-sback]').hidden = !o.back; sub.querySelector('.pg').textContent = o.prog || ''; sub.querySelector('.go').hidden = !!o.noTap;
+  if (who === '햄토리') { if (L.mood && L.mood !== '기본') HAM.feel(L.mood, 2600); else HAM.calm(); HAM.talk(Math.min(4200, 700 + L.text.replace(/<[^>]+>/g, '').length * 45)); } else HAM.calm(); layout(); return tx; }
+function say(L, o = {}) { return new Promise(res => { line(L, o); adv = v => { adv = null; res(v); }; }); }
+let bigHam = false;
+async function scene(lines) { card.hidden = true; bigHam = true; for (const L of lines) await say(L); bigHam = false; layout(); }
+function askStory([q, o, a, why]) { return new Promise(res => { const tx = line({ who: '햄토리', mood: '고민', text: '✋ ' + q }, { noTap: true }); const op = $('#sub .op'), ord = shuffle(o.map((_, k) => k)); let tries = 0;
+  op.innerHTML = ord.map(k => `<button data-k="${k}">${o[k]}</button>`).join(''); layout();
+  op.onclick = e => { const b = e.target.closest('[data-k]'); if (!b || b.disabled) return; const k = +b.dataset.k;
+    if (k === a || ++tries >= 2) { hit(k === a, b); op.querySelectorAll('[data-k]').forEach(x => { x.disabled = true; if (+x.dataset.k === a) x.classList.add('ok'); }); if (k !== a) b.classList.add('no');
+      tx.innerHTML = (k === a ? '⭕ <b>맞아!</b> ' : `정답은 <b>${o[a]}</b>. `) + why; $('#sub .go').hidden = false; layout(); setTimeout(() => { adv = () => { adv = null; res(); }; }, 250); }
+    else { hit(false); b.classList.add('no'); b.disabled = true; tx.innerHTML = '✋ ' + q + '<br><small>찍… 다시 한 번! 방금 설명을 떠올려 봐.</small>'; layout(); } }; }); }
+
+/* ── 개념 진행 (스토리 모드) ── */
 async function run(start) {
-  card.hidden = false; $('#menu').hidden = true; $('#top').hidden = false; layout();
+  $('#menu').hidden = true; $('#top').hidden = false; card.hidden = true; bossTok = null;
   let idx = start ? start.i : 0, st = start ? start.st || 0 : 0;
+  if (idx === 0 && st === 0 && STORY['프롤로그']) { topbar('프롤로그 · 시험 전날 밤'); noMission(); show('none'); await scene(STORY['프롤로그']); }
   while (idx < SECS.length) {
     const X = SECS[idx], S = X.s; topbar(`${X.c.t} › ${S.t}  (${idx + 1}/${SECS.length})`);
     const state = i => { let f = null, sc = null; for (let k = 0; k <= i; k++) { const x = S.steps[k]; if (x[1]) f = x[1]; if (x[2]) sc = x[2]; } return { f, sc }; };
     let i = Math.min(st, S.steps.length - 1); let back = false;
     if (st < 900) {
-      for (;;) { const { f, sc } = state(i); head.innerHTML = `<b>${S.t}</b><span>설명 ${i + 1} / ${S.steps.length}</span>`;
-        body.innerHTML = fig(f) + S.steps.slice(0, i + 1).map((x, k) => `<p class="st${k === i ? ' now' : ''}">${x[0]}</p>`).join('') + (sc ? '<p class="hint">👈 왼쪽 3D는 끌어서 돌리고, 아래 버튼으로 직접 조작해 봐.</p>' : '');
-        const now = body.querySelector('.now'); if (now) now.scrollIntoView({ block: 'nearest' }); if (sc) { show(sc); mission(sc); } else noMission(); layout();
-        SAVE.pos = { i: idx, st: i }; save(); setFoot(`<button data-b="prev" ${idx === 0 && i === 0 ? 'disabled' : ''}>◀ 이전</button><button class="pri" data-b="next">${i < S.steps.length - 1 ? '다음 ▶' : '확인 질문 ▶'}</button>`);
-        const a = await wait(); if (a === 'prev') { if (i > 0) { i--; continue; } back = true; break; } if (i < S.steps.length - 1) { i++; continue; } break; }
+      if (st === 0 && STORY[S.t + '|시작']) { const { sc } = state(S.steps.length - 1); figShow(null); noMission(); if (sc) show(state(0).sc || sc); await scene(STORY[S.t + '|시작']); }
+      for (;;) { const { f, sc } = state(i); figShow(f); if (sc) { show(sc); mission(sc); } else noMission();
+        SAVE.pos = { i: idx, st: i }; save();
+        const a = await say({ who: '햄토리', mood: i === 0 ? '설명' : null, text: S.steps[i][0] }, { back: !(idx === 0 && i === 0), prog: `설명 ${i + 1}/${S.steps.length}${sc ? ' · 3D는 끌어서 돌리고 버튼으로 조작' : ''}` });
+        if (a === 'prev') { if (i > 0) { i--; continue; } back = true; break; } if (i < S.steps.length - 1) { i++; continue; } break; }
       if (back) { idx = Math.max(0, idx - 1); st = 0; continue; }
-      for (const q of S.ask || []) await ask(q, S.t);
-      if (S.blanks && S.blanks.length) await blanks(S.blanks, S.t);
+      figShow(null);
+      for (const q of S.ask || []) await askStory(q);
+      if (S.blanks && S.blanks.length) { await say({ who: '햄토리', mood: '기쁨', text: '⚡ <b>빈칸 러시!</b> 학습지 빈칸이야. 빨리 맞히면 보너스!' }); subOff(); await blanks(S.blanks, S.t); }
+      SAVE.pos = { i: idx, st: 900 }; save();
     }
-    for (const id of S.probs || []) { const r = await prob(id); if (r === 'menu') return menu(); }
+    const ps = (S.probs || []).filter(id => Q[id]);
+    if (ps.length) { await say({ who: '햄토리', mood: '놀람', text: `📁 <b>사건 파일 ${ps.length}개</b> 도착! 사진 속 문제야. ✍️ 필기 켜고 같이 풀자.` }); subOff();
+      for (const id of ps) { const r = await prob(id); if (r === 'menu') return menu(); } card.hidden = true; }
+    if (STORY[S.t + '|끝']) await scene(STORY[S.t + '|끝']);
     idx++; st = 0; SAVE.pos = { i: idx, st: 0 }; save();
   }
-  SAVE.pos = null; save(); menu();
+  SAVE.pos = null; save(); confetti(90); sfx.win(); subOff(); menu();
 }
 function ask([q, o, a, why], t) { return new Promise(res => { const ord = shuffle(o.map((_, k) => k)); head.innerHTML = `<b>✋ 확인</b><span>${t}</span>`;
   body.innerHTML = `<p class="q">${q}</p><div class="opts">${ord.map(k => `<button data-k="${k}">${o[k]}</button>`).join('')}</div><div class="fb"></div>`; setFoot(''); let tries = 0;
@@ -144,10 +192,10 @@ body.addEventListener('pointerup', up); body.addEventListener('pointercancel', u
 
 /* ── 메뉴 ── */
 async function solveList(ids, title) { $('#menu').hidden = true; $('#top').hidden = false; topbar(title); for (const id of ids) { const r = await prob(id); if (r === 'menu') break; } menu(); }
-function menu() { bossTok = null; noMission(); card.hidden = true; $('#top').hidden = true; layout(); show('maxwell'); const m = $('#menu'); m.hidden = false;
+function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); card.hidden = true; $('#top').hidden = true; layout(); show('maxwell'); const m = $('#menu'); m.hidden = false; layout();
   const cur = SAVE.pos ? SECS[Math.min(SAVE.pos.i, SECS.length - 1)] : null; const allQ = Object.keys(Q); const wrong = allQ.filter(id => SAVE.res[id] === 0); const doneN = allQ.filter(id => id in SAVE.res).length;
   const unitQ = u => SECS.filter(x => x.u.id === u).flatMap(x => x.s.probs || []);
-  m.innerHTML = `<div class="mc"><h1>화학 <small>Ⅲ 화학 변화의 자발성 · Ⅳ 반응 속도</small></h1>
+  m.innerHTML = `<div class="mc"><h1>햄토리와 시험 전날 밤 <small>화학 Ⅲ 화학 변화의 자발성 · Ⅳ 반응 속도 · 🐹 햄토리랑 사건을 풀면서 공부하기</small></h1>
    <button class="big pri" data-go>${cur ? '▶ 이어서 — ' + cur.label : '▶ 처음부터 시작'}</button>
    <div class="row"><select data-sec>${SECS.map((x, i) => `<option value="${i}" ${cur && x === cur ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button data-from>여기부터</button></div>
    <h3>📝 교과서 문제 <small>${doneN}/${allQ.length} 풀이</small></h3>
