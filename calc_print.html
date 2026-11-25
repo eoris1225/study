@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>미적분 자습 프린트</title>
+<link rel="stylesheet" href="js/vendor/katex/katex.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap">
+<style>
+:root{--ink:#1d1b22;--paper:#fffdf6;--line:#cfc8b8;--red:#c8264a;--blue:#2a5bbf;--hl:#fff0a0;--grn:#1f7a52}
+*{box-sizing:border-box}
+html,body{margin:0;background:#e9e4d8;color:var(--ink);font:13.5px/1.6 'Noto Sans KR',sans-serif}
+#app{max-width:860px;margin:0 auto;padding:16px}
+.pg,.top{background:var(--paper);border:1.5px solid var(--ink);border-radius:3px;padding:16px 20px;margin:0 0 14px;box-shadow:3px 4px 0 rgba(0,0,0,.18)}
+h1{font:26px Jua;margin:0 0 4px}h2{font:22px Jua;margin:0 0 8px;display:flex;gap:10px;align-items:baseline}h2 em{font-style:normal;color:#fff;background:var(--red);border-radius:3px;padding:0 8px;font-size:17px}
+h3{font:17px Jua;margin:12px 0 4px;border-bottom:2px solid var(--hl)}h4{font:16px Jua;margin:0 0 4px;color:var(--blue)}h5{font:14.5px 'Noto Sans KR';font-weight:700;margin:0 0 4px}
+b{color:#8a1d3a}.sub{font-size:12.5px;color:#555;margin:2px 0 6px}.top{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}.top p{margin:2px 0}
+.ln{display:inline-block;min-width:110px;border-bottom:1px solid var(--ink);margin:0 6px}
+.btns{display:flex;gap:8px}.np{font:15px Jua;background:#5affd0;border:1.5px solid var(--ink);border-radius:3px;padding:4px 12px;cursor:pointer;box-shadow:2px 2px 0 rgba(0,0,0,.3)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bx{border:1.5px solid var(--ink);border-radius:3px;padding:8px 10px;background:#fff}.bx ul,.bx ol{margin:0;padding-left:20px}.bx li{margin:2px 0}
+.plan{list-style:none;padding:0!important}.plan li{display:flex;gap:6px;align-items:center}.b2{width:13px;height:13px;border:1.5px solid var(--ink);flex:none}.tip{font-size:12px;color:#555;margin:8px 0 0}
+.why{margin:0 0 8px;background:#f6f1e3;border-left:4px solid var(--hl);padding:6px 10px}
+.core{border:2px solid var(--blue);border-radius:4px;padding:8px 12px;background:#f4f8ff;margin:0 0 8px}.core ul{margin:0;padding-left:20px}.core li{margin:3px 0}
+.ex{border:1px dashed var(--grn);border-radius:4px;padding:6px 12px;margin:0 0 8px;background:#f5fbf7}.ex h5{color:var(--grn)}.ex ol{margin:0;padding-left:22px}.ex li{margin:2px 0}
+.pr{margin-top:10px}.pr small{font:12px 'Noto Sans KR';color:#888}
+.dr{margin:0;padding-left:26px;columns:2;column-gap:18px}.dr li{break-inside:avoid;margin:0 0 4px}.wl{height:54px;border-bottom:1px dashed #bbb;margin-bottom:4px}
+.sch{margin:8px 0 0;font-size:12.5px;background:#fff6d8;border:1px solid #e7c95a;border-radius:3px;padding:4px 8px}
+.sheet img{display:block;width:100%;border:1px solid var(--line);margin:0 0 8px}.note{margin:0 0 8px;background:#ffe9ee;border:1px solid #f3a6b8;border-radius:3px;padding:5px 10px;font-size:13px}
+.ka{margin:0;padding-left:26px;columns:2;column-gap:18px;font-size:12.3px}.ka li{break-inside:avoid;margin:0 0 4px}.ka .sl{color:#555;font-size:11.5px}
+.katex{font-size:1.05em}
+@media (max-width:640px){.two{grid-template-columns:1fr}.dr,.ka{columns:1}#app{padding:8px}.pg,.top{padding:12px}}
+@media print{@page{size:A4;margin:10mm}html,body{background:#fff}#app{max-width:none;padding:0}.pg,.top{box-shadow:none;border:none;padding:0;margin:0 0 4mm}.btns{display:none}
+ .pg{break-before:page}.top+.pg{break-before:auto}.core,.ex,.bx{break-inside:avoid}.sheet img{break-inside:avoid;border:none;margin:0 0 2mm;max-height:270mm;object-fit:contain}}
+</style></head><body>
+<div id="app"></div>
+<script src="js/vendor/katex/katex.min.js"></script><script src="js/vendor/katex/auto-render.min.js"></script>
+<script src="js/calc/drills.js?v=1"></script><script src="js/calc/lessons.js?v=1"></script><script src="js/calc/print.js?v=3"></script>
+</body></html>
