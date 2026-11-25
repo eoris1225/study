@@ -48,6 +48,21 @@ const POSE = {
   sleepy: () => ({ L: [0, -.5, -1.0], R: [0, .5, 1.0], H: [.32, 0, .35 + Math.sin(t * .8) * .05] }),
   think: () => ({ L: [0, -.55, -.75], R: [-.2, 1.2, -.2], H: [.1, -.2, .2] }),
 };
+/* 병맛 개그: 일부러 뚝뚝 끊기는(초당 5~6컷) 손으로 만든 듯한 동작 */
+const st = (f = 6) => Math.floor(t * f) / f;
+Object.assign(POSE, {
+  robot: () => { const k = Math.floor(t * 4) % 4; return [{ L: [0, -.3, 1.2], R: [0, .3, .8], H: [0, .5, 0] }, { L: [0, -.3, -.2], R: [0, .3, -1.2], H: [0, -.5, 0] }, { L: [0, -.3, 1.2], R: [0, .3, -1.2], H: [-.3, 0, 0] }, { L: [0, -.6, -.8], R: [0, .6, .8], H: [.2, 0, .4] }][k]; },
+  faint: () => ({ L: [0, -.2, 1.4], R: [0, .2, -1.4], H: [-.2, 0, 0], LL: [-1.2, 0, 0], RL: [-1.2, 0, 0] }),
+  flat: () => ({ L: [0, -.2, 1.5], R: [0, .2, -1.5], H: [0, 0, 0] }),
+  headspin: () => ({ L: [0, -.55, -.75], R: [0, .55, .75], H: [0, st(5) * 3.2 % (Math.PI * 2), 0] }),
+  spin: () => ({ L: [0, -.2, 1.3], R: [0, .2, -1.3], H: [-.2, 0, 0] }),
+  launch: () => ({ L: [0, -.1, 1.5], R: [0, .1, -1.5], H: [-.4, 0, 0], LL: [.5, 0, 0], RL: [.5, 0, 0] }),
+  nodbroken: () => ({ L: [0, -.55, -.75], R: [0, .55, .75], H: [(Math.floor(t * 10) % 2) * .5 - .1, 0, 0] }),
+  doze: () => ({ L: [0, -.4, -1.1], R: [0, .4, 1.1], H: [.6, 0, .2] }),
+  stare: () => ({ L: [0, -.55, -.75], R: [0, .55, .75], H: [0, -.32, 0] }),
+});
+const VAR = { joy: ['joy', 'robot', 'spin', 'nodbroken'], sad: ['sad', 'faint', 'flat'], surprise: ['surprise', 'launch'], angry: ['angry', 'headspin'] };
+let moodAt = 0, nextGag = 0;
 const ALIAS = { 기본: 'idle', 기쁨: 'joy', 놀람: 'surprise', 슬픔: 'sad', 설명: 'explain', 화남: 'angry', 졸림: 'sleepy', 고민: 'think' };
 
 const qW = new THREE.Quaternion(), qT = new THREE.Quaternion(), eu = new THREE.Euler();
@@ -72,7 +87,17 @@ function loop(now) {
   if (m === 'angry') { x = Math.sin(t * 30) * .25; }
   if (m === 'sleepy') { rz = .1 + Math.sin(t * .8) * .04; y = 0; }
   if (m === 'talk' || m === 'explain') y = Math.abs(Math.sin(t * 5)) * .35;
-  root.position.set(x, y, 0); root.rotation.set(0, ry, rz); shadow.scale.setScalar(1 - y * .08);
+  const e = (now - moodAt) / 1000; let rx = 0, sy = 1, sx = 1;
+  if (m === 'robot') { y = 0; ry = .32 + (Math.floor(t * 4) % 2 ? .5 : -.3); }
+  if (m === 'faint') { const k = Math.min(1, Math.floor(e * 6) / 6 / .5); rx = -1.45 * k; y = 0; ry = .1; if (e > .5) x = Math.sin(t * 40) * .05; }         /* 뻣뻣하게 뒤로 꽈당, 다리 하늘로 */
+  if (m === 'flat') { sy = e < .15 ? 1 : .35; sx = e < .15 ? 1 : 1.5; y = 0; }                                                         /* 납작 호떡 */
+  if (m === 'spin') { y = Math.abs(Math.sin(st(8) * 4)) * 1.5; ry = st(8) * 9; }                                                          /* 뚝뚝 끊기며 빙글빙글 */
+  if (m === 'launch') { y = e < .9 ? Math.sin(Math.min(1, e / .9) * Math.PI) * 26 : 0; rz = e < .9 ? st(10) * 7 : 0; sy = e > .9 && e < 1.15 ? .45 : 1; sx = e > .9 && e < 1.15 ? 1.4 : 1; }   /* 화면 밖으로 발사 → 쿵 착지 */
+  if (m === 'nodbroken') y = 0;
+  if (m === 'doze') { rz = Math.min(.55, Math.floor(e * 3) / 3 * .18); y = 0; }                                                          /* 서서 졸다 옆으로 기울기 */
+  if (m === 'stare') { ry = 0; y = 0; }                                                                                                  /* 갑자기 정면 응시 */
+  root.position.set(x, y, 0); root.rotation.set(rx, ry, rz); root.scale.set(sx, sy, sx); shadow.scale.setScalar(Math.max(.3, 1 - y * .04) * sx);
+  if (m === 'idle' && now > nextGag) { nextGag = now + 14000 + Math.random() * 12000; if (moodAt) { mood = Math.random() < .5 ? 'doze' : 'stare'; moodAt = now; moodUntil = now + (mood === 'doze' ? 2600 : 1500); } else moodAt = 1; }
   R.render(S, cam);
 }
 requestAnimationFrame(loop);
@@ -80,6 +105,6 @@ requestAnimationFrame(loop);
 export function size() { const r = cv.getBoundingClientRect(); if (!r.width) return; R.setSize(r.width, r.height, false); cam.aspect = r.width / r.height; cam.updateProjectionMatrix(); }
 addEventListener('resize', size);
 /* 감정: 이름(한글/영문) · 지속(ms, 0이면 계속) */
-export function feel(m, ms = 1600) { m = ALIAS[m] || m || 'idle'; mood = m; moodUntil = performance.now() + (ms || 1e9); }
+export function feel(m, ms = 1600) { m = ALIAS[m] || m || 'idle'; if (VAR[m] && Math.random() < .55) m = VAR[m][1 + Math.floor(Math.random() * (VAR[m].length - 1))]; if (m === 'launch' || m === 'faint') ms = Math.max(ms, 1800); mood = m; moodAt = performance.now(); moodUntil = moodAt + (ms || 1e9); nextGag = moodAt + 15000; }
 export function talk(ms = 1400) { talkUntil = performance.now() + ms; }
 export function calm() { mood = 'idle'; moodUntil = 0; }

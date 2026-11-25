@@ -1,6 +1,6 @@
 /* 화학 개념 강의: 교과서 순서 · 3D 무대 · 확인 질문 · 교과서 문제(사진) · 펜 필기 · 진행 저장 */
-import { show, has, view } from './stage.js?v=2';
-import * as HAM from './ham.js?v=3';
+import { show, has, view } from './stage.js?v=5';
+import * as HAM from './ham.js?v=4';
 const $ = s => document.querySelector(s);
 const C = window.CHEM, Q = window.CHEMQ;
 const KEY = 'chem_v1';
@@ -111,6 +111,7 @@ let adv = null, pd = null;
 addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY }; }, true);
 addEventListener('pointerup', e => { if (!adv || !pd || $('#sub').hidden) return; if (Math.hypot(e.clientX - pd.x, e.clientY - pd.y) > 10) return; if (e.target.closest('button,input,select,label,a,#ctl,#gph,#top,#card,#menu,#mis,#zoomfig')) return; adv('next'); });
 addEventListener('keydown', e => { if (!adv || $('#sub').hidden) return; if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') { e.preventDefault(); adv('next'); } else if (e.key === 'ArrowLeft' && !$('#sub [data-sback]').hidden) adv('prev'); });
+document.addEventListener('click', e => { if (e.target.closest('#sub [data-sback]') && adv) { e.stopPropagation(); adv('prev'); } });
 function subOn() { const sub = $('#sub'); if (sub.hidden) { sub.hidden = false; card.hidden = true; document.body.classList.add('story'); } }
 function subOff() { adv = null; $('#sub').hidden = true; document.body.classList.remove('story'); figShow(null); }
 function figShow(f) { const fp = $('#figp'); if (!f) { fp.hidden = true; return; } if (fp.dataset.f !== f) { fp.dataset.f = f; fp.innerHTML = `<img src="img/chem/${f}.jpg" alt="교과서 그림"><button class="zb" data-z>🔍 크게</button>`; fp.querySelector('img').onload = layout; } fp.hidden = false; }
@@ -121,7 +122,7 @@ function line(L, o = {}) { const sub = $('#sub'); subOn(); const who = L.who; su
   if (who === '햄토리') { if (L.mood && L.mood !== '기본') HAM.feel(L.mood, 2600); else HAM.calm(); HAM.talk(Math.min(4200, 700 + L.text.replace(/<[^>]+>/g, '').length * 45)); } else HAM.calm(); layout(); return tx; }
 function say(L, o = {}) { return new Promise(res => { line(L, o); adv = v => { adv = null; res(v); }; }); }
 let bigHam = false;
-async function scene(lines) { card.hidden = true; bigHam = true; for (const L of lines) await say(L); bigHam = false; layout(); }
+async function scene(lines) { card.hidden = true; bigHam = true; for (let i = 0; i < lines.length;) { const a = await say(lines[i], { back: i > 0, prog: `${i + 1}/${lines.length}` }); i = a === 'prev' ? Math.max(0, i - 1) : i + 1; } bigHam = false; layout(); }
 function askStory([q, o, a, why]) { return new Promise(res => { const tx = line({ who: '햄토리', mood: '고민', text: '✋ ' + q }, { noTap: true }); const op = $('#sub .op'), ord = shuffle(o.map((_, k) => k)); let tries = 0;
   op.innerHTML = ord.map(k => `<button data-k="${k}">${o[k]}</button>`).join(''); layout();
   op.onclick = e => { const b = e.target.closest('[data-k]'); if (!b || b.disabled) return; const k = +b.dataset.k;
@@ -151,7 +152,8 @@ async function run(start) {
       SAVE.pos = { i: idx, st: 900 }; save();
     }
     const ps = (S.probs || []).filter(id => Q[id]);
-    if (ps.length) { await say({ who: '햄토리', mood: '놀람', text: `📁 <b>사건 파일 ${ps.length}개</b> 도착! 사진 속 문제야. ✍️ 필기 켜고 같이 풀자.` }); subOff();
+    if (ps.length) { await say({ who: '햄토리', mood: '놀람', text: `📁 <b>사건 파일 ${ps.length}개</b> 도착! 근데 문제 보기 전에… 이게 <b>무슨 반응인지</b>부터 알아야 풀려. 풀이 개념 먼저!` }); subOff();
+      if (await cardsPage(S.t) === 'menu') return menu();
       for (const id of ps) { const r = await prob(id); if (r === 'menu') return menu(); } card.hidden = true; }
     if (STORY[S.t + '|끝']) await scene(STORY[S.t + '|끝']);
     idx++; st = 0; SAVE.pos = { i: idx, st: 0 }; save();
@@ -166,7 +168,8 @@ function ask([q, o, a, why], t) { return new Promise(res => { const ord = shuffl
 
 /* ── 교과서 문제 ── */
 function prob(id) { return new Promise(async res => { const P = Q[id]; if (!P) return res(); head.innerHTML = `<b>📝 교과서 문제</b><span>${P.src}</span>`; card.hidden = false; layout();
-  const top = `${fig(P.img)}<div class="tools"><button data-ink>✍️ 필기</button><button data-clr>지우기</button><button data-skip>정답만 보기</button></div>`;
+  const SV = window.CHEMSOLVE, sx = SECS.find(x => (x.s.probs || []).includes(id)), pa = SV ? SV.probHTML(id, sx ? sx.s.t : '') : '';
+  const top = `${pa}${fig(P.img)}<div class="tools"><button data-ink>✍️ 필기</button><button data-clr>지우기</button><button data-skip>정답만 보기</button></div>`;
   let right = true, fin = false; const done = (ok) => { if (fin) return; fin = true; if (ok) { gain(30); toast('💯 <b>완벽!</b> 문제 클리어'); confetti(24); } SAVE.res[id] = ok ? 1 : 0; save(); setFoot(`<button data-b="menu">☰ 메뉴</button><button class="pri" data-b="next">다음 ▶</button>`); wait().then(a => res(a === 'menu' ? 'menu' : null)); };
   const answer = () => `<div class="ans">✅ <b>정답</b> ${P.ans || (P.o ? P.o[P.a] : '')}</div>`;
   setFoot('');
@@ -184,20 +187,38 @@ function prob(id) { return new Promise(async res => { const P = Q[id]; if (!P) r
   body.querySelector('[data-skip]').onclick = () => { if (!body.querySelector('.ans')) { body.insertAdjacentHTML('beforeend', answer() + (P.type === 'bogi' ? P.items.map(([l, t, v, w]) => `<p class="why">${l}. ${v ? '⭕' : '❌'} ${w}</p>`).join('') : P.type === 'steps' ? P.steps.map(([q, o, a, w], i) => `<p class="why">${i + 1}. ${q} → <b>${o[a]}</b> ${w}</p>`).join('') : '')); done(false); } };
   inkSetup(); }); }
 
-/* ── 펜 필기: 펜은 항상 쓰기, 손가락은 스크롤 (카드 안 내용과 같이 움직임) ── */
-let ink = null;
-function inkSetup() { const b = body.querySelector('[data-ink]'), clr = body.querySelector('[data-clr]'); if (!b) return; ink = null; b.onclick = () => { if (ink) { ink.cv.remove(); ink = null; b.classList.remove('on'); body.classList.remove('inking'); return; } const cv = document.createElement('canvas'); cv.className = 'ink'; body.appendChild(cv); const r = Math.min(2, devicePixelRatio || 1); cv.width = body.scrollWidth * r; cv.height = Math.max(body.scrollHeight, body.clientHeight) * r; cv.style.width = body.scrollWidth + 'px'; cv.style.height = Math.max(body.scrollHeight, body.clientHeight) + 'px'; ink = { cv, g: cv.getContext('2d'), r }; b.classList.add('on'); body.classList.add('inking'); };
-  clr.onclick = () => { if (ink) ink.g.clearRect(0, 0, ink.cv.width, ink.cv.height); }; }
-let pen = null, fing = null, penDown = false, penUp = 0;
-body.addEventListener('pointerdown', e => { if (e.pointerType === 'pen') penDown = true; if (!ink) return; if (e.pointerType === 'touch' && (penDown || Date.now() - penUp < 300)) { e.preventDefault(); return; }
-  if (e.pointerType === 'pen' || e.pointerType === 'mouse' && e.shiftKey) { const ctl = e.target.closest('button'); const r = ink.cv.getBoundingClientRect(); pen = { id: e.pointerId, x: (e.clientX - r.left) * ink.r, y: (e.clientY - r.top) * ink.r, moved: false, ctl }; e.preventDefault(); body.setPointerCapture(e.pointerId); return; }
-  if (e.pointerType === 'touch') fing = { id: e.pointerId, y: e.clientY }; });
-body.addEventListener('pointermove', e => { if (pen && e.pointerId === pen.id && ink) { const r = ink.cv.getBoundingClientRect(), x = (e.clientX - r.left) * ink.r, y = (e.clientY - r.top) * ink.r; if (!pen.moved && Math.hypot(x - pen.x, y - pen.y) < 6 * ink.r) return; pen.moved = true; const g = ink.g; g.strokeStyle = '#ffe27a'; g.lineWidth = (1.4 + (e.pressure || .5) * 2.2) * ink.r; g.lineCap = 'round'; g.beginPath(); g.moveTo(pen.x, pen.y); g.lineTo(x, y); g.stroke(); pen.x = x; pen.y = y; e.preventDefault(); }
-  else if (fing && e.pointerId === fing.id && ink) { body.scrollTop -= e.clientY - fing.y; fing.y = e.clientY; } });
-const up = e => { if (e.pointerType === 'pen') { penDown = false; penUp = Date.now(); } if (pen && e.pointerId === pen.id) { if (!pen.moved && pen.ctl) pen.ctl.click(); pen = null; } if (fing && e.pointerId === fing.id) fing = null; };
+/* ── 필기: [✍️ 필기] 켜면 손가락·펜·마우스 다 쓰기, 두 손가락으로 스크롤. 꺼져 있어도 펜(S펜)은 바로 쓰기 ──
+   잉크는 사진(흰 바탕)·카드(어두운 바탕) 둘 다 잘 보이는 색, 풀이가 아래로 늘어나면 캔버스도 같이 늘어남 */
+const INKC = ['#ff3b6b', '#3b8bff', '#1fbf6a'];
+let ink = null, inkOn = false, inkCol = 0; try { inkOn = localStorage.getItem('chem_ink') === '1'; } catch (e) { }
+function inkCanvas() { if (ink && ink.cv.isConnected) return ink; const cv = document.createElement('canvas'); cv.className = 'ink'; body.appendChild(cv); ink = { cv, g: cv.getContext('2d'), r: Math.min(2, devicePixelRatio || 1), w: 0, h: 0 }; inkFit(); return ink; }
+function inkFit() { const w = body.clientWidth, h = Math.max(body.scrollHeight, body.clientHeight); if (ink.w === w && ink.h >= h) return;
+  let snap = null; if (ink.w) { snap = document.createElement('canvas'); snap.width = ink.cv.width; snap.height = ink.cv.height; snap.getContext('2d').drawImage(ink.cv, 0, 0); }
+  ink.cv.width = w * ink.r; ink.cv.height = h * ink.r; ink.cv.style.width = w + 'px'; ink.cv.style.height = h + 'px'; if (snap) ink.g.drawImage(snap, 0, 0); ink.w = w; ink.h = h; }
+function inkUI() { const b = body.querySelector('[data-ink]'); if (!b) return; b.classList.toggle('on', inkOn); b.innerHTML = inkOn ? '✍️ 필기 중 <small>(두 손가락=스크롤)</small>' : '✍️ 필기'; body.classList.toggle('inking', inkOn);
+  const c = body.querySelector('[data-col]'); if (c) c.innerHTML = `<i style="display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;background:${INKC[inkCol]}"></i> 색`; }
+function inkSetup() { const b = body.querySelector('[data-ink]'), clr = body.querySelector('[data-clr]'); if (!b) return; ink = null;
+  if (!body.querySelector('[data-col]')) clr.insertAdjacentHTML('beforebegin', '<button data-col></button>');
+  b.onclick = () => { inkOn = !inkOn; try { localStorage.setItem('chem_ink', inkOn ? '1' : '0'); } catch (e) { } if (inkOn) inkCanvas(); inkUI(); };
+  body.querySelector('[data-col]').onclick = () => { inkCol = (inkCol + 1) % INKC.length; inkUI(); };
+  clr.onclick = () => { if (ink) ink.g.clearRect(0, 0, ink.cv.width, ink.cv.height); }; if (inkOn) inkCanvas(); inkUI(); }
+const TP = new Map(); let stroke = null, sy = null; const avgY = () => [...TP.values()].reduce((a, b) => a + b, 0) / TP.size;
+body.addEventListener('pointerdown', e => { if (!body.querySelector('[data-ink]')) return; if (!inkOn && e.pointerType !== 'pen') return; if (e.target.closest('button,a,input,select,label')) return;
+  if (e.pointerType === 'touch') { TP.set(e.pointerId, e.clientY); if (TP.size >= 2) { stroke = null; sy = avgY(); return; } }
+  inkCanvas(); inkFit(); const r = ink.cv.getBoundingClientRect(); stroke = { id: e.pointerId, x: (e.clientX - r.left) * ink.r, y: (e.clientY - r.top) * ink.r }; e.preventDefault(); try { body.setPointerCapture(e.pointerId); } catch (er) { } });
+body.addEventListener('pointermove', e => { if (TP.has(e.pointerId)) TP.set(e.pointerId, e.clientY); if (TP.size >= 2 && sy != null) { const a = avgY(); body.scrollTop -= a - sy; sy = a; return; }
+  if (!stroke || e.pointerId !== stroke.id || !ink) return; const r = ink.cv.getBoundingClientRect(), x = (e.clientX - r.left) * ink.r, y = (e.clientY - r.top) * ink.r, g = ink.g;
+  const pr = e.pointerType === 'pen' && e.pressure ? e.pressure : .5; g.strokeStyle = INKC[inkCol]; g.lineWidth = (1.6 + pr * 2.6) * ink.r; g.lineCap = g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(stroke.x, stroke.y); g.lineTo(x, y); g.stroke(); stroke.x = x; stroke.y = y; e.preventDefault(); });
+const up = e => { TP.delete(e.pointerId); if (TP.size < 2) sy = null; if (stroke && e.pointerId === stroke.id) stroke = null; };
 body.addEventListener('pointerup', up); body.addEventListener('pointercancel', up);
 
 /* ── 메뉴 ── */
+/* 문제풀이 개념 카드 (절마다 문제 들어가기 전에, 메뉴에서도 따로 볼 수 있음) */
+function cardsPage(t, all) { return new Promise(res => { const SV = window.CHEMSOLVE; if (!SV) return res(); const ids = all ? Object.keys(SV.CARDS) : SV.secCards(t); if (!ids.length) return res();
+  card.hidden = false; layout(); head.innerHTML = `<b>📚 문제풀이 개념</b><span>${all ? '전체 카드' : t}</span>`; body.scrollTop = 0;
+  body.innerHTML = `<p class="hint">문제를 보면 먼저 <b>"이게 무슨 반응이지?"</b> → 카드의 <b>풀이 순서</b>대로. 함정은 시험에 진짜 나옴.</p>` + ids.map((c, i) => SV.cardHTML(c, !all && i === 0)).join('');
+  setFoot(all ? '<button class="pri" data-b="menu">☰ 메뉴</button>' : '<button data-b="menu">☰ 메뉴</button><button class="pri" data-b="next">알겠어, 문제 풀기 ▶</button>'); wait().then(res); }); }
 async function solveList(ids, title) { $('#menu').hidden = true; $('#top').hidden = false; topbar(title); for (const id of ids) { const r = await prob(id); if (r === 'menu') break; } menu(); }
 function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); card.hidden = true; $('#top').hidden = true; layout(); show('maxwell'); const m = $('#menu'); m.hidden = false; layout();
   const cur = SAVE.pos ? SECS[Math.min(SAVE.pos.i, SECS.length - 1)] : null; const allQ = Object.keys(Q); const wrong = allQ.filter(id => SAVE.res[id] === 0); const doneN = allQ.filter(id => id in SAVE.res).length;
@@ -207,16 +228,18 @@ function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); 
    <div class="row"><select data-sec>${SECS.map((x, i) => `<option value="${i}" ${cur && x === cur ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button data-from>여기부터</button></div>
    <h3>📝 교과서 문제 <small>${doneN}/${allQ.length} 풀이</small></h3>
    <div class="grid"><button data-u="III">Ⅲ 문제 전부 (${unitQ('III').length})</button><button data-u="IV">Ⅳ 문제 전부 (${unitQ('IV').length})</button>${wrong.length ? `<button data-w>🔁 틀린 문제 (${wrong.length})</button>` : ''}</div>
+   <div class="grid" style="margin-top:6px"><button data-cards>📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
    <h3>⚡ 스피드 런 <small>90초 · ❤️×3 · 확인 질문 + 빈칸 총출동</small></h3>
    <div class="grid"><button data-boss="III">Ⅲ 보스전 <small>최고 ${(SAVE.best || {}).III || 0}</small></button><button data-boss="IV">Ⅳ 보스전 <small>최고 ${(SAVE.best || {}).IV || 0}</small></button></div>
    <p class="tip">🎮 3D 미션 ${Object.keys(SAVE.mis || {}).length} / ${Object.keys(MIS).length} 달성 · Lv ${lvl()} · ⭐ ${SAVE.xp || 0} XP</p>
    <div class="row"><button data-home>🏠 홈</button></div>
-   <p class="tip">왼쪽 3D는 끌어서 돌리고 버튼·슬라이더로 직접 조작할 수 있어. 교과서 그림은 🔍로만 커져 (실수로 안 커짐). 문제에서 ✍️ 필기를 켜면 펜으로 쓰고 손가락으로 스크롤.</p></div>`;
+   <p class="tip">왼쪽 3D는 끌어서 돌리고 버튼·슬라이더로 직접 조작할 수 있어. 교과서 그림은 🔍로만 커져 (실수로 안 커짐). 문제에서 ✍️ 필기를 켜면 손가락·펜으로 쓰고 두 손가락으로 스크롤 (S펜은 필기 안 켜도 써짐).</p></div>`;
   m.onclick = e => { const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.go !== undefined) return run(SAVE.pos || { i: 0, st: 0 });
     if (b.dataset.from !== undefined) return run({ i: +m.querySelector('[data-sec]').value, st: 0 });
     if (b.dataset.u) return solveList(unitQ(b.dataset.u), b.textContent);
     if (b.dataset.boss) return boss(b.dataset.boss);
+    if (b.dataset.cards !== undefined) { m.hidden = true; $('#top').hidden = false; topbar('📚 문제풀이 개념 카드'); return cardsPage('', true).then(() => menu()); }
     if (b.dataset.w !== undefined) return solveList(wrong, '틀린 문제 다시');
     if (b.dataset.home !== undefined) location.href = 'index.html'; };
 }

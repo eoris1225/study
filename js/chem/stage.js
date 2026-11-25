@@ -1,5 +1,6 @@
 /* 화학 3D 무대: 개념마다 직접 만지는 3D 장면 + 실시간 그래프 */
 import * as THREE from 'three';
+import { dress } from './gag3d.js?v=3';
 
 const $ = s => document.querySelector(s);
 const cv = $('#stage');
@@ -174,12 +175,13 @@ SC.catalystDist = SC.maxwellcat;
 let curKey = null;
 export function show(key) {
   if (key === curKey) return; curKey = key; ST = window.__chemState = { key }; scene.remove(ROOT); ROOT = new THREE.Group(); scene.add(ROOT); heatBits.length = 0; ui(); dragYaw = 0; dragPitch = 0;
-  const fn = SC[key]; upd = fn ? fn(ROOT) : null;
+  const fn = SC[key], u0 = fn ? fn(ROOT) : null; let dr = null; try { dr = dress(key, ROOT, scene); } catch (e) { console.error(e); }
+  upd = (u0 || dr) ? (t, dt) => { if (u0) u0(t, dt); if (dr) dr(t); } : null;   /* 장면 + 병맛 종이 햄 */
   if (key === 'catalyst') { /* 촉매 절은 분포 곡선도 같이 */ }
 }
 export const has = k => !!SC[k];
 let VIEW = { x: 0, y: 0 };
-export function view(offX, offY) { VIEW = { x: offX, y: offY }; resize(); }
+export function view(offX, offY) { VIEW = { x: offX, y: offY }; window.__chemCardMode = Math.abs(offX) > 20; resize(); }
 function resize() { const w = innerWidth, h = innerHeight; R.setSize(w, h); cam.aspect = w / h; cam.setViewOffset(w, h, VIEW.x, VIEW.y, w, h); cam.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 /* 끌어서 돌려 보기 */

@@ -31,6 +31,10 @@ button,select,input{font-family:inherit}
 .ans{margin-top:12px;padding:12px;border-radius:12px;background:#3a3214;border:1px solid var(--gold);font-size:16.5px;line-height:1.6}
 .tools{display:flex;gap:6px;margin:0 0 8px}.tools button{padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#262c48;color:#fff;font-size:14px}.tools button.on{background:#6a5a1a;border-color:var(--gold)}
 canvas.ink{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
+.tools button small{font-size:11px;opacity:.75}
+.pa{border:1.5px solid #ffd23f88;background:#2a2740;border-radius:12px;padding:8px 12px;margin:0 0 10px}.pa .pah{font:16px Jua;color:var(--gold);margin-bottom:4px}.pa p{margin:3px 0;font-size:15px;line-height:1.6}.pa p b{color:#7ad8ff;margin-right:4px}.pa p.tr b{color:#ff9aa8}
+.cc{border:1px solid var(--line);border-radius:10px;background:#1a1f36;margin:8px 0;padding:6px 10px}.cc summary{cursor:pointer;font:16px Jua;color:var(--acc);padding:4px 0}.cc .cw{margin:4px 0 6px;font-size:15px;color:#fff}
+.cc h5{margin:8px 0 2px;font-size:13.5px;color:var(--gold)}.cc ul,.cc ol{margin:0;padding-left:20px}.cc li{font-size:14.5px;line-height:1.6;margin:1px 0}.cc .ce{margin:8px 0 2px;padding:6px 9px;border-radius:8px;background:#26304e;font-size:14px;line-height:1.6}.cc .ce b{color:var(--gold);margin-right:4px}
 #ctl{position:fixed;z-index:12;left:12px;bottom:14px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(54vw - 30px)}
 #ctl button,#ctl label{padding:9px 12px;border-radius:12px;border:1px solid #ffffff33;background:#1d2238e8;color:#fff;font-size:14.5px}#ctl button.on{background:#2a6a58;border-color:var(--acc)}
 #ctl label{display:flex;align-items:center;gap:8px}#ctl input{width:120px}
@@ -81,6 +85,7 @@ body.port #figp{left:8px;right:8px;width:auto;top:50px}body.port #figp img{max-h
 <script src="js/chem/data.js?v=2"></script>
 <script src="js/chem/data2.js?v=1"></script>
 <script src="js/chem/data3.js?v=1"></script>
+<script src="js/chem/solve.js?v=1"></script>
 <script type="importmap">{"imports":{"three":"./js/vendor/three.module.min.js"}}</script>
-<script type="module" src="js/chem/main.js?v=9"></script>
+<script type="module" src="js/chem/main.js?v=10"></script>
 </body></html>
