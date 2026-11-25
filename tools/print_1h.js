@@ -6,6 +6,7 @@ const ROOT = path.join(__dirname, '..');
 global.window = global; global.document = {};
 const J = f => require(path.join(ROOT, 'js', f));
 ['chem/data.js', 'chem/data2.js', 'chem/data3.js', 'chem/solve.js', 'chem/data4.js', 'chem/naesin.js'].forEach(J);
+const FIG = require('./print_figs.js');
 const circ = ['①', '②', '③', '④', '⑤', '⑥'];
 
 const css = `@page{size:A4;margin:12mm 12mm 13mm}
@@ -31,6 +32,7 @@ td,th{border:1px solid #555;padding:1mm 1.8mm;vertical-align:top;font-size:9.2pt
 .qimg{display:block;max-width:100%;max-height:62mm;margin:1mm 0;border:1px solid #ccc}
 .ans p{margin:0 0 1.3mm;font-size:8.6pt;line-height:1.45;break-inside:avoid}.ans{columns:2;column-gap:5mm}.ans h2{column-span:all}
 .ox{columns:2;column-gap:5mm;margin:0;padding-left:6mm}.ox li{break-inside:avoid;font-size:9pt;margin:0 0 1.2mm}.ox .b{font-weight:700;white-space:pre}
+.duo{display:flex;gap:3mm;align-items:flex-start;break-inside:avoid}.dl{flex:1;min-width:0}.fg{flex:0 0 68mm;border:1px solid #ccc;border-radius:2mm;padding:1mm;margin-top:2mm;background:#fcfcfc}.fg svg{display:block}
 .f{border:1.4px solid #111;border-radius:1mm;padding:0 1.5mm;font-weight:700;white-space:nowrap}
 @media screen{body{background:#e9e4d8}.wrap{background:#fff;padding:10mm 12mm;margin:6mm auto;box-shadow:0 2px 10px #0003}.btn{position:fixed;right:12px;top:12px;font:700 14px sans-serif;padding:6px 12px;border:1.5px solid #111;border-radius:4px;background:#5affd0;cursor:pointer}}
 @media print{.btn{display:none}.wrap{padding:0}}`;
@@ -38,8 +40,8 @@ const page = (title, body, extra = '') => `<!doctype html><html lang="ko"><head>
 const chap = (C, num) => `<div class="chap">
 <h2>${C.t} <small>${C.p || ''}</small></h2>
 <table class="nt"><tr><th style="width:17%">개념</th><th>쉬운 말 정리</th><th style="width:23%">내 필기</th></tr>${C.k.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td><td class="memo"></td></tr>`).join('')}</table>
-${C.r && C.r.length ? `<div class="box"><b>이런 문제는 이렇게</b>${C.r.map(([t, v]) => `<div class="rc"><b>${t}</b>: ${v}</div>`).join('')}</div>` : ''}
-${(C.w || []).map(([t, v]) => `<div class="warn"><b class="t">헷갈리는 것 — ${t}</b><br>${v}</div>`).join('')}
+<div class="duo"><div class="dl">${C.r && C.r.length ? `<div class="box"><b>이런 문제는 이렇게</b>${C.r.map(([t, v]) => `<div class="rc"><b>${t}</b>: ${v}</div>`).join('')}</div>` : ''}
+${(C.w || []).map(([t, v]) => `<div class="warn"><b class="t">헷갈리는 것 — ${t}</b><br>${v}</div>`).join('')}</div>${C.fig ? `<div class="fg">${C.fig}</div>` : ''}</div>
 ${C.ex ? `<div class="ex"><div class="exh">예제 따라 풀기 <span class="src">${C.ex.s || ''}</span></div>${C.ex.q}${C.ex.st.map(([q, a, why], i) => `<div class="st"><b>${circ[i] || i + 1}</b> ${q} → <b>${a}</b>${why ? `<br><span class="dim">${why}</span>` : ''}</div>`).join('')}<div class="ea">답: <b>${C.ex.a}</b></div></div>` : ''}
 ${C.pr ? `<div class="pr"><span class="n">직접 풀기 ${num}.</span> <span class="src">${C.pr.s || ''}</span><br>${C.pr.q}<div class="work"></div></div>` : ''}</div>`;
 
@@ -137,6 +139,7 @@ const CAL = [
   ex: { q: '$v(t)=3t^2-6t$, 원점 출발. $t=3$ 에서의 위치와 $0\\sim3$ 동안 움직인 거리', st: [['위치', '$\\int_0^3(3t^2-6t)dt=\\big[t^3-3t^2\\big]_0^3=0$', '원점에 돌아옴'], ['방향', '$v=3t(t-2)$: $0<t<2$ 뒤로, $t>2$ 앞으로', ''], ['거리', '$\\int_0^2(6t-3t^2)dt+\\int_2^3(3t^2-6t)dt=4+4$', '']], a: '위치 0, 거리 8' },
   pr: { s: '[중단원 평가 Ⅲ-2 · 17번]', q: '수직선 위를 움직이는 점 P의 시각 $t\\ (t\\ge0)$ 에서의 속도 $v(t)$ 가 $v(t)=-2t+6$ 일 때, $t=0$ 에서 $t=4$ 까지 점 P가 움직인 거리는?', a: '10 (⑤)', h: '$t=3$ 에서 $v=0$ → $\\int_0^3(6-2t)dt+\\int_3^4(2t-6)dt=9+1$' } },
 ];
+CAL.forEach((c, i) => { c.fig = FIG.CALC[i] && FIG.CALC[i](); });
 const calcBody = `<h1>미적분1 1시간 자습 프린트</h1>
 <p>범위: 교과서 87쪽~끝 — Ⅱ-2 도함수의 활용(03~06) · Ⅲ 적분 (부정적분·정적분 / 넓이 / 속도와 거리)</p>
 <table class="tt"><tr><th>0~5분</th><td><b>0. 미분 기계</b> — 이것만 되면 나머지가 다 풀려. 예제 가리고 따라 쓰기</td></tr>
@@ -237,6 +240,7 @@ const CH = [
   ex: { s: `[${Q['IV2-c1'].src}]`, q: img('IV2-c1'), st: [['정촉매가 바꾸는 것', '활성화 에너지 ↓ (새로운 경로)', '정반응·역반응 모두'], ['그러면', 'Eₐ 이상 에너지를 가진 분자 비율 ↑ → 반응 속도 ↑', ''], ['안 바뀌는 것', 'ΔH, 분자 운동 에너지 분포 (온도가 같으므로)', '']], a: Q['IV2-c1'].o[Q['IV2-c1'].a] },
   pr: prOf('V4-24') },
 ];
+CH.forEach((c, i) => { c.fig = FIG.CHEM[i + 1] && FIG.CHEM[i + 1](); });
 const ansOf = id => { const P = Q[id]; if (P.type === 'bogi') return `<b>${P.ans}</b> ${P.items.map(([l, , v, w]) => `${l}. ${v ? '⭕' : '❌'} ${w}`).join(' ')}`; if (P.type === 'mc') return `<b>${P.o[P.a]}</b> ${P.ex || ''}`; return `<b>${P.ans}</b>`; };
 const OXPICK = [ 'LNG의 주성분은', 'N₂(g) + 2O₂(g) → 2NO₂(g)는', '냉각 팩은', '1 g당 연소열이 가장 작은', '결합 에너지로 구한 ΔH = (생성물', 'O₂(g)와 O₃(g)의', '에타인(C₂H₂)과', '닫힌계는', '기체가 물에 녹는', '자발적 반응은 반응 속도가', '반응 차수는 화학', '반응 속도 상수 k는', '1차 반응인 N₂O₅', 'A 2개, B 3개', '온도를 10 °C 높이면', '온도가 높아지면 활성화 에너지가', '압력밥솥에서', '정촉매를 사용하면 정반응의', '오존 분해 Cl', '그린 수소는' ];
 const NS = window.CHEMNAESIN, OX = OXPICK.map(s => NS.find(x => x[1].startsWith(s))).filter(Boolean);
