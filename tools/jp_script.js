@@ -4,7 +4,7 @@
    node tools/jp_script.js build    → js/jp/story.js    (고친 대본.txt를 게임에 넣기) */
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'), TXT = path.join(ROOT, 'docs/jp/대본.txt'), JS = path.join(ROOT, 'js/jp/story.js');
-const WHO = { n: '나', o: '유나', s: '스즈', m: '엄마', d: '아빠', h: '하나', k: '미야코', t: '선생님', r: '반친구', f: '선배아빠' };
+const WHO = { n: '나', o: '유나', s: '스즈', m: '엄마', d: '아빠', h: '하나', k: '미야코', t: '선생님', r: '반친구', f: '선배아빠', u: '하루토' };
 const OHW = Object.fromEntries(Object.entries(WHO).map(([k, v]) => [v, k]));
 const CHAR = { o: '유나', s: '스즈' }, RCHAR = { 유나: 'o', 스즈: 's' };
 
@@ -15,11 +15,8 @@ function exportTxt() {
     for (const L of E.lines) {
       if (Array.isArray(L)) { const [w, f, m, t, tr] = L; const fm = f || m ? ` [${f || ''}/${m || ''}]` : ''; out.push(`${WHO[w] || w}${fm}: ${t}`); if (tr) out.push(`   (${tr})`); continue; }
       for (const [k, v] of Object.entries(L)) {
-        if (k === 'bg') out.push(`@배경 ${v}${L.night ? ' 밤' : L.rain ? ' 장마' : ''}`);
-        else if (k === 'flash') out.push(`@플래시 ${v}`);
-        else if (k === 'pov') out.push(`@시점 ${v}`);
-        else if (k === 'noise') out.push(`@노이즈 ${v}`);
-        else if (k === 'rain' || k === 'night' || k === 'sub' || k === 'once') continue;
+        if (k === 'bg') out.push(`@배경 ${v}${L.night ? ' 밤' : ''}${L.rain ? ' 장마' : ''}`);
+        else if (k === 'night' || k === 'rain' || k === 'sub' || k === 'once') continue;
         else if (k === 'title') out.push(`@제목 ${v}${L.sub ? ' / ' + L.sub : ''}`);
         else if (k === 'place') out.push(`@장소 ${v.replace(/^📍\s*/, '')}`);
         else if (k === 'shot') out.push(`@카메라 ${v}`);
@@ -33,6 +30,9 @@ function exportTxt() {
         else if (k === 'tspeed') out.push(`@텍스트속도 ${v}`);
         else if (k === 'tremble') out.push(`@글자떨림 ${v}`);
         else if (k === 'note') out.push(`@수첩 ${v}`);
+        else if (k === 'flash') out.push(`@플래시 ${v}`);
+        else if (k === 'view') out.push(`@시점 ${v}`);
+        else if (k === 'noise') out.push(`@노이즈 ${v}`);
         else if (k === 'pos') for (const [c, p] of Object.entries(v)) out.push(`@위치 ${CHAR[c]} ${p.join(' ')}`);
         else if (k === 'walk') for (const [c, p] of Object.entries(v)) out.push(`@걷기 ${CHAR[c]} ${p.join(' ')}`);
         else if (k === 'mot') for (const [c, m] of Object.entries(v)) out.push(`@동작 ${CHAR[c]} ${m}`);
@@ -58,9 +58,9 @@ function build() {
       errs.push(`${ln}줄: 들여쓰기 줄은 @선택·@마음선택 아래에만`); return; }
     cur = null;
     if (l.startsWith('@')) { const sp = l.indexOf(' '), cmd = sp < 0 ? l.slice(1) : l.slice(1, sp), arg = sp < 0 ? '' : l.slice(sp + 1).trim(), a = arg.split(/\s+/); let D = {}; const argC = arg.replace(/\s*\([^)]*\)\s*$/, '');
-      if (cmd === '배경') { D.bg = a[0]; if (a[1] === '밤') D.night = true; if (a[1] === '장마') D.rain = true; }
+      if (cmd === '배경') { D.bg = a[0]; if (a.includes('밤')) D.night = true; if (a.includes('장마') || a.includes('비')) D.rain = true; }
       else if (cmd === '제목') { const [t, s] = arg.split(' / '); D.title = t; if (s) D.sub = s; }
-      else if (cmd === '장소') D.place = '📍 ' + arg;
+      else if (cmd === '장소') D.place = arg;
       else if (cmd === '카메라') D.shot = argC;
       else if (cmd === '효과') D.fx = argC === '없음' ? null : argC;
       else if (cmd === '흔들림') D.shake = +arg;
@@ -72,8 +72,8 @@ function build() {
       else if (cmd === '텍스트속도') D.tspeed = argC;
       else if (cmd === '글자떨림') D.tremble = argC;
       else if (cmd === '수첩') D.note = argC;
-      else if (cmd === '플래시') D.flash = argC || '흰색';
-      else if (cmd === '시점') D.pov = argC;
+      else if (cmd === '플래시') D.flash = argC || '흰색 빠름';
+      else if (cmd === '시점') D.view = argC;
       else if (cmd === '노이즈') D.noise = argC;
       else if (cmd === '위치') D.pos = { [C(a[0], ln)]: a.slice(1).map(Number) };
       else if (cmd === '걷기') D.walk = { [C(a[0], ln)]: a.slice(1).map(Number) };
@@ -91,4 +91,31 @@ function build() {
   const js = `'use strict';\n/* 이 파일은 docs/jp/대본.txt 에서 자동으로 만들어져요 (node tools/jp_script.js build). 대본을 고치려면 대본.txt를 고치세요. */\nwindow.JPSTORY = ${JSON.stringify(ST, null, 1)};\n`;
   fs.writeFileSync(JS, js); console.log('→', JS, ST.length, '에피소드', ST.reduce((a, e) => a + e.lines.length, 0), '줄');
 }
-({ export: exportTxt, build })[process.argv[2]] ? ({ export: exportTxt, build })[process.argv[2]]() : console.log('사용법: node tools/jp_script.js export | build');
+/* 게임에 나오는 일본어 문구를 전부 모음 → tools/jp_yomi.py 가 읽기(후리가나)·발음을 만듦 */
+function texts() { global.window = {}; for (const f of ['js/jp/words.js', 'js/jp/ja.js', 'js/jp/story.js', 'js/jp/quiz.js', 'js/jp/notebook.js']) { delete require.cache[path.join(ROOT, f)]; require(path.join(ROOT, f)); }
+  const S = new Set(), walk = v => { if (typeof v === 'string') window.JA.japaneseOf(v).forEach(x => S.add(x)); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(window.JPSTORY); walk(window.JPQUIZ); (window.JPWORDS || []).forEach(w => w[0].split('・').forEach(x => S.add(x.trim()))); (window.NOTEBOOK.allTerms ? window.NOTEBOOK.allTerms() : []).forEach(x => S.add(x));
+  fs.writeFileSync(path.join(ROOT, 'tools/.jp_texts.json'), JSON.stringify([...S])); console.log('→ tools/.jp_texts.json', S.size, '개'); }
+/* 음성 녹음 계획: 대사마다 누가, 어떤 감정·속삭임·뜸으로 말하는지 → tools/jp_voice.py 가 VOICEVOX로 녹음 */
+function voiceplan() { global.window = {}; for (const f of ['js/jp/words.js', 'js/jp/ja.js', 'js/jp/story.js', 'js/jp/quiz.js', 'js/jp/notebook.js']) { delete require.cache[path.join(ROOT, f)]; require(path.join(ROOT, f)); }
+  const JA = window.JA, plan = new Map(), add = (who, text, ctx) => JA.japaneseOf(text).forEach(seg => { const k = `${who}|${seg}`; if (!plan.has(k) || (ctx.spoken && !plan.get(k).spoken)) plan.set(k, Object.assign({ key: k, who, text: seg }, ctx)); });
+  const spoken = t => /「/.test(t) && !/[가-힣]/.test(t.replace(/「[^」]*」/g, '').replace(/[(（][^)）]*[)）]/g, ''));   // 일본어로 말한 대사 (자동 재생·감정)
+  const WHISPER = /(속삭|귓가|귓속|소곤|나지막|목소리를 낮|작게 중얼|아주 작게|입술을 가져다|숨결로|귀 가까이|잠긴 목소리)/;
+  const SPK = { 하루토: 'u', 나: 'n', 유나: 'o', 스즈: 's', 엄마: 'm', 아빠: 'd', 하나: 'h', 미야코: 'k', 선생님: 't', 반친구: 'r', 선배아빠: 'f' };
+  const split = (line, defFace) => { const m = line.match(/^(하루토|선배아빠|선생님|반친구|미야코|유나|스즈|엄마|아빠|하나|나)\s*(?:\[([^\]]*)\])?\s*:\s*/); if (!m) return ['s', defFace, line]; const [f] = (m[2] || '').split('/'); return [SPK[m[1]], f || defFace, line.slice(m[0].length)]; };
+  for (const E of window.JPSTORY) { let breath = 0, slow = 0, tremble = 0; const hist = [];
+    for (const L of E.lines) {
+      if (!Array.isArray(L)) { if (L.breath) breath = L.breath; if (L.tspeed) slow = L.tspeed === '느림' ? 1 : L.tspeed === '빠름' ? -1 : 0; if (L.tremble) tremble = 1;
+        const ctx = { whisper: hist.slice(-2).some(h => WHISPER.test(h)), slow, breath: 0, tremble: 0 };
+        if (L.ask) { const [, , , , ok, no] = L.ask; for (const x of [ok, no]) if (x) { const [w, f, tx] = split(x, 'happy'); add(w, tx, Object.assign({}, ctx, { face: f, spoken: spoken(tx) })); } }
+        if (L.pick) L.pick[1].forEach(o => { const [w, f, tx] = split(o[3], o[1]); add(w, tx, Object.assign({}, ctx, { face: f, spoken: spoken(tx) })); });
+        continue; }
+      const [who, face, mot, text, tr] = L;
+      if (who !== 'n') add(who, text, { spoken: spoken(text), face, mot, whisper: hist.slice(-2).some(h => WHISPER.test(h)) || /^\((속삭|작게|귓속|속닥)/.test(text) || /^\((속삭|작게|속닥)/.test(tr || ''), slow, breath, tremble, label: (text.match(/^\(([^)]*)\)/) || [])[1] || '' });
+      hist.push(text + ' ' + (tr || '')); breath = 0; tremble = 0; } }
+  const gen = new Set(); const walk = v => { if (typeof v === 'string') JA.japaneseOf(v).forEach(x => gen.add(x)); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  walk(window.JPSTORY); walk(window.JPQUIZ); (window.JPWORDS || []).forEach(w => w[0].split('・').forEach(x => gen.add(x.trim()))); (window.NOTEBOOK.allTerms ? window.NOTEBOOK.allTerms() : []).forEach(x => gen.add(x));
+  gen.forEach(seg => { const k = `w|${seg}`; if (!plan.has(k)) plan.set(k, { key: k, who: 'w', text: seg }); });
+  fs.writeFileSync(path.join(ROOT, 'tools/.jp_voice_plan.json'), JSON.stringify([...plan.values()])); console.log('→ tools/.jp_voice_plan.json', plan.size, '개'); }
+const CMD = { export: exportTxt, build, texts, voiceplan };
+CMD[process.argv[2]] ? CMD[process.argv[2]]() : console.log('사용법: node tools/jp_script.js export | build | texts');
