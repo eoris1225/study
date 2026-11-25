@@ -225,6 +225,19 @@ function cardsPage(t, all) { return new Promise(res => { const SV = window.CHEMS
   card.hidden = false; layout(); head.innerHTML = `<b>📚 문제풀이 개념</b><span>${all ? '전체 카드' : t}</span>`; body.scrollTop = 0;
   body.innerHTML = `<p class="hint">문제를 보면 먼저 <b>"이게 무슨 반응이지?"</b> → 카드의 <b>풀이 순서</b>대로. 함정은 시험에 진짜 나옴.</p>` + ids.map((c, i) => SV.cardHTML(c, !all && i === 0)).join('');
   setFoot(all ? '<button class="pri" data-b="menu">☰ 메뉴</button>' : '<button data-b="menu">☰ 메뉴</button><button class="pri" data-b="next">알겠어, 문제 풀기 ▶</button>'); wait().then(res); }); }
+/* 🎯 내신 디테일 O/X: 한 판 20개 무작위 (틀린 적 있는 것 먼저), 틀린 건 저장 */
+async function naesin() { const N = window.CHEMNAESIN || []; if (!N.length) return; $('#menu').hidden = true; $('#top').hidden = false; card.hidden = false; layout();
+  SAVE.ns = SAVE.ns || {}; const wrong = N.map((_, i) => i).filter(i => SAVE.ns[i]), rest = shuffle(N.map((_, i) => i).filter(i => !SAVE.ns[i]));
+  const list = [...shuffle(wrong), ...rest].slice(0, 20); let ok = 0;
+  for (let n = 0; n < list.length; n++) { const i = list[n], [pg, st, tr, why] = N[i]; topbar(`🎯 내신 디테일 ${n + 1}/${list.length}`);
+    head.innerHTML = `<b>🎯 내신 디테일</b><span>교과서 ${pg}쪽 · ${n + 1}/${list.length}</span>`; body.scrollTop = 0;
+    body.innerHTML = `<div class="bar"><i style="width:${n / list.length * 100}%"></i></div><p class="q">${st}</p><div class="ox"><button data-v="1">⭕ 맞다</button><button data-v="0">❌ 틀리다</button></div><div class="fb"></div>`; setFoot('');
+    const right = await new Promise(r2 => { body.querySelector('.ox').onclick = e => { const b = e.target.closest('[data-v]'); if (!b) return; const good = (b.dataset.v === '1') === tr; hit(good, b, 8);
+      body.querySelectorAll('.ox button').forEach(x => { x.disabled = true; if ((x.dataset.v === '1') === tr) x.classList.add('ok'); }); if (!good) b.classList.add('no');
+      const fb = body.querySelector('.fb'); fb.className = 'fb ' + (good ? 'ok' : 'no'); fb.innerHTML = `${good ? '⭕ 맞아!' : '❌ 땡!'} <b>${tr ? '맞는 문장' : '틀린 문장'}</b> <span>${why || ''}</span>`; r2(good); }; });
+    if (right) { ok++; delete SAVE.ns[i]; } else SAVE.ns[i] = 1; save(); setFoot('<button class="pri" data-b="next">다음 ▶</button>'); await wait(); }
+  head.innerHTML = '<b>🎯 내신 디테일 끝</b>'; body.innerHTML = `<p class="big">${ok} / ${list.length}</p><p class="q">틀린 ${Object.keys(SAVE.ns).length}개는 다음 판에 먼저 나와.</p>`;
+  setFoot('<button data-b="menu">☰ 메뉴</button><button class="pri" data-b="again">한 판 더 ▶</button>'); const a = await wait(); if (a === 'again') return naesin(); menu(); }
 async function solveList(ids, title) { $('#menu').hidden = true; $('#top').hidden = false; topbar(title); for (const id of ids) { const r = await prob(id); if (r === 'menu') break; } menu(); }
 function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); card.hidden = true; $('#top').hidden = true; layout(); show('maxwell'); const m = $('#menu'); m.hidden = false; layout();
   const cur = SAVE.pos ? SECS[Math.min(SAVE.pos.i, SECS.length - 1)] : null; const allQ = Object.keys(Q); const wrong = allQ.filter(id => SAVE.res[id] === 0); const doneN = allQ.filter(id => id in SAVE.res).length;
@@ -234,7 +247,7 @@ function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); 
    <div class="row"><select data-sec>${SECS.map((x, i) => `<option value="${i}" ${cur && x === cur ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button data-from>여기부터</button></div>
    <h3>📝 교과서 문제 <small>${doneN}/${allQ.length} 풀이</small></h3>
    <div class="grid"><button data-u="III">Ⅲ 문제 전부 (${unitQ('III').length})</button><button data-u="IV">Ⅳ 문제 전부 (${unitQ('IV').length})</button>${wrong.length ? `<button data-w>🔁 틀린 문제 (${wrong.length})</button>` : ''}</div>
-   <div class="grid" style="margin-top:6px"><button data-print style="grid-column:1/-1">🖨️ 1시간 자습 프린트 <small>공식표 · 빈칸 · 실전 문제 · 정답</small></button><button data-cards style="grid-column:1/-1">📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
+   <div class="grid" style="margin-top:6px"><button data-ns style="grid-column:1/-1">🎯 내신 디테일 O/X <small>교과서 구석 숫자·물질 이름·생활 예·함정 문장 ${(window.CHEMNAESIN || []).length}개 · 틀린 것만 다시</small></button><button data-print style="grid-column:1/-1">🖨️ 1시간 자습 프린트 <small>공식표 · 빈칸 · 실전 문제 · 정답</small></button><button data-cards style="grid-column:1/-1">📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
    <h3>⚡ 스피드 런 <small>90초 · ❤️×3 · 확인 질문 + 빈칸 총출동</small></h3>
    <div class="grid"><button data-boss="III">Ⅲ 보스전 <small>최고 ${(SAVE.best || {}).III || 0}</small></button><button data-boss="IV">Ⅳ 보스전 <small>최고 ${(SAVE.best || {}).IV || 0}</small></button></div>
    <p class="tip">🎮 3D 미션 ${Object.keys(SAVE.mis || {}).length} / ${Object.keys(MIS).length} 달성 · Lv ${lvl()} · ⭐ ${SAVE.xp || 0} XP</p>
@@ -245,6 +258,7 @@ function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); 
     if (b.dataset.from !== undefined) return run({ i: +m.querySelector('[data-sec]').value, st: 0 });
     if (b.dataset.u) return solveList(unitQ(b.dataset.u), b.textContent);
     if (b.dataset.boss) return boss(b.dataset.boss);
+    if (b.dataset.ns !== undefined) return naesin();
     if (b.dataset.print !== undefined) return void window.open('chem_print.html', '_blank');
     if (b.dataset.cards !== undefined) { m.hidden = true; $('#top').hidden = false; topbar('📚 문제풀이 개념 카드'); return cardsPage('', true).then(() => menu()); }
     if (b.dataset.w !== undefined) return solveList(wrong, '틀린 문제 다시');

@@ -69,18 +69,22 @@ function probs() { PR = [];
     return `<div class="pq"><div class="ph"><b>${i + 1}</b><span>${P.src}</span><i>무슨 반응? <span class="ln w"></span></i></div><img src="img/chem/${P.img}.jpg" alt="${P.src}">${P.type === 'steps' ? `<p class="sm">답을 쓰고 풀이 과정을 적어 보기</p>` : ''}<div class="ans-ln">답 <span class="ln"></span></div></div>`; }).join('')}</div></section>`; }
 
 /* ⑤ 정답 */
+/* ③-2 내신 디테일 O/X (전부, 쪽 순서) */
+function ns() { const N = (window.CHEMNAESIN || []).slice().sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+  window.__NS = N; return `<section class="pg"><h2><em>⑥</em> 내신 디테일 O/X ${N.length}개 <small>교과서 구석 숫자·물질 이름·생활 예·함정 문장 · 괄호에 O/X, 틀린 문장은 밑줄 긋고 고치기</small></h2><ol class="ns">${N.map(([pg, st]) => `<li><span class="ox2">(  )</span> ${st} <small>${pg}쪽</small></li>`).join('')}</ol></section>`; }
 function key() { const ans = P => P.type === 'bogi' ? `${P.ans || ''}` : P.type === 'mc' ? P.o[P.a] : (P.ans || '');
   const why = P => P.type === 'bogi' ? P.items.map(([l, , v, w]) => `${l}. ${v ? '⭕' : '❌'} ${strip(w)}`).join(' &nbsp; ') : P.type === 'mc' ? strip(P.ex || '') : P.steps.map(([q, o, a]) => `${strip(q)} → <b>${strip(o[a])}</b>`).join('<br>');
   return `<section class="pg key"><h2>정답 · 풀이</h2><h3>③ 빈칸</h3><ol class="kb">${BL.map(b => `<li>${strip(b[2])}</li>`).join('')}</ol>
+  <h3>⑥ 내신 디테일 O/X</h3><ol class="kns">${(window.__NS || []).map(([pg, st, tr, why]) => `<li><b>${tr ? 'O' : 'X'}</b> ${tr ? '' : strip(why)}</li>`).join('')}</ol>
   <h3>④ 실전 문제</h3>${PR.map(([t, id], i) => { const P = Q[id], A = SV.PA[id]; return `<div class="ka"><p><b>${i + 1}. ${strip(ans(P))}</b> <small>(${P.src})</small></p>${A ? `<p class="an">무슨 반응? ${strip(A[0])}${A[1] ? ` · 먼저 볼 것: ${strip(A[1])}` : ''}${A[2] ? ` · <b>함정</b> ${strip(A[2])}` : ''}</p>` : ''}<p class="wy">${why(P)}</p></div>`; }).join('')}
   <p class="score">빈칸 <span></span> / ${BL.length} · 문제 <span></span> / ${PR.length} &nbsp; 틀린 문제는 ② 해당 카드의 "함정"을 다시 읽고, 게임 메뉴 🔁 틀린 문제로 복습</p></section>`; }
 
 function plan() { const d = new Date();
   return `<header class="top"><div><h1>화학 Ⅲ·Ⅳ · 1시간 자습 프린트</h1><p>교과서 72쪽~끝 + 학습지 &nbsp;·&nbsp; 이름 <span class="ln"></span> &nbsp; 날짜 ${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.</p></div>
-  <ul class="plan"><li><span class="bx2"></span><b>0~10분</b> ① 공식·판단표 소리 내 읽기</li><li><span class="bx2"></span><b>10~22분</b> ③ 빈칸 (보기 없이)</li><li><span class="bx2"></span><b>22~50분</b> ④ 실전 문제 (못 다 풀면 다음 시간에 이어서) — 풀기 전 "무슨 반응?" 먼저</li><li><span class="bx2"></span><b>50~60분</b> ⑤ 채점 → 틀린 유형은 ② 카드 함정 다시</li></ul>
+  <ul class="plan"><li><span class="bx2"></span><b>0~10분</b> ① 공식·판단표 소리 내 읽기</li><li><span class="bx2"></span><b>10~22분</b> ③ 빈칸 + ⑥ 내신 O/X (보기 없이)</li><li><span class="bx2"></span><b>22~50분</b> ④ 실전 문제 (못 다 풀면 다음 시간에 이어서) — 풀기 전 "무슨 반응?" 먼저</li><li><span class="bx2"></span><b>50~60분</b> ⑤ 채점 → 틀린 유형은 ② 카드 함정 다시</li></ul>
   <div class="btns"><button class="np" onclick="print()">인쇄하기</button><button class="np" id="re">문제·빈칸 다시 섞기</button></div></header>`; }
 
-function render() { document.getElementById('app').innerHTML = plan() + FORM + blanks() + probs() + cards() + key();
+function render() { document.getElementById('app').innerHTML = plan() + FORM + blanks() + ns() + probs() + cards() + key();
   document.getElementById('re').onclick = () => { seed = (seed * 31 + 17) % 99991; render(); scrollTo(0, 0); }; }
 render();
 })();
