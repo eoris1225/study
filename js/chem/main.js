@@ -213,6 +213,12 @@ body.addEventListener('pointermove', e => { if (TP.has(e.pointerId)) TP.set(e.po
 const up = e => { TP.delete(e.pointerId); if (TP.size < 2) sy = null; if (stroke && e.pointerId === stroke.id) stroke = null; };
 body.addEventListener('pointerup', up); body.addEventListener('pointercancel', up);
 
+/* ── 유령 클릭 막기: 대사를 넘긴 그 터치의 click이 새로 뜬 ⭕/❌·선택지에 떨어져 저절로 골라지던 버그
+   카드·선택지 내용이 바뀌면 0.45초 동안 그 안의 클릭은 무시 ── */
+let armAt = 0; const arm = () => { armAt = performance.now() + 450; };
+new MutationObserver(arm).observe(body, { childList: true }); new MutationObserver(arm).observe($('#sub .op'), { childList: true }); new MutationObserver(arm).observe(card, { attributes: true, attributeFilter: ['hidden'] });
+document.addEventListener('click', e => { if (performance.now() < armAt && e.target.closest && e.target.closest('#card .bd, #card .ft, #sub .op')) { e.stopPropagation(); e.preventDefault(); } }, true);
+
 /* ── 메뉴 ── */
 /* 문제풀이 개념 카드 (절마다 문제 들어가기 전에, 메뉴에서도 따로 볼 수 있음) */
 function cardsPage(t, all) { return new Promise(res => { const SV = window.CHEMSOLVE; if (!SV) return res(); const ids = all ? Object.keys(SV.CARDS) : SV.secCards(t); if (!ids.length) return res();
