@@ -42,13 +42,31 @@ canvas.ink{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
 #menu .row{display:flex;gap:6px;margin-top:6px}#menu select{flex:1;min-width:0;padding:10px;border-radius:12px;background:#262c48;color:#fff;border:1px solid var(--line);font-size:14px}
 #menu .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.tip{font-size:12.5px;opacity:.6;line-height:1.6}
 body.port #card{left:8px;right:8px;width:auto;top:auto;height:58vh;bottom:8px}body.port #ctl{bottom:calc(58vh + 18px);max-width:calc(100vw - 24px)}body.port #gph{width:280px;height:170px}body.port .fig img{max-height:22vh}
+#top em{margin-left:auto;font:15px Jua;font-style:normal;color:var(--gold);white-space:nowrap}#top em b{color:#ff9a4a}
+#mis{position:fixed;z-index:13;left:12px;top:288px;max-width:360px;padding:8px 12px;border-radius:12px;background:#1d2238ee;border:1.5px solid var(--gold);font-size:14.5px;line-height:1.45}#mis b{color:var(--gold)}#mis span{opacity:.75;font-size:12.5px}#mis.done{border-color:var(--acc);opacity:.85}#mis.pulse{animation:pl .6s 3}
+@keyframes pl{50%{transform:scale(1.06);background:#2a6a58}}
+body.port #mis{top:236px;max-width:calc(100vw - 24px)}#gph[hidden]~#mis{top:58px}
+.pop{position:fixed;z-index:60;transform:translate(-50%,0);font:22px Jua;color:var(--gold);text-shadow:0 2px 6px #000;pointer-events:none;animation:up .95s ease-out forwards}
+@keyframes up{to{transform:translate(-50%,-70px);opacity:0}}
+.toast{position:fixed;z-index:61;left:50%;top:70px;transform:translateX(-50%);padding:10px 18px;border-radius:14px;background:#2a2350f0;border:1.5px solid var(--gold);font-size:17px;pointer-events:none;animation:tin 1.9s forwards}
+@keyframes tin{0%{opacity:0;transform:translate(-50%,-10px)}12%,80%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+i.cf{position:fixed;z-index:59;top:-12px;width:9px;height:14px;border-radius:2px;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+#card.shake{animation:sh .35s}@keyframes sh{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.bar{height:8px;border-radius:4px;background:#ffffff1a;margin-bottom:8px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--gold));transition:width .3s}
+.bl{font-size:19px;line-height:1.8}.slot{display:inline-block;min-width:70px;padding:0 10px;border-radius:8px;border:2px dashed var(--gold);text-align:center;color:var(--gold)}.slot.ok{border-style:solid;border-color:var(--acc);background:#1f5a48;color:#fff}.slot.no{border-style:solid;border-color:var(--bad);background:#5a1f2a;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.chips button{padding:11px 16px;border-radius:999px;border:1.5px solid #5a6aa8;background:#262c48;color:#fff;font-size:17px}.chips button.ok{background:#1f5a48;border-color:var(--acc)}.chips button.no{background:#5a1f2a;border-color:var(--bad);animation:sh .3s}
+p.big{font:30px Jua;color:var(--gold);margin:16px 0 4px}
+#menu .grid button small{display:block;font-size:11.5px;opacity:.7}
 </style></head><body>
 <canvas id="stage"></canvas><canvas id="gph" width="360" height="220" hidden></canvas><div id="ctl" hidden></div>
-<div id="top" hidden><button>☰ 메뉴</button><span></span></div>
+<div id="top" hidden><button>☰ 메뉴</button><span></span><em id="xp"></em></div><div id="mis" hidden></div>
 <div id="card" hidden><div class="hd"></div><div class="bd"></div><div class="ft"></div></div>
 <div id="menu" hidden></div>
 <script src="js/zoomfig.js?v=402611251"></script>
-<script src="js/chem/data.js?v=1"></script>
+<script src="js/chem/data.js?v=2"></script>
+<script src="js/chem/data2.js?v=1"></script>
+<script src="js/chem/data3.js?v=1"></script>
 <script type="importmap">{"imports":{"three":"./js/vendor/three.module.min.js"}}</script>
-<script type="module" src="js/chem/main.js?v=1"></script>
+<script type="module" src="js/chem/main.js?v=2"></script>
 </body></html>
