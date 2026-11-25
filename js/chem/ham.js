@@ -12,7 +12,7 @@ const cam = new THREE.PerspectiveCamera(30, 1, 1, 300); cam.position.set(0, 7.6,
 const root = new THREE.Group(); S.add(root);
 const shadow = new THREE.Mesh(new THREE.CircleGeometry(5, 32), new THREE.MeshBasicMaterial({ color: '#000', transparent: true, opacity: .22 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = .05; S.add(shadow);
 
-let B = {}, rest = {}, ready = false, mood = 'idle', moodUntil = 0, talkUntil = 0, cur = {}, t = 0;
+let skin = null, B = {}, rest = {}, ready = false, mood = 'idle', moodUntil = 0, talkUntil = 0, cur = {}, t = 0;
 const NAMES = { L: 'mixamorigLeftArm', R: 'mixamorigRightArm', LF: 'mixamorigLeftForeArm', RF: 'mixamorigRightForeArm', H: 'mixamorigHead', N: 'mixamorigNeck', S: 'mixamorigSpine1', LL: 'mixamorigLeftUpLeg', RL: 'mixamorigRightUpLeg' };
 
 (async () => {
@@ -20,9 +20,17 @@ const NAMES = { L: 'mixamorigLeftArm', R: 'mixamorigRightArm', LF: 'mixamorigLef
   const o = await new FBXLoader(mgr).loadAsync('models/ham/Ham.fbx?v=1');
   const tex = new THREE.TextureLoader().load('models/ham/ham.jpg?v=1'); tex.colorSpace = THREE.SRGBColorSpace;
   o.traverse(n => { if (n.isBone) B[n.name] = n; if (n.isMesh) { n.frustumCulled = false;
-    const ms = [].concat(n.material).map(m => m.name.includes('Eye') ? new THREE.MeshToonMaterial({ color: '#141418' }) : m.name.includes('Hige') ? new THREE.MeshBasicMaterial({ color: '#3a3a40' }) : new THREE.MeshToonMaterial({ map: tex }));
-    n.material = ms.length === 1 ? ms[0] : ms; } });
+    const ms = [].concat(n.material).map(m => m.name.includes('Eye') ? Object.assign(new THREE.MeshPhongMaterial({ color: '#08080c', specular: '#8a8a8a', shininess: 80 }), { userData: { eye: 1 } }) : m.name.includes('Hige') ? new THREE.MeshBasicMaterial({ color: '#3a3a40' }) : new THREE.MeshToonMaterial({ map: tex }));
+    n.material = ms.length === 1 ? ms[0] : ms; if (n.isSkinnedMesh) skin = n; } });
   root.add(o); o.updateMatrixWorld(true);
+  /* 눈: 원본(Unity)처럼 반짝이는 검은 눈 + 하이라이트 */
+  if (skin) { const g = skin.geometry, pos = g.attributes.position, idx = g.index, eyeMat = [].concat(skin.material).findIndex(m => m.userData.eye);
+    const grp = g.groups.find(x => x.materialIndex === eyeMat); const head = B.mixamorigHead;
+    if (grp && head) { const v = new THREE.Vector3(), boxes = [new THREE.Box3(), new THREE.Box3()];
+      for (let i = grp.start; i < grp.start + grp.count; i++) { const k = idx ? idx.getX(i) : i; skin.getVertexPosition(k, v); skin.localToWorld(v); boxes[v.x < 0 ? 0 : 1].expandByPoint(v); }
+      for (const bx of boxes) { if (bx.isEmpty()) continue; const sz = bx.getSize(new THREE.Vector3()), c = bx.getCenter(new THREE.Vector3());
+        for (const [dx, dy, r] of [[.18, .2, .2], [-.16, -.18, .09]]) { const hl = new THREE.Mesh(new THREE.SphereGeometry(Math.max(sz.x, sz.y) * r, 12, 8), new THREE.MeshBasicMaterial({ color: '#ffffff' }));
+          const w = new THREE.Vector3(c.x + sz.x * dx * (c.x < 0 ? -1 : 1) * -1, c.y + sz.y * dy, bx.max.z); head.worldToLocal(w); hl.position.copy(w); head.add(hl); } } } }
   const rq = o.getWorldQuaternion(new THREE.Quaternion()).invert();
   for (const [n, b] of Object.entries(B)) rest[n] = { l: b.quaternion.clone(), w: rq.clone().multiply(b.getWorldQuaternion(new THREE.Quaternion())) };
   ready = true; cv.classList.add('on');

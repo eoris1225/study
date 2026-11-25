@@ -1,6 +1,6 @@
 /* 화학 개념 강의: 교과서 순서 · 3D 무대 · 확인 질문 · 교과서 문제(사진) · 펜 필기 · 진행 저장 */
 import { show, has, view } from './stage.js?v=2';
-import * as HAM from './ham.js?v=2';
+import * as HAM from './ham.js?v=3';
 const $ = s => document.querySelector(s);
 const C = window.CHEM, Q = window.CHEMQ;
 const KEY = 'chem_v1';
