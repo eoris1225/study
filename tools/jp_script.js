@@ -15,8 +15,11 @@ function exportTxt() {
     for (const L of E.lines) {
       if (Array.isArray(L)) { const [w, f, m, t, tr] = L; const fm = f || m ? ` [${f || ''}/${m || ''}]` : ''; out.push(`${WHO[w] || w}${fm}: ${t}`); if (tr) out.push(`   (${tr})`); continue; }
       for (const [k, v] of Object.entries(L)) {
-        if (k === 'bg') out.push(`@배경 ${v}${L.night ? ' 밤' : ''}`);
-        else if (k === 'night' || k === 'sub' || k === 'once') continue;
+        if (k === 'bg') out.push(`@배경 ${v}${L.night ? ' 밤' : L.rain ? ' 장마' : ''}`);
+        else if (k === 'flash') out.push(`@플래시 ${v}`);
+        else if (k === 'pov') out.push(`@시점 ${v}`);
+        else if (k === 'noise') out.push(`@노이즈 ${v}`);
+        else if (k === 'rain' || k === 'night' || k === 'sub' || k === 'once') continue;
         else if (k === 'title') out.push(`@제목 ${v}${L.sub ? ' / ' + L.sub : ''}`);
         else if (k === 'place') out.push(`@장소 ${v.replace(/^📍\s*/, '')}`);
         else if (k === 'shot') out.push(`@카메라 ${v}`);
@@ -55,7 +58,7 @@ function build() {
       errs.push(`${ln}줄: 들여쓰기 줄은 @선택·@마음선택 아래에만`); return; }
     cur = null;
     if (l.startsWith('@')) { const sp = l.indexOf(' '), cmd = sp < 0 ? l.slice(1) : l.slice(1, sp), arg = sp < 0 ? '' : l.slice(sp + 1).trim(), a = arg.split(/\s+/); let D = {}; const argC = arg.replace(/\s*\([^)]*\)\s*$/, '');
-      if (cmd === '배경') { D.bg = a[0]; if (a[1] === '밤') D.night = true; }
+      if (cmd === '배경') { D.bg = a[0]; if (a[1] === '밤') D.night = true; if (a[1] === '장마') D.rain = true; }
       else if (cmd === '제목') { const [t, s] = arg.split(' / '); D.title = t; if (s) D.sub = s; }
       else if (cmd === '장소') D.place = '📍 ' + arg;
       else if (cmd === '카메라') D.shot = argC;
@@ -69,6 +72,9 @@ function build() {
       else if (cmd === '텍스트속도') D.tspeed = argC;
       else if (cmd === '글자떨림') D.tremble = argC;
       else if (cmd === '수첩') D.note = argC;
+      else if (cmd === '플래시') D.flash = argC || '흰색';
+      else if (cmd === '시점') D.pov = argC;
+      else if (cmd === '노이즈') D.noise = argC;
       else if (cmd === '위치') D.pos = { [C(a[0], ln)]: a.slice(1).map(Number) };
       else if (cmd === '걷기') D.walk = { [C(a[0], ln)]: a.slice(1).map(Number) };
       else if (cmd === '동작') D.mot = { [C(a[0], ln)]: a[1] };

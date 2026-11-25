@@ -96,6 +96,9 @@ const MOT = {
   eat: t => ({ upperarm_R: [-.6, 0, .25], forearm_R: [-1.8 - Math.max(0, S(t * 5)) * .3, -.2, 0], upperarm_L: [-.6, 0, .2], forearm_L: [-.9, .5, 0], head: [.15, 0, 0] }),
   card: t => ({ upperarm_R: [-.9 - Math.max(0, S(t * 5)) * .4, 0, .3], forearm_R: [-.2, 0, 0], spine1: [.35, 0, 0], head: [.25, 0, 0] }),
   sleep: t => ({ head: [.45, 0, .3 + S(t) * .03], spine2: [.1, 0, .05] }),
+  grip_sleeve: t => ({ upperarm_R: [-.9, 0, .45], forearm_R: [-.5, -.3, 0], upperarm_L: [-.3, 0, .2], forearm_L: [-.9, .5, 0], head: [.22, .15, 0], spine1: [.12, 0, 0] }),
+  lean_in: t => { const k = Math.min(1, t * 1.5); return { spine1: [.35 * k, 0, 0], spine2: [.2 * k, 0, 0], head: [.1 * k, 0, 0], upperarm_L: [-1.2 * k, 0, .4], upperarm_R: [-1.2 * k, 0, -.4], forearm_L: [-.4, .6, 0], forearm_R: [-.4, -.6, 0] }; },
+  flinch_sound: t => { const k = t < .2 ? t / .2 : 1; return { spine2: [.25 * k, 0, 0], head: [.35 * k, 0, S(t * 30) * .03 * Math.max(0, 1 - t)], upperarm_L: [-.9 * k, 0, .9], upperarm_R: [-.9 * k, 0, -.9], forearm_L: [-2.2 * k, .3, 0], forearm_R: [-2.2 * k, -.3, 0], _sh: S(t * 40) * .03 * Math.max(0, 1 - t / 2) }; },
   look_away: t => ({ head: [.15, .65 * Math.min(1, t * 4), .1], neck: [0, .2, 0], upperarm_R: [-.4, 0, .2], forearm_R: [-1.6, -.3, 0] }),
   ear_red: t => ({ upperarm_L: [-.3, 0, .18], upperarm_R: [-.3, 0, -.18], forearm_L: [-.7, .6, 0], forearm_R: [-.7, -.6, 0], head: [.32, 0, .12], spine2: [.08, 0, 0] }),
   reach_miss: t => ({ upperarm_L: [-1.15 + S(t * 1.6) * .12, 0, .25], upperarm_R: [-1.15 - S(t * 1.6) * .12, 0, -.25], forearm_L: [-.25, .2, 0], forearm_R: [-.25, -.2, 0], spine1: [.18, 0, 0], head: [.1, S(t * .9) * .12, .1] }),
@@ -204,7 +207,7 @@ function setWorld(n) {
   if (Math.abs(SPOTS.o[2] - SPOTS.s[2]) < 1.5) { const k = SPOTS.o[0] < SPOTS.s[0] ? 1 : -1; SPOTS.o[3] = k * 1.15; SPOTS.s[3] = -k * 1.15; }
   place('o', SPOTS.o); place('s', SPOTS.s); FXclear();
 }
-const LIGHTS = { 벚꽃역광: { h: '#ffe6f0', g: '#8a6a7a', hi: 1.5, s: '#ffd0c0', si: 2.6, sp: [-10, 9, -18], ex: 1.18 }, 저녁실내: { h: '#ffd8a8', g: '#6a4a30', hi: 1.15, s: '#ffb070', si: 1.6, sp: [12, 8, 6], ex: 1.05 }, 아침햇살: { h: '#fff4e4', g: '#7a6a58', hi: 1.65, s: '#ffe6c0', si: 2.5, sp: [14, 10, 10], ex: 1.12 }, 정오햇살: { h: '#ffffff', g: '#7a7064', hi: 1.75, s: '#fffaf0', si: 2.6, sp: [4, 22, 6], ex: 1.08 }, 오후노을_시작: { h: '#ffe8cc', g: '#6a5040', hi: 1.45, s: '#ffc890', si: 2.2, sp: [16, 9, 8], ex: 1.08 }, 오후노을: { h: '#ffd4a8', g: '#5a3a28', hi: 1.25, s: '#ff9a50', si: 2.1, sp: [18, 5, 6], ex: 1.12 }, 저녁노을_어스름: { h: '#c8a8e0', g: '#3a2a40', hi: 1, s: '#ff9a70', si: 1.3, sp: [-16, 4, -10], ex: 1.18 }, 밤달빛: { h: '#9ab0ff', g: '#20203a', hi: .75, s: '#b8c8ff', si: .9, sp: [-8, 14, 4], ex: 1.25 }, 기본: { h: '#ffffff', g: '#6a5a50', hi: 1.6, s: '#fff2e0', si: 2.2, sp: [8, 18, 12], ex: 1.05 } };
+const LIGHTS = { 벚꽃역광: { h: '#ffe6f0', g: '#8a6a7a', hi: 1.5, s: '#ffd0c0', si: 2.6, sp: [-10, 9, -18], ex: 1.18 }, 저녁실내: { h: '#ffd8a8', g: '#6a4a30', hi: 1.15, s: '#ffb070', si: 1.6, sp: [12, 8, 6], ex: 1.05 }, 아침햇살: { h: '#fff4e4', g: '#7a6a58', hi: 1.65, s: '#ffe6c0', si: 2.5, sp: [14, 10, 10], ex: 1.12 }, 정오햇살: { h: '#ffffff', g: '#7a7064', hi: 1.75, s: '#fffaf0', si: 2.6, sp: [4, 22, 6], ex: 1.08 }, 오후노을_시작: { h: '#ffe8cc', g: '#6a5040', hi: 1.45, s: '#ffc890', si: 2.2, sp: [16, 9, 8], ex: 1.08 }, 오후노을: { h: '#ffd4a8', g: '#5a3a28', hi: 1.25, s: '#ff9a50', si: 2.1, sp: [18, 5, 6], ex: 1.12 }, 저녁노을_어스름: { h: '#c8a8e0', g: '#3a2a40', hi: 1, s: '#ff9a70', si: 1.3, sp: [-16, 4, -10], ex: 1.18 }, 오후햇살: { h: '#fff4e0', g: '#7a6a58', hi: 1.6, s: '#ffe2b0', si: 2.5, sp: [16, 14, 8], ex: 1.1 }, 오후실내: { h: '#ffe8c8', g: '#6a5040', hi: 1.35, s: '#ffd8a0', si: 1.9, sp: [14, 10, 8], ex: 1.06 }, 장마_오후: { h: '#b8c8d8', g: '#40505a', hi: 1.2, s: '#c8d8e8', si: .9, sp: [-6, 14, 8], ex: 1.02 }, 장마_역광: { h: '#d0d8e8', g: '#40505a', hi: 1.25, s: '#ffe8c8', si: 1.8, sp: [-12, 8, -14], ex: 1.1 }, 장마_저녁: { h: '#7a8aa8', g: '#20283a', hi: .85, s: '#8aa0c0', si: .6, sp: [-6, 14, 8], ex: 1.1 }, 병원형광등: { h: '#e8f4ff', g: '#9aa8b8', hi: 1.7, s: '#f0f8ff', si: 1.2, sp: [0, 20, 4], ex: 1.05 }, 밤형광등: { h: '#d8e8f0', g: '#3a4048', hi: 1.15, s: '#e8f4ff', si: .9, sp: [0, 20, 4], ex: 1.12 }, 축제등불: { h: '#ffb070', g: '#20183a', hi: 1.05, s: '#ff9a50', si: 1.1, sp: [8, 6, 10], ex: 1.3 }, 체육관빛: { h: '#fff8f0', g: '#8a7a68', hi: 1.8, s: '#ffffff', si: 1.6, sp: [0, 24, 6], ex: 1.05 }, 불꽃빛: { h: '#ffc8e0', g: '#20183a', hi: 1.1, s: '#ffd070', si: 1.6, sp: [0, 20, -20], ex: 1.35 }, 밤달빛: { h: '#9ab0ff', g: '#20203a', hi: .75, s: '#b8c8ff', si: .9, sp: [-8, 14, 4], ex: 1.25 }, 기본: { h: '#ffffff', g: '#6a5a50', hi: 1.6, s: '#fff2e0', si: 2.2, sp: [8, 18, 12], ex: 1.05 } };
 function light(n) { const k = LIGHTS[n] ? n : /밤|달/.test(n) ? '밤달빛' : /어스름|저녁노을/.test(n) ? '저녁노을_어스름' : /노을|석양/.test(n) ? '오후노을' : /아침/.test(n) ? '아침햇살' : /정오|낮/.test(n) ? '정오햇살' : /벚꽃/.test(n) ? '벚꽃역광' : /실내|저녁/.test(n) ? '저녁실내' : '기본'; const L = LIGHTS[k]; hemi.color.set(L.h); hemi.groundColor.set(L.g); hemi.intensity = L.hi; sun.color.set(L.s); sun.intensity = L.si; sun.position.set(...L.sp); R.toneMappingExposure = L.ex; }
 function place(k, p) { const a = AV[k]; if (!a || !p) return; a.g.position.set(p[0], p[1] || 0, p[2]); a.g.rotation.y = p[3] || 0; a.tgt = null; }
 function walk(k, x, z, ry) { const a = AV[k]; if (a) a.tgt = { p: V3(x, a.g.position.y, z), ry }; }
@@ -212,14 +215,15 @@ function walk(k, x, z, ry) { const a = AV[k]; if (a) a.tgt = { p: V3(x, a.g.posi
 /* ── 효과: 벚꽃 · 눈 · 불꽃 · 반딧불 ── */
 let parts = null;
 function FXclear() { if (parts) { scene.remove(parts.m); parts = null; } }
-function fx(kind) { FXclear(); if (!kind) return; const n = kind === 'fireworks' ? 600 : 260, geo = new THREE.BufferGeometry(), P = new Float32Array(n * 3), V = [];
+function fx(kind) { FXclear(); if (!kind) return; const n = kind === 'fireworks' ? 600 : kind === 'rain_heavy' ? 1400 : kind === 'rain' ? 800 : 260, geo = new THREE.BufferGeometry(), P = new Float32Array(n * 3), V = [];
   for (let i = 0; i < n; i++) { P[i * 3] = (Math.random() - .5) * 50; P[i * 3 + 1] = Math.random() * 25; P[i * 3 + 2] = (Math.random() - .5) * 40; V.push(Math.random()); }
-  geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); const col = { sakura: '#ffb8d0', snow: '#ffffff', fireworks: '#ffd060', firefly: '#d8ff60', confetti: '#ff7ab0', beans: '#c8a060' }[kind] || '#fff';
-  const m = new THREE.Points(geo, new THREE.PointsMaterial({ color: col, size: kind === 'fireworks' ? .35 : .45, transparent: true, opacity: .9, depthWrite: false })); scene.add(m); parts = { m, kind, V, t: 0 }; }
+  geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); const col = { rain: '#a8c8e8', rain_heavy: '#c0d8f0', sakura: '#ffb8d0', snow: '#ffffff', fireworks: '#ffd060', firefly: '#d8ff60', confetti: '#ff7ab0', beans: '#c8a060' }[kind] || '#fff';
+  const m = new THREE.Points(geo, new THREE.PointsMaterial({ color: col, size: kind === 'fireworks' ? .35 : kind.startsWith('rain') ? .12 : .45, transparent: true, opacity: .9, depthWrite: false })); scene.add(m); parts = { m, kind, V, t: 0 }; }
 function stepFX(dt) { if (!parts) return; parts.t += dt; const P = parts.m.geometry.attributes.position, k = parts.kind;
   for (let i = 0; i < P.count; i++) { let x = P.getX(i), y = P.getY(i), z = P.getZ(i); const v = parts.V[i];
     if (k === 'fireworks') { const c = Math.floor(i / 100), ph = (parts.t * .5 + c * .37) % 1, cx = ((c * 37) % 7 - 3) * 8, cy = 30 + (c % 3) * 5, a = i * 2.39996, r = ph * 12 * (0.6 + v * .4); x = cx + Math.cos(a) * r; y = cy + Math.sin(a * .7) * r - ph * ph * 6; z = -40 + Math.sin(a) * r * .5; parts.m.material.color.setHSL((c * .17 + .05) % 1, .9, .6); parts.m.material.opacity = 1 - ph; }
     else if (k === 'firefly') { x += S(parts.t + v * 9) * dt; y = 2 + Math.abs(S(parts.t * .5 + v * 7)) * 6; }
+    else if (k.startsWith('rain')) { y -= dt * (k === 'rain_heavy' ? 34 : 22) * (.7 + v * .5); if (y < 0) y = 25; }
     else { y -= dt * (k === 'snow' ? 1.5 : 2.2) * (.5 + v); x += S(parts.t + v * 6) * dt * 1.5; if (y < 0) y = 25; }
     P.setXYZ(i, x, y, z); } P.needsUpdate = true; }
 
@@ -236,7 +240,8 @@ function shotTarget() { const o = AV.o.g.position, s = AV.s.g.position, mid = o.
   else if (shot === 'sky') { p = mid.clone().addScaledVector(side, 18).add(V3(0, 4, 0)); l = mid.clone().add(V3(0, 18, -20)); }
   else { p = mid.clone().addScaledVector(side, 13 + L * .6).add(V3(sw, 7, 0)); l = mid.clone().add(V3(0, 5.6, 0)); }
   return [p, l]; }
-function stepCam(dt) { camT += dt; const [p, l] = shotTarget(); const k = Math.min(1, dt * 2.6); camPos.lerp(p, k); camLook.lerp(l, k); cam.position.copy(camPos); if (shake > 0) { shake -= dt; cam.position.x += (Math.random() - .5) * shake; cam.position.y += (Math.random() - .5) * shake; } cam.lookAt(camLook); }
+let camRoll = 0, rollT = 0; const SHOTMAP = { 줌인: 'close', '줌인 느림': 'close', 틸트: null };
+function stepCam(dt) { camT += dt; const [p, l] = shotTarget(); const k = Math.min(1, dt * 2.6); camPos.lerp(p, k); camLook.lerp(l, k); cam.position.copy(camPos); if (shake > 0) { shake -= dt; cam.position.x += (Math.random() - .5) * shake; cam.position.y += (Math.random() - .5) * shake; } cam.lookAt(camLook); if (rollT > 0) { rollT -= dt; cam.rotateZ(camRoll * Math.min(1, rollT)); } }
 
 /* ── 명찰 · 말풍선 위치 ── */
 const tmpV = V3(0, 0, 0);
@@ -278,7 +283,7 @@ document.addEventListener('click', e => { const j = e.target.closest && e.target
 function showLog() { const w = $('#log'); w.innerHTML = `<div class="lh"><b>📜 대사 기록</b><button data-x>닫기 ✕</button></div><div class="lb">${LOG.length ? LOG.map(([who, h]) => `<div class="lg" data-who="${who}">${NAMES[who] ? `<em style="color:${COLS[who]}">${NAMES[who]}</em>` : ''}<div>${h}</div></div>`).join('') : '<p>아직 기록이 없어요. 스토리를 진행하면 여기에 쌓여요. 일본어를 누르면 뜻·발음이 나오고 읽어 줘요.</p>'}</div>`;
   w.hidden = false; const lb = w.querySelector('.lb'); lb.scrollTop = lb.scrollHeight; w.querySelector('[data-x]').onclick = () => { w.hidden = true; $('#jpop').hidden = true; }; }
 /* 유나의 생존 수첩 */
-const NOTE = { 가족호칭_내남구분_친외가: ['가족 호칭', '내 가족은 낮춤(ちち·はは·あに·あね), 남의 가족은 높임(おとうさん·おかあさん). 친가·외가 구분 없음: 삼촌·외삼촌·고모부·이모부 = おじさん, 숙모·외숙모·고모·이모 = おばさん. 막내 기준으로 통일 (엄마가 큰딸을 おねえちゃん).'], 교복_변화_다양성: ['교복', '대부분 교복을 입음. 남 가쿠란(学ラン)·여 세일러복 → 1980년대 무렵부터 재킷형(블레이저) 증가. 요즘은 학생이 교복을 직접 정하는 학교, 치마·바지 선택, 남녀 공용 교복도.'], 고교생의하루_시간표: ['고교생의 하루', '8:00~8:30 등교 (자전거 통학 많음, 넓은 자전거 주차장) → 12:10 점심 (교실 도시락·식당·급식, 매점에서 간식·학용품) → 3:40 청소 (학생이 당번 정해 직접) → 4:00 동아리 → 7:00 학원 (한 곳에서 여러 과목).'], 부카츠_교사지도_운동부특징: ['동아리 (部活)', '운동부 / 문화부(관악·서예·다도·가루타…, 없으면 새로 만들기도). 운동부: 주 3~5회 자발적, 아침 수업 전·주말에도, 프로 선수가 되기도. 안 하고 바로 집에 가면 귀가부(帰宅部). 교사에게 지도는 업무 부담이지만 평생 이어지는 관계가 되기도. 전국 대회: 운동부 인터하이(7~8월), 문화부 전국 고교 종합 문화제(7월 말~8월 초).'], 성씨_통계_지역유래: ['성씨', '약 10만~30만 종. 많은 성: 사토·스즈키·다카하시·다나카·이토. 귀족·무사만 쓰다가 메이지 유신 이후 서민도. 지형·방향 조합(山下·小川·田中·前田·森), 지방 유래(가고시마 아리무라). 부부는 법률상 같은 성 → 부부 별성 요구 ↑.'] };
+const NOTE = { 가족호칭_내남구분_친외가: ['가족 호칭', '내 가족은 낮춤(ちち·はは·あに·あね), 남의 가족은 높임(おとうさん·おかあさん). 친가·외가 구분 없음: 삼촌·외삼촌·고모부·이모부 = おじさん, 숙모·외숙모·고모·이모 = おばさん. 막내 기준으로 통일 (엄마가 큰딸을 おねえちゃん).'], 교복_변화_다양성: ['교복', '대부분 교복을 입음. 남 가쿠란(学ラン)·여 세일러복 → 1980년대 무렵부터 재킷형(블레이저) 증가. 요즘은 학생이 교복을 직접 정하는 학교, 치마·바지 선택, 남녀 공용 교복도.'], 고교생의하루_시간표: ['고교생의 하루', '8:00~8:30 등교 (자전거 통학 많음, 넓은 자전거 주차장) → 12:10 점심 (교실 도시락·식당·급식, 매점에서 간식·학용품) → 3:40 청소 (학생이 당번 정해 직접) → 4:00 동아리 → 7:00 학원 (한 곳에서 여러 과목).'], 부카츠_교사지도_운동부특징: ['동아리 (部活)', '운동부 / 문화부(관악·서예·다도·가루타…, 없으면 새로 만들기도). 운동부: 주 3~5회 자발적, 아침 수업 전·주말에도, 프로 선수가 되기도. 안 하고 바로 집에 가면 귀가부(帰宅部). 교사에게 지도는 업무 부담이지만 평생 이어지는 관계가 되기도. 전국 대회: 운동부 인터하이(7~8월), 문화부 전국 고교 종합 문화제(7월 말~8월 초).'], 방문예절_체류시간_외투: ['방문 예절', '방문 전 약속·선물 준비 → 외투는 밖에서 벗어 손에 → 신발 코 바깥쪽 → 선물은 쇼핑백에서 꺼내 양손으로 → 문지방·다다미 테두리·방석 밟지 않기 → 화장실은 「トイレ、かりてもいいですか」 → 너무 오래 머물지 않기 → 외투는 현관을 나와서 입기 → 다녀온 뒤 감사 전화·문자.'], 선물_금기품목_4종: ['피해야 할 선물', '병문안: 화분(根付く=寝付く 앓아누움)·흰 꽃(죽음)·붉은 꽃(피) / 집들이: 라이터·초·재떨이·붉은 꽃(화재) / 상사: 신발·양말·슬리퍼(밟는다) / 결혼: 칼·가위(인연 끊음)·도자기·유리(깨짐).'], 인사말_만날때_헤어질때: ['인사말', '만날 때: おはよう(아침, 정중히 おはようございます)·こんにちは(낮)·こんばんは(저녁). 매일 보는 친구·가족끼린 こんにちは 잘 안 씀, 직장은 시간 상관없이 おはようございます. 헤어질 때: さようなら = 오래 헤어질 때(학교 선생님·학생 정도) / 친구: じゃあね·またね·また明日·バイバイ / 손윗사람: 失礼します.'], 계절선물_오추겐_오세이보: ['계절 선물 · 답례', 'お中元(오추겐) = 7월 중순 (소면·장어·젤리·아이스크림), お歳暮(오세이보) = 12월 (고기·게·햄·과자). 상사·신세 진 사람에게, 요즘은 택배로. 받은 선물엔 おかえし(답례) = 1/3~반 정도. 선물 명칭: プレゼント(특별한 날)·おみやげ(여행)·てみやげ(방문)·おかえし(답례).'], 고시엔_야구대회: ['고시엔 (甲子園)', '전국 고교 야구 선수권 대회. 100년 넘는 역사, 매년 8월, TV 생중계, 지역 예선 3,000팀 이상, 토너먼트(한 번 지면 끝), 진 팀은 구장의 흙을 담아 감. 봄 대회도 있음.'], 성씨_통계_지역유래: ['성씨', '약 10만~30만 종. 많은 성: 사토·스즈키·다카하시·다나카·이토. 귀족·무사만 쓰다가 메이지 유신 이후 서민도. 지형·방향 조합(山下·小川·田中·前田·森), 지방 유래(가고시마 아리무라). 부부는 법률상 같은 성 → 부부 별성 요구 ↑.'] };
 function note(k) { SAVE.notes = SAVE.notes || {}; const first = !SAVE.notes[k]; SAVE.notes[k] = 1; save(); const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; const n = document.createElement('div'); n.className = 'nb'; n.innerHTML = `<small>📒 유나의 생존 수첩 ${first ? '· 새 항목' : ''}</small><b>${t}</b>${d ? `<p>${d}</p>` : ''}`; document.body.appendChild(n); setTimeout(() => n.classList.add('off'), 6500); setTimeout(() => n.remove(), 7200); }
 function notebook() { const w = $('#notebook'); const ks = Object.keys(SAVE.notes || {}); w.innerHTML = `<div class="lh"><b>📒 유나의 생존 수첩</b><button data-x>닫기 ✕</button></div><div class="lb">${ks.length ? ks.map(k => { const [t, d] = NOTE[k] || [k.replace(/_/g, ' '), '']; return `<div class="lg"><em>${t}</em><div>${d}</div></div>`; }).join('') : '<p>아직 비어 있어요. 스토리 중에 하나씩 채워져요.</p>'}</div>`; w.hidden = false; w.querySelector('[data-x]').onclick = () => { w.hidden = true; }; }
 
@@ -326,7 +331,7 @@ async function runEp(ep, i0 = 0) {
   /* 시작 위치까지의 배경·자세를 다시 계산 */
   let bg = E.lines.find(x => x.bg)?.bg || 'room';
   for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.bg) { bg = x.bg; CUR.night = !!x.night; } }
-  setWorld(bg); let lt = '기본'; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.light) lt = x.light; } light(lt); TSPD = 2; TREM = '';
+  setWorld(bg); let lt = '기본'; for (let j = 0; j < i0; j++) { const x = E.lines[j]; if (x && x.light) lt = x.light; } light(lt); TSPD = 2; TREM = ''; pov('복귀'); noise('없음');
   for (let i = i0; i < E.lines.length; i++) {
     CUR.i = i; SAVE.ep = ep; SAVE.i = i; save(); $('#prog').textContent = `${E.t} · ${Math.round(i / E.lines.length * 100)}%`;
     const L = E.lines[i]; if (STOP) return;
@@ -350,7 +355,7 @@ async function directive(D) {
   if (D.bg) { CUR.night = !!D.night; await fade(() => setWorld(D.bg)); }
   if (D.title) await card(D.title, D.sub || '', true);
   if (D.place) { const p = $('#place'); p.innerHTML = D.place; p.classList.remove('on'); void p.offsetWidth; p.classList.add('on'); }
-  if (D.shot) shot = D.shot;
+  if (D.shot) { if (/틸트/.test(D.shot)) { camRoll = .14; rollT = 1.6; } else shot = SHOTMAP[D.shot] !== undefined ? (SHOTMAP[D.shot] || shot) : /줌/.test(D.shot) ? 'close' : D.shot; }
   if (D.pos) for (const [k, v] of Object.entries(D.pos)) place(k, v);
   if (D.walk) for (const [k, v] of Object.entries(D.walk)) walk(k, v[0], v[1], v[2]);
   if (D.prop) for (const [k, n, on] of D.prop) prop(k, n, on !== false);
@@ -361,34 +366,47 @@ async function directive(D) {
   if (D.sfx) sfx(D.sfx);
   if (D.wait) await new Promise(r => setTimeout(r, D.wait));
   if (D.light) light(D.light);
+  if (D.flash) flash();
+  if (D.pov) pov(D.pov);
+  if (D.noise) noise(D.noise);
+  if (D.rain) fx('rain');
   if (D.tspeed) TSPD = { 느림: 1, 보통: 2, 빠름: 4 }[D.tspeed] || 2;
   if (D.tremble) TREM = D.tremble;
   if (D.note) note(D.note);
   if (D.breath) { tx$.innerHTML = ''; nm.hidden = true; await new Promise(r => setTimeout(r, D.breath)); }
+  const RN = { 유나: 'o', 스즈: 's', 엄마: 'm', 아빠: 'd', 하나: 'h', 미야코: 'k', 선생님: 't', 반친구: 'r', 선배아빠: 'f' };
+  const sayAs = async (face, mot, line, extra) => { const m = String(line).match(/^(\S+?)\s*(?:\[([^\]]*)\])?\s*:\s*/); const who = m && RN[m[1]];
+    if (!who || who === 's') { if (m && who === 's') { line = line.slice(m[0].length); if (m[2]) { const [f, mo] = m[2].split('/'); if (f) face = f; if (mo) mot = mo; } } return sayS(face, mot, line, extra); }
+    line = line.slice(m[0].length); if (AV[who] && m[2]) { const [f, mo] = m[2].split('/'); if (f) setFace(AV[who], f); if (mo) motion(AV[who], mo); }
+    box$.className = 'who-' + who; box$.dataset.who = who; nm.hidden = false; nm.textContent = NAMES[who]; nm.style.color = COLS[who]; const h = fmt(line) + (extra ? window.JA.render(extra) : ''); LOG.push([who, h]); speak(who, line); await typeOut(h); await tapWait(0); };
   const sayS = async (face, mot, line, extra) => { setFace(AV.s, face); motion(AV.s, mot); box$.className = 'who-s'; nm.hidden = false; nm.textContent = NAMES.s; nm.style.color = COLS.s; AV.s.talk = 2 + line.length * .05; box$.dataset.who = 's'; const h = fmt(line) + (extra ? window.JA.render(extra) : ''); LOG.push(['s', h]); speak('s', line); await typeOut(h); await tapWait(0); };
   /* 시험 선택지: 정답이면 호감도 크게, 틀려도 스즈가 다정하게 알려 주고 그대로 진행 (복습 목록에 저장) */
   if (D.ask) { const [q, opts, ans, why, okLine, noLine] = D.ask; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = '🎮 ' + fmt(q); const k = await radial(q, opts);
     const tag = 'ask:' + CUR.ep + ':' + CUR.i;
-    if (k === ans) { heart(+3); sfx('ok'); delete SAVE.miss[tag]; save(); await sayS('happy', 'nod', okLine || '정답!', `<span class="why">📘 ${why}</span>`); }
-    else { heart(+1); sfx('pop'); SAVE.miss[tag] = [q, opts[ans], why]; save(); await sayS('smile', 'tilt', (noLine || '음, 그건 이렇게 하는 거야.'), `<span class="why">🌱 정답은 <b>${opts[ans]}</b><br>📘 ${why}</span>`); }
+    if (k === ans) { heart(+3); sfx('ok'); delete SAVE.miss[tag]; save(); await sayAs('happy', 'nod', okLine || '정답!', `<span class="why">📘 ${why}</span>`); }
+    else { heart(+1); sfx('pop'); SAVE.miss[tag] = [q, opts[ans], why]; save(); await sayAs('smile', 'tilt', (noLine || '음, 그건 이렇게 하는 거야.'), `<span class="why">🌱 정답은 <b>${opts[ans]}</b><br>📘 ${why}</span>`); }
     motion(AV.s, 'idle'); }
   /* 관계 선택지: 어느 쪽을 골라도 좋은 장면 + 배울 거리 */
   if (D.pick) { const [q, opts, learn] = D.pick; box$.className = 'who-n'; nm.hidden = true; tx$.innerHTML = '💗 ' + fmt(q); const k = await radial(q, opts.map(o => o[0]));
     const [, face, mot, line, by] = opts[k]; heart(+2); sfx('ok'); if (by) motion(AV.o, by); await sayS(face, mot, line, learn ? `<span class="why">📘 ${learn}</span>` : ''); motion(AV.s, 'idle'); }
   if (D.quiz) await quiz(D.quiz);
 }
+function overlay(id, cls) { let d = document.getElementById(id); if (!d) { d = document.createElement('div'); d.id = id; document.body.appendChild(d); } d.className = cls || ''; return d; }
+function flash() { const d = overlay('fxflash', 'on'); setTimeout(() => d.className = '', 60); }
+function pov(v) { overlay('fxpov', /복귀|없음|끝/.test(v) ? '' : 'on'); }
+function noise(v) { overlay('fxnoise', /강/.test(v) ? 'on strong' : /약/.test(v) ? 'on' : ''); }
 function fade(fn) { return new Promise(res => { const f = $('#fade'); f.classList.add('on'); setTimeout(() => { fn(); f.classList.remove('on'); setTimeout(res, 500); }, 500); }); }
 function card(t, s, auto2) { return new Promise(res => { const c = $('#card'); c.innerHTML = `<h2>${t}</h2><p>${s}</p>${auto2 ? '' : '<button>계속 ▶</button>'}`; c.hidden = false; 
   const go = () => { c.hidden = true; res(); }; if (auto2) setTimeout(go, 2600); else c.querySelector('button').onclick = go; c.onclick = e => { if (auto2) go(); }; }); }
 /* 효과음 (합성) */
-const SFX_ALIAS = { door_open: 'door', door_slide: 'door', cane_tap: 'tap', footsteps_fast: 'tap', brush_hair: 'tap', bike_bell: 'bell', birds_morning: 'chime', cicada_spring_wind: 'chime', night_crickets: 'chime', evening_chime: 'bell', wind_sakura: 'chime' };
+const SFX_ALIAS = { door_open: 'door', door_slide: 'door', cane_tap: 'tap', footsteps_fast: 'tap', brush_hair: 'tap', bike_bell: 'bell', birds_morning: 'chime', cicada_spring_wind: 'chime', night_crickets: 'chime', evening_chime: 'bell', wind_sakura: 'chime', station_crowd: 'tap', ceramic_clatter: 'crash', rain_loop: 'rain', rain_soft: 'rain', rain_heavy: 'rain', cloth_rustle: 'tap', slip: 'ng', crash_rain: 'crash', cane_clatter: 'tap', summer_cicada_night: 'chime', thunder_distant: 'gong', rain_crash_flashback: 'crash', rain_heavy_muffled: 'rain', crowd_cheer: 'clap', taiko_bon: 'gong', fireworks_big: 'gong' };
 let AC = null; function sfx(k) { k = SFX_ALIAS[k] || k; try { AC = AC || new AudioContext(); const o = AC.createOscillator(), g = AC.createGain(); o.connect(g); g.connect(AC.destination); const t = AC.currentTime;
-  const S2 = { tap: [[1200, 0], [900, .04]], chime: [[2093, 0], [2637, .12]], ok: [[660, 0], [990, .08]], ng: [[220, 0], [160, .12]], bell: [[1320, 0], [1320, .4]], gong: [[110, 0], [100, 1.2]], door: [[520, 0], [780, .1]], pop: [[400, 0], [900, .05]], clap: [[900, 0], [300, .03]] }[k] || [[440, 0]];
+  const S2 = { crash: [[180, 0], [90, .05]], rain: [[300, 0], [280, .2]], tap: [[1200, 0], [900, .04]], chime: [[2093, 0], [2637, .12]], ok: [[660, 0], [990, .08]], ng: [[220, 0], [160, .12]], bell: [[1320, 0], [1320, .4]], gong: [[110, 0], [100, 1.2]], door: [[520, 0], [780, .1]], pop: [[400, 0], [900, .05]], clap: [[900, 0], [300, .03]] }[k] || [[440, 0]];
   o.type = k === 'gong' ? 'sine' : k === 'bell' ? 'triangle' : 'square'; S2.forEach(([f, d]) => o.frequency.setValueAtTime(f, t + d)); g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.0001, t + (k === 'gong' ? 2.5 : k === 'bell' ? 1 : .3)); o.start(t); o.stop(t + 2.6); } catch (e) { } }
 
 /* ── 메뉴 ── */
 let STOP = false;
-function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $('#hud').hidden = true; $('#quiz').hidden = true; $('#radial').hidden = true; const m = $('#menu'); m.hidden = false; tx$.innerHTML = ''; nm.hidden = true; hideWords();
+function menu() { STOP = true; try { speechSynthesis.cancel(); } catch (e) { } $('#hud').hidden = true; $('#quiz').hidden = true; $('#radial').hidden = true; pov('복귀'); noise('없음'); const m = $('#menu'); m.hidden = false; tx$.innerHTML = ''; nm.hidden = true; hideWords();
   setWorld('street'); fx('sakura'); shot = 'wide'; place('s', [2.5, 0, 0, -.4]); place('o', [-2.5, 0, 0, .4]); setFace(AV.s, 'happy'); setFace(AV.o, 'smile'); motion(AV.o, 'wave');
   m.innerHTML = `<div class="mc"><h1>스즈 소리, 유나 목소리<small>鈴の音、ユナの声 — 일본 문화 4·5·6과 스토리</small></h1>
   <p class="lead">한국에서 온 교환학생 <b style="color:#ffd23f">한유나</b>(나)와 앞을 보지 못하는 일본 소녀 <b style="color:#ff9ab8">야마시타 스즈</b>의 1년. 내가 고르는 선택지가 곧 시험 문제!</p>
