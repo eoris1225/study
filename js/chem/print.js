@@ -55,16 +55,17 @@ function cards() { const C = SV.CARDS;
 let BL = [];
 function blanks() { const all = []; SECS.forEach(x => (x.s.blanks || []).forEach(b => all.push([x.s.t, ...b])));
   const by = {}; all.forEach(b => (by[b[0]] = by[b[0]] || []).push(b));
-  BL = []; for (const k of Object.keys(by)) BL.push(...shuf(by[k]).slice(0, 2)); BL = BL.slice(0, 32);
-  return `<section class="pg"><h2><em>③</em> 빈칸 ${BL.length}개 <small>보기 없이 먼저 써 보기 · 10분</small></h2><ol class="bl">${BL.map(b => `<li>${strip(b[1]).replace('___', '<span class="ln"></span>')}</li>`).join('')}</ol></section>`; }
+  BL = []; for (const k of Object.keys(by)) BL.push(...shuf(by[k]).slice(0, 3)); BL = BL.slice(0, 48);
+  return `<section class="pg"><h2><em>③</em> 빈칸 ${BL.length}개 <small>보기 없이 먼저 써 보기 · 12분</small></h2><ol class="bl">${BL.map(b => `<li>${strip(b[1]).replace('___', '<span class="ln"></span>')}</li>`).join('')}</ol></section>`; }
 
 /* ④ 실전 문제 */
-const PICK = ['열화학 반응식', '결합 에너지와 반응 엔탈피', '헤스 법칙', '헤스 법칙과 생성 엔탈피', '엔트로피 · 무질서도', '반응 엔탈피와 반응의 자발성', '반응 엔탈피와 반응의 자발성', '반응 속도식 · 반응 차수', '1차 반응의 반감기', '유효 충돌과 활성화 에너지', '온도와 반응 속도', '촉매와 반응 속도'];
+const BIG = { '반응 엔탈피와 반응의 자발성': 4, '온도와 반응 속도': 3, '1차 반응의 반감기': 3, '촉매와 반응 속도': 3, '헤스 법칙과 생성 엔탈피': 3, '헤스 법칙': 3, '반응 속도식 · 반응 차수': 3, '열화학 반응식': 3 };
 let PR = [];
-function probs() { const used = new Set();
-  PR = PICK.map(t => { const s = SECS.find(x => x.s.t === t).s; const ids = (s.probs || []).filter(id => Q[id] && Q[id].img && !used.has(id));
-    const pref = ids.filter(id => /^(V|U)/.test(id)); const id = shuf(pref.length ? pref : ids)[0]; used.add(id); return [t, id]; }).filter(x => x[1]);
-  return `<section class="pg"><h2><em>④</em> 실전 문제 ${PR.length}개 <small>사진 문제 · 25분 · 풀기 전에 문제 옆에 "무슨 반응?" 한 줄 적기</small></h2><div class="pqs">${PR.map(([t, id], i) => { const P = Q[id];
+function probs() { PR = [];
+  for (const x of SECS) { const ids = (x.s.probs || []).filter(id => Q[id] && Q[id].img); if (!ids.length) continue;
+    const pref = shuf(ids.filter(id => /^(V|U)/.test(id))), rest = shuf(ids.filter(id => !/^(V|U)/.test(id)));
+    [...pref, ...rest].slice(0, BIG[x.s.t] || 2).forEach(id => PR.push([x.s.t, id])); }
+  return `<section class="pg"><h2><em>④</em> 실전 문제 ${PR.length}개 <small>사진 문제 · 단원 순서 · 풀기 전에 "무슨 반응?" 한 줄 · 시간 남으면 끝까지</small></h2><div class="pqs">${PR.map(([t, id], i) => { const P = Q[id];
     return `<div class="pq"><div class="ph"><b>${i + 1}</b><span>${P.src}</span><i>무슨 반응? <span class="ln w"></span></i></div><img src="img/chem/${P.img}.jpg" alt="${P.src}">${P.type === 'steps' ? `<p class="sm">답을 쓰고 풀이 과정을 적어 보기</p>` : ''}<div class="ans-ln">답 <span class="ln"></span></div></div>`; }).join('')}</div></section>`; }
 
 /* ⑤ 정답 */
@@ -76,7 +77,7 @@ function key() { const ans = P => P.type === 'bogi' ? `${P.ans || ''}` : P.type 
 
 function plan() { const d = new Date();
   return `<header class="top"><div><h1>화학 Ⅲ·Ⅳ · 1시간 자습 프린트</h1><p>교과서 72쪽~끝 + 학습지 &nbsp;·&nbsp; 이름 <span class="ln"></span> &nbsp; 날짜 ${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.</p></div>
-  <ul class="plan"><li><span class="bx2"></span><b>0~10분</b> ① 공식·판단표 소리 내 읽기</li><li><span class="bx2"></span><b>10~20분</b> ③ 빈칸 (보기 없이)</li><li><span class="bx2"></span><b>20~45분</b> ④ 실전 문제 — 풀기 전 "무슨 반응?" 먼저</li><li><span class="bx2"></span><b>45~60분</b> ⑤ 채점 → 틀린 유형은 ② 카드 함정 다시</li></ul>
+  <ul class="plan"><li><span class="bx2"></span><b>0~10분</b> ① 공식·판단표 소리 내 읽기</li><li><span class="bx2"></span><b>10~22분</b> ③ 빈칸 (보기 없이)</li><li><span class="bx2"></span><b>22~50분</b> ④ 실전 문제 (못 다 풀면 다음 시간에 이어서) — 풀기 전 "무슨 반응?" 먼저</li><li><span class="bx2"></span><b>50~60분</b> ⑤ 채점 → 틀린 유형은 ② 카드 함정 다시</li></ul>
   <div class="btns"><button class="np" onclick="print()">인쇄하기</button><button class="np" id="re">문제·빈칸 다시 섞기</button></div></header>`; }
 
 function render() { document.getElementById('app').innerHTML = plan() + FORM + blanks() + probs() + cards() + key();
