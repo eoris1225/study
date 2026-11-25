@@ -95,11 +95,18 @@ function boss(uid) { const tok = bossTok = {}; noMission(); subOff(); $('#menu')
 
 /* ── 스토리: 대본(docs/chem/대본.txt) · 영화 자막 · 아무 데나 탭하면 다음 ── */
 const STORY = {};
-try { const txt = await (await fetch(encodeURI('docs/chem/대본.txt') + '?v=1')).text(); let cur = null;
+/* 대본 속 $…$ 수식 → HTML (ΔH, 아래첨자, 위첨자, °, × …) */
+function tex(m) { const T = []; m = m.replace(/</g, '\u0003').replace(/>/g, '\u0004').replace(/\^\\circ/g, '°').replace(/\\text\{([^{}]*)\}/g, (_, x) => '\u0001' + (T.push(x) - 1) + '\u0002');
+  m = m.replace(/\\Delta\s*/g, 'Δ').replace(/\\circ/g, '°').replace(/\\times/g, '×').replace(/\\cdot/g, '·').replace(/\\le(q)?/g, '≤').replace(/\\ge(q)?/g, '≥').replace(/\\(to|rightarrow)/g, '→').replace(/\\,|\;|\\ /g, ' ').replace(/-/g, '−');
+  m = m.replace(/(^|[^\u0001\d])([A-Za-z])(?![A-Za-z])/g, '$1<i>$2</i>');
+  m = m.replace(/([_^])\{([^{}]*)\}/g, (_, k, x) => k === '_' ? `<sub>${x}</sub>` : `<sup>${x}</sup>`).replace(/([_^])(\u0001\d+\u0002|<i>.<\/i>|.)/g, (_, k, x) => k === '_' ? `<sub>${x}</sub>` : `<sup>${x}</sup>`);
+  return '<span class="m">' + m.replace(/\u0001(\d+)\u0002/g, (_, i) => T[i]).replace(/\u0003/g, '&lt;').replace(/\u0004/g, '&gt;') + '</span>'; }
+const rich = t => t.replace(/\$([^$]+)\$/g, (_, m) => tex(m));
+try { const txt = await (await fetch(encodeURI('docs/chem/대본.txt') + '?v=2')).text(); let cur = null;
   for (const raw of txt.split('\n')) { const l = raw.trim(); if (!l || l.startsWith('#')) continue; let m;
     if ((m = l.match(/^===\s*(.+?)\s*===$/))) { cur = STORY[m[1].replace(/\s*\|\s*/, '|')] = []; continue; } if (!cur) continue;
-    if ((m = l.match(/^\[지문\]\s*(.*)$/))) cur.push({ who: '지문', text: m[1] });
-    else if ((m = l.match(/^([^:()\[]{1,8}?)\s*(?:\(([^)]*)\))?\s*:\s*(.+)$/))) cur.push({ who: m[1].trim(), mood: m[2], text: m[3] }); } } catch (e) { }
+    if ((m = l.match(/^\[지문\]\s*(.*)$/))) cur.push({ who: '지문', text: rich(m[1]) });
+    else if ((m = l.match(/^([^:()\[]{1,8}?)\s*(?:\(([^)]*)\))?\s*:\s*(.+)$/))) cur.push({ who: m[1].trim(), mood: m[2], text: rich(m[3]) }); } } catch (e) { }
 let adv = null, pd = null;
 addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY }; }, true);
 addEventListener('pointerup', e => { if (!adv || !pd || $('#sub').hidden) return; if (Math.hypot(e.clientX - pd.x, e.clientY - pd.y) > 10) return; if (e.target.closest('button,input,select,label,a,#ctl,#gph,#top,#card,#menu,#mis,#zoomfig')) return; adv('next'); });
