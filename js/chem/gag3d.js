@@ -59,7 +59,7 @@ export function dress(key, root, scene) {
   const g = L[1];
   let off = [0, 0, 0]; if (P) { const p = G.position; off = { ice: [-.9, .4, .1], towel: [0, 1.25, .05], cape: [0, .3, -.05], hammer: [.8, .6, .05], seed: [-1, .1, 0], zzz: [.6, 1.4, 0], sweat: [.7, 1.1, .05], wheel: [0, .4, -.1] }[L[2].split(':')[0]] || [-1.1, .5, 0]; P.position.set(p.x + off[0], p.y + off[1], p.z + off[2]); P.userData.o = P.position.clone(); }
   return (T) => { const t = st(T), k = Math.floor(T * 5);
-    G.rotation.set(0, 0, 0); H.rotation.set(0, 0, 0); H.position.set(0, .45, 0); H.scale.set(1, 1, 1); setF('n'); const bx = window.__chemCardMode ? -1.5 : 4.3; let gx = bx, gy = -2.2; if (P) { P.position.set(bx + off[0], -2.2 + off[1], 2.6 + off[2]); P.userData.o = P.position.clone(); }
+    G.rotation.set(0, 0, 0); H.rotation.set(0, 0, 0); H.position.set(0, .45, 0); H.scale.set(1, 1, 1); setF('n'); const bx = document.body.classList.contains('story') ? -6.4 : window.__chemCardMode ? -1.5 : 4.3;   /* 스토리 땐 큰 햄토리·라벨 피해서 왼쪽 아래 */ let gx = bx, gy = -2.2; if (P) { P.position.set(bx + off[0], -2.2 + off[1], 2.6 + off[2]); P.userData.o = P.position.clone(); }
     switch (g) {
       case 'shiver': H.position.x = (k % 2 ? .06 : -.06); H.rotation.z = (k % 2 ? .05 : -.05); break;                                   // 덜덜
       case 'bath': H.position.y = .2 + (k % 4 === 0 ? .15 : 0); G.rotation.z = Math.sin(t * 3) * .1; break;

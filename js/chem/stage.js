@@ -1,6 +1,6 @@
 /* 화학 3D 무대: 개념마다 직접 만지는 3D 장면 + 실시간 그래프 */
 import * as THREE from 'three';
-import { dress } from './gag3d.js?v=3';
+import { dress } from './gag3d.js?v=4';
 
 const $ = s => document.querySelector(s);
 const cv = $('#stage');

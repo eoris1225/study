@@ -1,5 +1,5 @@
 /* 화학 개념 강의: 교과서 순서 · 3D 무대 · 확인 질문 · 교과서 문제(사진) · 펜 필기 · 진행 저장 */
-import { show, has, view } from './stage.js?v=5';
+import { show, has, view } from './stage.js?v=6';
 import * as HAM from './ham.js?v=4';
 const $ = s => document.querySelector(s);
 const C = window.CHEM, Q = window.CHEMQ;
@@ -180,7 +180,7 @@ function prob(id) { return new Promise(async res => { const P = Q[id]; if (!P) r
     body.querySelector('.opts').onclick = e => { const b = e.target.closest('[data-k]'); if (!b || b.disabled) return; const k = +b.dataset.k, fb = body.querySelector('.fb'); if (k !== P.a) { right = false; tries++; hit(false); b.classList.add('no'); b.disabled = true; if (tries < 2) { fb.className = 'fb no'; fb.innerHTML = '다시 한 번!'; return; } }
       if (k === P.a) hit(true, b); body.querySelectorAll('[data-k]').forEach(x => { x.disabled = true; if (+x.dataset.k === P.a) x.classList.add('ok'); }); fb.className = 'fb ' + (k === P.a ? 'ok' : 'no'); fb.innerHTML = `${k === P.a ? '⭕ 정답!' : `정답은 <b>${P.o[P.a]}</b>`} <span>${P.ex}</span>`; done(right); }; }
   else { body.innerHTML = top + '<p class="q">사진의 문제를 먼저 직접 풀어 봐 (✍️ 필기). 막히면 한 단계씩 같이 풀자.</p><div class="steps"></div><div class="end"></div>';
-    const box = body.querySelector('.steps'); for (let s = 0; s < P.steps.length; s++) { const [q, o, a, why] = P.steps[s]; const ord = shuffle(o.map((_, k) => k)); const el = document.createElement('div'); el.className = 'gs'; el.innerHTML = `<p><b>${s + 1}.</b> ${q}</p><div class="opts">${ord.map(k => `<button data-k="${k}">${o[k]}</button>`).join('')}</div><div class="fb"></div>`; box.appendChild(el); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const box = body.querySelector('.steps'); for (let s = 0; s < P.steps.length; s++) { const [q, o, a, why] = P.steps[s]; const ord = shuffle(o.map((_, k) => k)); const el = document.createElement('div'); el.className = 'gs'; el.innerHTML = `<p><b>${s + 1}.</b> ${q}</p><div class="opts">${ord.map(k => `<button data-k="${k}">${o[k]}</button>`).join('')}</div><div class="fb"></div>`; box.appendChild(el); if (s > 0) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); else body.scrollTop = 0;   /* 첫 단계는 맨 위(문제 분석·사진)부터 보이게 */
       await new Promise(r2 => { let tries = 0; el.querySelector('.opts').onclick = e => { const b = e.target.closest('[data-k]'); if (!b || b.disabled) return; const k = +b.dataset.k, fb = el.querySelector('.fb'); if (k !== a) { right = false; tries++; hit(false); b.classList.add('no'); b.disabled = true; if (tries < 2) { fb.className = 'fb no'; fb.innerHTML = '음, 다시 생각해 봐.'; return; } } else hit(true, b, 5);
         el.querySelectorAll('[data-k]').forEach(x => { x.disabled = true; if (+x.dataset.k === a) x.classList.add('ok'); }); fb.className = 'fb ' + (k === a ? 'ok' : 'no'); fb.innerHTML = `${k === a ? '⭕' : `→ <b>${o[a]}</b>`} <span>${why}</span>`; r2(); }; }); }
     body.querySelector('.end').innerHTML = answer(); body.querySelector('.end').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); done(right); }
@@ -234,7 +234,7 @@ function menu() { bossTok = null; noMission(); subOff(); HAM.feel('joy', 1500); 
    <div class="row"><select data-sec>${SECS.map((x, i) => `<option value="${i}" ${cur && x === cur ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button data-from>여기부터</button></div>
    <h3>📝 교과서 문제 <small>${doneN}/${allQ.length} 풀이</small></h3>
    <div class="grid"><button data-u="III">Ⅲ 문제 전부 (${unitQ('III').length})</button><button data-u="IV">Ⅳ 문제 전부 (${unitQ('IV').length})</button>${wrong.length ? `<button data-w>🔁 틀린 문제 (${wrong.length})</button>` : ''}</div>
-   <div class="grid" style="margin-top:6px"><button data-cards>📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
+   <div class="grid" style="margin-top:6px"><button data-cards style="grid-column:1/-1">📚 문제풀이 개념 카드 <small>무슨 반응인지·풀이 순서·함정</small></button></div>
    <h3>⚡ 스피드 런 <small>90초 · ❤️×3 · 확인 질문 + 빈칸 총출동</small></h3>
    <div class="grid"><button data-boss="III">Ⅲ 보스전 <small>최고 ${(SAVE.best || {}).III || 0}</small></button><button data-boss="IV">Ⅳ 보스전 <small>최고 ${(SAVE.best || {}).IV || 0}</small></button></div>
    <p class="tip">🎮 3D 미션 ${Object.keys(SAVE.mis || {}).length} / ${Object.keys(MIS).length} 달성 · Lv ${lvl()} · ⭐ ${SAVE.xp || 0} XP</p>
