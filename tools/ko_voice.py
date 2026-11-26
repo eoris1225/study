@@ -86,7 +86,7 @@ def sentences(p):
         if not part.strip(): continue
         q = part.startswith(('“', '"'))
         for s in re.split(r'(?<=[.?!])\s+', part.strip()):
-            if s.strip(): out.append((s.strip(), q))
+            if s.strip() and not re.match(r'^[—–-]\s*《', s.strip()): out.append((s.strip(), q))   # 출처 표시(— 《책》에서)는 읽지 않음
     return out
 
 # ── 합성 ──
