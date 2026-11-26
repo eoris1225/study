@@ -10,7 +10,7 @@
   const saveOpt = () => SS('ko_opt', JSON.stringify(opt));
   const TABS = [['read', '📖', '원문'], ['note', '🔍', '분석'], ['anim', '🎬', '애니'], ['ox', '⭕', 'O/X'], ['blank', '🧩', '빈칸'], ['quiz', '📝', '문제']];
   const NUM = ['①', '②', '③', '④', '⑤'];
-  const SHORT = { warrant: '영장주의', review: '적부 심사', dopamine: '도파민', ecg: '심전도', mrf: '자기 유변 유체', nwp: '수치예보', arch: '건축법', disclose: '공모·공시', shapley: '섀플리 값', honneth: '호네트·버틀러', bp: '혈압' };
+  const SHORT = { argue: '논증하는 글', anthro: '인류세', warrant: '영장주의', review: '적부 심사', dopamine: '도파민', ecg: '심전도', mrf: '자기 유변 유체', nwp: '수치예보', arch: '건축법', disclose: '공모·공시', shapley: '섀플리 값', honneth: '호네트·버틀러', bp: '혈압' };
   const order = () => KO.P.slice().sort((a, b) => a.no - b.no);
 
   /* ── 종이 폭: 폰은 좁은 종이, 태블릿·PC는 넓은 종이 (필기 좌표가 안 흔들리게 폭 고정 + 배율) ── */
@@ -52,8 +52,8 @@
   function done(p, k) { const g = prog[p.id] || {};
     if (k === 'ox') return g.ox && Object.keys(g.ox).length >= p.ox.length; if (k === 'quiz') return g.quiz && Object.keys(g.quiz).length >= p.quiz.length;
     if (k === 'blank') return g.blank && Object.keys(g.blank).length >= p.blanks.length; return !!g[k]; }
-  function score(p) { const g = prog[p.id] || {}; let ox = 0, q = 0; if (g.ox) Object.entries(g.ox).forEach(([i, v]) => { if (p.ox[i] && (v === 1) === !!p.ox[i][1]) ox++; }); if (g.quiz) Object.entries(g.quiz).forEach(([i, v]) => { if (p.quiz[i] && v === p.quiz[i].a) q++; });
-    return { ox, oxn: g.ox ? Object.keys(g.ox).length : 0, q, qn: g.quiz ? Object.keys(g.quiz).length : 0 }; }
+  function score(p) { const g = prog[p.id] || {}; let ox = 0, q = 0; if (g.ox) Object.entries(g.ox).forEach(([i, v]) => { if (p.ox[i] && (v === 1) === !!p.ox[i][1]) ox++; }); if (g.quiz) Object.entries(g.quiz).forEach(([i, v]) => { if (p.quiz[i] && p.quiz[i].opts && v === p.quiz[i].a) q++; });
+    return { ox, oxn: g.ox ? Object.keys(g.ox).length : 0, q, qn: g.quiz ? Object.keys(g.quiz).filter(i => p.quiz[i] && p.quiz[i].opts).length : 0 }; }
 
   /* ── 목록 ── */
   function home() { header('국어 독서 · 기말 범위', null); KOInk.detach();
@@ -72,11 +72,11 @@
       <table><tr><th>선생님</th><th>범위</th><th>앱</th></tr>
       <tr><td rowspan="3">김선홍T</td><td>프린트: 대기, 영장 및 강제 처분, 적부심사, 도파민, 호네트</td><td>✅ 5지문</td></tr>
       <tr><td>9월 전국연합학력평가: 심장 (17~20)</td><td>✅ 기출 4문항</td></tr>
-      <tr><td>교과서 p.148~149</td><td>⚠️ 사진 필요</td></tr>
+      <tr><td>교과서 p.148~149: 논증하는 글 쓰기 (설득 전략·논거·내용 조직)</td><td>✅ 개념 + 교과서 활동</td></tr>
       <tr><td rowspan="3">오홍주T</td><td>프린트 1~3: 공모, 자기유변유체, 섀플리 값</td><td>✅ 3지문</td></tr>
       <tr><td>10월 전국연합학력평가: 건축법 (17~20)</td><td>✅ 기출 4문항</td></tr>
-      <tr><td>교과서 204~210: 인류의 미래에 관한 두 가지 관점(인류세)</td><td>⚠️ 사진 필요</td></tr></table>
-      <p class="tip">교과서 쪽은 사진이 없어서 아직 못 넣었어요. 교과서 해당 쪽 사진을 보내 주면 같은 방식(원문·분석·애니·문제)으로 추가할게요. 프린트 4쪽 <b>혈압</b>은 범위표(1~3쪽) 밖이지만 함께 받은 지문이라 '참고'로 넣어 두었어요.</p></div>
+      <tr><td>교과서 <b>204~206</b>: (가) 인류의 미래에 관한 두 가지 관점(인류세) <small>※ 범위표의 210은 잘못 나온 것 → 206까지</small></td><td>✅ 본문 + 내용 정리하기</td></tr></table>
+      <p class="tip">교과서 207쪽부터의 (나) 한국 비무장 지대의 교훈은 범위 밖이라 넣지 않았어요. 프린트 4쪽 <b>혈압</b>은 범위표(1~3쪽) 밖이지만 함께 받은 지문이라 '참고'로 넣어 두었어요.</p></div>
       <div class="help"><h2>✍️ 필기도구 쓰는 법</h2><ul>
       <li><b>S펜</b>은 그냥 대고 쓰면 돼요 (켤 필요 없음). 펜으로 버튼을 톡 누르면 버튼이 눌려요.</li>
       <li>손가락은 기본이 <b>스크롤</b>. 아래 막대의 <b>✋/☝️</b>를 누르면 손가락으로도 쓰고, 그때는 <b>두 손가락</b>으로 스크롤.</li>
@@ -119,6 +119,7 @@
       <div class="theme"><b>한 줄 주제</b>${p.theme}</div>
       <h2 class="sec">구조도</h2><div class="struct">${p.structure}</div>
       ${tb ? `<h2 class="sec">한눈 비교표</h2>${tb}` : ''}
+      ${p.gloss ? `<h2 class="sec">어휘 · 날개 풀이</h2><dl class="gloss">${p.gloss.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>` : ''}
       <h2 class="sec">문단별 해부</h2>${ns}
       <div class="endnav"><button data-tab2="anim">🎬 움직이는 그림으로 확인 ▶</button></div>`, `${p.id}:note`);
     pa.classList.add('marks');
@@ -161,19 +162,23 @@
   }
 
   function quiz(p) { const g = P(p.id); g.quiz = g.quiz || {};
+    const MC = p.quiz.filter(q => q.opts).length;
     const qh = (q, i) => { const v = g.quiz[i];
+      if (q.type === 'write') return `<div class="qc wq${v ? ' done' : ''}" data-i="${i}"><div class="qhd"><span class="tag tb">${q.tag}</span><b>${i + 1}.</b> ${KO.mark(q.q)}</div>${q.bogi ? `<div class="bogi"><span>&lt;보기&gt;</span>${q.bogi}</div>` : ''}
+        <div class="wpad">✍️ 펜으로 여기에 먼저 써 보세요</div><button class="tapme mdl">${v ? '예시 답 접기' : '💡 예시 답 보기'}</button><div class="model"${v ? '' : ' hidden'}>${q.model}</div></div>`;
       return `<div class="qc${v !== undefined ? ' done' : ''}" data-i="${i}"><div class="qhd"><span class="tag${/기출/.test(q.tag) ? ' ex' : ''}">${q.tag}</span><b>${i + 1}.</b> ${KO.mark(q.q)}</div>
       ${q.img ? `<img class="qimg" src="${q.img}" alt="보기 그림"><button class="tapme zbtn" data-zoom="${q.img}">🔍 그림 크게 보기</button>` : ''}${q.bogi ? `<div class="bogi"><span>&lt;보기&gt;</span>${q.bogi}</div>` : ''}
       <div class="opts">${q.opts.map((o, k) => `<button class="opt qo${v !== undefined && k === q.a ? ' ok' : ''}${v === k && k !== q.a ? ' no' : ''}" data-k="${k}"><span>${NUM[k]}</span>${o}</button>`).join('')}</div>
       <div class="why">${v !== undefined ? whyHtml(q, v) : ''}</div></div>`; };
     const whyHtml = (q, v) => `<div class="res ${v === q.a ? 'r' : 'w'}">${v === q.a ? '⭕ 정답!' : `❌ 고른 답 ${NUM[v]} · 정답 ${NUM[q.a]}`} <button class="tapme rq">다시 풀기</button></div><ul>${q.why.map((w, k) => `<li class="${k === q.a ? 'a' : ''}"><b>${NUM[k]}</b> ${w}</li>`).join('')}</ul>`;
     const sc = score(p);
-    const pa = paper(`${srcLine(p)}<h1 class="ptitle">📝 문제 — ${p.title}</h1><div class="qtop"><span class="score">${sc.q} / ${p.quiz.length}</span><span>${p.exam ? '기출 4문항 + 변형' : '변형 문제 (시험 대비 자체 제작)'} · 펜으로 지문 근거를 표시하며 풀어 봐요</span></div>
+    const pa = paper(`${srcLine(p)}<h1 class="ptitle">📝 문제 — ${p.title}</h1><div class="qtop"><span class="score">${sc.q} / ${MC}</span><span>${p.exam ? '기출 4문항 + 변형' : p.quiz.some(q => q.type === 'write') ? '교과서 활동(서술형) + 변형 문제' : '변형 문제 (시험 대비 자체 제작)'} · 펜으로 지문 근거를 표시하며 풀어 봐요</span></div>
       ${p.quiz.map(qh).join('')}<div class="endnav"><button data-nextp>다음 지문 ▶</button></div>`, `${p.id}:quiz`);
-    pa.onclick = e => { const o = e.target.closest('.qo'), r = e.target.closest('.rq');
+    pa.onclick = e => { const o = e.target.closest('.qo'), r = e.target.closest('.rq'), md = e.target.closest('.mdl');
+      if (md) { const c = md.closest('.qc'), i = +c.dataset.i, box = c.querySelector('.model'); box.hidden = !box.hidden; md.textContent = box.hidden ? '💡 예시 답 보기' : '예시 답 접기'; if (!box.hidden) { g.quiz[i] = 'w'; c.classList.add('done'); save(); } return; }
       if (o) { const c = o.closest('.qc'), i = +c.dataset.i, q = p.quiz[i]; if (g.quiz[i] !== undefined) return; const k = +o.dataset.k; g.quiz[i] = k; save();
         c.classList.add('done'); c.querySelectorAll('.qo').forEach(b => { if (+b.dataset.k === q.a) b.classList.add('ok'); }); if (k !== q.a) o.classList.add('no'); c.querySelector('.why').innerHTML = whyHtml(q, k);
-        const s2 = score(p); pa.querySelector('.qtop .score').textContent = `${s2.q} / ${p.quiz.length}`; }
+        const s2 = score(p); pa.querySelector('.qtop .score').textContent = `${s2.q} / ${MC}`; }
       if (r) { const c = r.closest('.qc'), i = +c.dataset.i; delete g.quiz[i]; save(); c.classList.remove('done'); c.querySelectorAll('.qo').forEach(b => b.classList.remove('ok', 'no')); c.querySelector('.why').innerHTML = ''; }
       if (e.target.closest('[data-nextp]')) { const os = order().filter(x => !x.extra); const j = os.indexOf(p); go(j >= 0 && j < os.length - 1 ? `#/p/${os[j + 1].id}/read` : '#/'); } };
   }

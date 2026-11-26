@@ -173,3 +173,7 @@ details .pp{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;ma
 #zoomov .zsc{flex:1;overflow:auto;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 #zoomov img{display:block;max-width:none;background:#fff;margin:0 auto}
 .zbtn{display:block;margin:-4px 0 8px auto}
+.tag.tb{background:var(--green)}
+.wpad{margin:10px 0 6px;min-height:150px;border:1.5px dashed #c9c0ab;border-radius:10px;background:repeating-linear-gradient(transparent 0 33px,#e8e0cf 33px 34px);color:#b4ab96;font-size:13px;padding:6px 10px}
+.model{white-space:pre-line;background:#fff6d8;border:1.5px solid #ecd27a;border-radius:10px;padding:9px 11px;font-size:14.5px;line-height:1.65;margin-top:6px}
+.gloss{margin:0;font-size:14px;line-height:1.55}.gloss dt{font-weight:900;color:var(--navy);margin-top:6px}.gloss dd{margin:2px 0 0 10px}
