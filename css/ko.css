@@ -201,3 +201,13 @@ details .pp{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;ma
 .bs-file input{display:none}
 .bs-prog{min-height:22px;font-weight:700;color:var(--blue)}
 .bs-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}.bs-row button{border:1.5px solid #cfc6b2;background:#fff;border-radius:10px;padding:7px 12px;font-weight:700}
+/* 낭독 플레이어 */
+#player{position:fixed;left:0;right:0;top:calc(48px + 47px + env(safe-area-inset-top));z-index:19;display:flex;align-items:center;gap:6px;padding:6px 8px;background:#fff6df;border-bottom:1.5px solid #ecd27a;box-shadow:0 2px 6px #0001}
+#player button,#player select{border:1.5px solid #d9c690;background:#fff;border-radius:10px;height:34px;min-width:38px;font-weight:900;font-size:15px;padding:0 8px}
+#player .pl{background:var(--navy);color:#fff;border-color:var(--navy);min-width:46px}
+#player .spk{flex:1;min-width:0;font-size:13px;font-weight:700;color:#7a5a00;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#player .spk[data-w=man]{color:#1745b8}#player .spk[data-w=alt]{color:#b03072}#player .spk[data-w=old]{color:#2d7a3e}
+body.playing #view{top:calc(48px + 47px + 47px + env(safe-area-inset-top))}
+::highlight(tts){background-color:#bfe0ff}
+.pp.reading{background:#f5f9ff;border-radius:6px}
+.rbar .tts{background:#fff6df;border-color:#e0c060}
