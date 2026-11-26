@@ -66,7 +66,7 @@
       <div class="hero"><h1>📚 국어 독서 · 기말 시험 범위</h1><p>지문마다 <b>원문 읽기(필기)</b> → <b>문단별 분석</b> → <b>움직이는 그림</b> → <b>O/X · 빈칸 · 문제</b> 순서로. 위의 <b>다음 ▶</b>만 누르면 순서대로 진행돼요.</p>
       ${lp ? `<button class="big" data-go="${last}">▶ 이어하기: ${lp.title} · ${(TABS.find(t => t[0] === last.split('/')[3]) || TABS[0])[2]}</button>` : `<button class="big" data-go="#/p/${order()[0].id}/read">▶ 처음부터 시작</button>`}
       <button class="big alt" data-go="#/rush">🔥 전 범위 O/X 섞어 풀기 (20문항)</button>
-      <a class="big prt" href="print/korean-1hour.pdf" target="_blank" rel="noopener">🖨 1시간 자습 프린트 <small>A4 20쪽 · 12지문 원문·쉬운 말·함정·O/X·문제·정답</small></a></div>
+      <a class="big prt" href="print/korean-1hour.pdf?v=202611270040" target="_blank" rel="noopener">🖨 1시간 자습 프린트 <small>A4 20쪽 · 12지문 원문·쉬운 말·함정·O/X·문제·정답</small></a></div>
       ${grp('김선홍T 범위', p => p.teacher === '김선홍T')}
       ${grp('오홍주T 범위', p => p.teacher === '오홍주T')}
       ${grp('참고 (범위 밖 · 함께 받은 프린트)', p => p.extra)}
