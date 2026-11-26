@@ -10,6 +10,7 @@
   const saveOpt = () => SS('ko_opt', JSON.stringify(opt));
   const TABS = [['read', '📖', '원문'], ['note', '🔍', '분석'], ['anim', '🎬', '애니'], ['ox', '⭕', 'O/X'], ['blank', '🧩', '빈칸'], ['quiz', '📝', '문제']];
   const NUM = ['①', '②', '③', '④', '⑤'];
+  const SHORT = { warrant: '영장주의', review: '적부 심사', dopamine: '도파민', ecg: '심전도', mrf: '자기 유변 유체', nwp: '수치예보', arch: '건축법', disclose: '공모·공시', shapley: '섀플리 값', honneth: '호네트·버틀러', bp: '혈압' };
   const order = () => KO.P.slice().sort((a, b) => a.no - b.no);
 
   /* ── 종이 폭: 폰은 좁은 종이, 태블릿·PC는 넓은 종이 (필기 좌표가 안 흔들리게 폭 고정 + 배율) ── */
@@ -143,10 +144,10 @@
   function ox(p) { const g = P(p.id); g.ox = g.ox || {}; let only = false;
     const items = p.ox.map(([t, a, why, pi]) => ({ t, a, why, p: pi, pid: p.id }));
     const draw = () => { const sc = score(p); const pa = paper(`${srcLine(p)}<h1 class="ptitle">⭕ O/X — ${p.title}</h1>
-      <div class="qtop"><span class="big">${sc.ox} / ${p.ox.length}</span><button data-only class="${only ? 'on' : ''}">틀린 것만</button><button data-reset>다시 풀기</button></div>
+      <div class="qtop"><span class="score">${sc.ox} / ${p.ox.length}</span><button data-only class="${only ? 'on' : ''}">틀린 것만</button><button data-reset>다시 풀기</button></div>
       <div class="oxl">${oxList(items, i => g.ox[i], null)}</div><div class="endnav"><button data-tab2="blank">🧩 빈칸으로 ▶</button></div>`, `${p.id}:ox`);
       if (only) pa.querySelectorAll('.oxi').forEach(el => { const v = g.ox[el.dataset.i]; if (v === undefined || (v === 1) === !!items[el.dataset.i].a) el.hidden = true; });
-      bindOx(pa, items, i => g.ox[i], (i, v) => { g.ox[i] = v; save(); }, () => { const sc2 = score(p); pa.querySelector('.qtop .big').textContent = `${sc2.ox} / ${p.ox.length}`; });
+      bindOx(pa, items, i => g.ox[i], (i, v) => { g.ox[i] = v; save(); }, () => { const sc2 = score(p); pa.querySelector('.qtop .score').textContent = `${sc2.ox} / ${p.ox.length}`; });
       pa.addEventListener('click', e => { if (e.target.closest('[data-only]')) { only = !only; draw(); } if (e.target.closest('[data-reset]')) { g.ox = {}; save(); only = false; draw(); } const b = e.target.closest('[data-tab2]'); if (b) go(`#/p/${p.id}/${b.dataset.tab2}`, true); }); };
     draw(); }
 
@@ -162,17 +163,17 @@
   function quiz(p) { const g = P(p.id); g.quiz = g.quiz || {};
     const qh = (q, i) => { const v = g.quiz[i];
       return `<div class="qc${v !== undefined ? ' done' : ''}" data-i="${i}"><div class="qhd"><span class="tag${/기출/.test(q.tag) ? ' ex' : ''}">${q.tag}</span><b>${i + 1}.</b> ${KO.mark(q.q)}</div>
-      ${q.img ? `<img class="qimg" src="${q.img}" alt="보기 그림">` : ''}${q.bogi ? `<div class="bogi"><span>&lt;보기&gt;</span>${q.bogi}</div>` : ''}
+      ${q.img ? `<img class="qimg" src="${q.img}" alt="보기 그림"><button class="tapme zbtn" data-zoom="${q.img}">🔍 그림 크게 보기</button>` : ''}${q.bogi ? `<div class="bogi"><span>&lt;보기&gt;</span>${q.bogi}</div>` : ''}
       <div class="opts">${q.opts.map((o, k) => `<button class="opt qo${v !== undefined && k === q.a ? ' ok' : ''}${v === k && k !== q.a ? ' no' : ''}" data-k="${k}"><span>${NUM[k]}</span>${o}</button>`).join('')}</div>
       <div class="why">${v !== undefined ? whyHtml(q, v) : ''}</div></div>`; };
     const whyHtml = (q, v) => `<div class="res ${v === q.a ? 'r' : 'w'}">${v === q.a ? '⭕ 정답!' : `❌ 고른 답 ${NUM[v]} · 정답 ${NUM[q.a]}`} <button class="tapme rq">다시 풀기</button></div><ul>${q.why.map((w, k) => `<li class="${k === q.a ? 'a' : ''}"><b>${NUM[k]}</b> ${w}</li>`).join('')}</ul>`;
     const sc = score(p);
-    const pa = paper(`${srcLine(p)}<h1 class="ptitle">📝 문제 — ${p.title}</h1><div class="qtop"><span class="big">${sc.q} / ${p.quiz.length}</span><span>${p.exam ? '기출 4문항 + 변형' : '변형 문제 (시험 대비 자체 제작)'} · 펜으로 지문 근거를 표시하며 풀어 봐요</span></div>
+    const pa = paper(`${srcLine(p)}<h1 class="ptitle">📝 문제 — ${p.title}</h1><div class="qtop"><span class="score">${sc.q} / ${p.quiz.length}</span><span>${p.exam ? '기출 4문항 + 변형' : '변형 문제 (시험 대비 자체 제작)'} · 펜으로 지문 근거를 표시하며 풀어 봐요</span></div>
       ${p.quiz.map(qh).join('')}<div class="endnav"><button data-nextp>다음 지문 ▶</button></div>`, `${p.id}:quiz`);
     pa.onclick = e => { const o = e.target.closest('.qo'), r = e.target.closest('.rq');
       if (o) { const c = o.closest('.qc'), i = +c.dataset.i, q = p.quiz[i]; if (g.quiz[i] !== undefined) return; const k = +o.dataset.k; g.quiz[i] = k; save();
         c.classList.add('done'); c.querySelectorAll('.qo').forEach(b => { if (+b.dataset.k === q.a) b.classList.add('ok'); }); if (k !== q.a) o.classList.add('no'); c.querySelector('.why').innerHTML = whyHtml(q, k);
-        const s2 = score(p); pa.querySelector('.qtop .big').textContent = `${s2.q} / ${p.quiz.length}`; }
+        const s2 = score(p); pa.querySelector('.qtop .score').textContent = `${s2.q} / ${p.quiz.length}`; }
       if (r) { const c = r.closest('.qc'), i = +c.dataset.i; delete g.quiz[i]; save(); c.classList.remove('done'); c.querySelectorAll('.qo').forEach(b => b.classList.remove('ok', 'no')); c.querySelector('.why').innerHTML = ''; }
       if (e.target.closest('[data-nextp]')) { const os = order().filter(x => !x.extra); const j = os.indexOf(p); go(j >= 0 && j < os.length - 1 ? `#/p/${os[j + 1].id}/read` : '#/'); } };
   }
@@ -182,13 +183,20 @@
     const all = []; order().filter(p => !p.extra).forEach(p => p.ox.forEach((x, i) => all.push(p.id + ':' + i)));
     const fresh = () => { const a = all.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } set = { ids: a.slice(0, 20), ans: {} }; SS('ko_rush', JSON.stringify(set)); };
     if (!set || !set.ids || set.ids.some(id => !KO.get(id.split(':')[0]))) fresh();
-    const draw = () => { const items = set.ids.map(id => { const [pid, i] = id.split(':'), p = KO.get(pid), x = p.ox[+i]; return { t: x[0], a: x[1], why: x[2], p: x[3], pid, src: p.emoji + ' ' + p.title.split(' ')[0] }; });
+    const draw = () => { const items = set.ids.map(id => { const [pid, i] = id.split(':'), p = KO.get(pid), x = p.ox[+i]; return { t: x[0], a: x[1], why: x[2], p: x[3], pid, src: p.emoji + ' ' + (SHORT[pid] || p.title) }; });
       const right = Object.entries(set.ans).filter(([i, v]) => (v === 1) === !!items[i].a).length;
-      const pa = paper(`<h1 class="ptitle">🔥 전 범위 O/X 섞어 풀기</h1><div class="qtop"><span class="big">${right} / ${items.length}</span><button data-new>새 20문항</button></div><div class="oxl">${oxList(items, i => set.ans[i])}</div>`, 'rush');
-      bindOx(pa, items, i => set.ans[i], (i, v) => { set.ans[i] = v; SS('ko_rush', JSON.stringify(set)); }, () => { const r2 = Object.entries(set.ans).filter(([i, v]) => (v === 1) === !!items[i].a).length; pa.querySelector('.qtop .big').textContent = `${r2} / ${items.length}`; });
+      const pa = paper(`<h1 class="ptitle">🔥 전 범위 O/X 섞어 풀기</h1><div class="qtop"><span class="score">${right} / ${items.length}</span><button data-new>새 20문항</button></div><div class="oxl">${oxList(items, i => set.ans[i])}</div>`, 'rush');
+      bindOx(pa, items, i => set.ans[i], (i, v) => { set.ans[i] = v; SS('ko_rush', JSON.stringify(set)); }, () => { const r2 = Object.entries(set.ans).filter(([i, v]) => (v === 1) === !!items[i].a).length; pa.querySelector('.qtop .score').textContent = `${r2} / ${items.length}`; });
       pa.addEventListener('click', e => { if (e.target.closest('[data-new]')) { fresh(); draw(); view.scrollTop = 0; } }); };
     draw(); }
 
+  /* 그림 확대: 🔍 버튼으로만 (실수로 커지지 않게), ＋/− 로 배율, 뒤로 가기 = 닫기 */
+  const zo = document.createElement('div'); zo.id = 'zoomov'; zo.hidden = true; zo.innerHTML = '<div class="zbar"><button data-z="-">－ 작게</button><button data-z="+">＋ 크게</button><button data-z="x">✕ 닫기</button></div><div class="zsc"><img alt="확대 그림"></div>';
+  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(zo)); let zw = 100;
+  const zclose = () => { if (zo.hidden) return; zo.hidden = true; if (history.state && history.state.zoom) history.back(); };
+  document.addEventListener('click', e => { const b = e.target.closest('[data-zoom]'); if (b) { zw = 100; const im = zo.querySelector('img'); im.src = b.dataset.zoom; im.style.width = zw + '%'; zo.hidden = false; history.pushState({ zoom: 1 }, ''); return; }
+    const z = e.target.closest('#zoomov [data-z]'); if (!z) return; if (z.dataset.z === 'x') return zclose(); zw = Math.max(100, Math.min(400, zw + (z.dataset.z === '+' ? 50 : -50))); zo.querySelector('img').style.width = zw + '%'; });
+  addEventListener('popstate', () => { if (!zo.hidden) zo.hidden = true; });
   addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(() => { const w0 = W; measure(); if (W !== w0) render(); else { sizeWrap(); KOInk.setScale(S); if (anim && anim.resize) anim.resize(); } }, 200); });
   document.addEventListener('DOMContentLoaded', () => { if (!location.hash) history.replaceState(null, '', '#/'); render(); });
 })();
