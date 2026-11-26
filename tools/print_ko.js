@@ -1,5 +1,5 @@
 /* 국어 1시간 자습 프린트 — 기말 범위 12지문 (다른 과목 1시간 프린트와 같은 틀)
-   지문마다: 🎯 한 줄 주제 → 문단별 핵심 문장(원문) · 쉬운 말 · 내 필기 칸 → 한눈 비교표 → ⚠ 함정 → O/X 6 → 문제 / 맨 뒤 정답·근거
+   지문마다: 🎯 한 줄 주제 → 문단별 원문 전체(핵심 문장 형광) · 쉬운 말 · 내 필기 칸 → 한눈 비교표 → ⚠ 함정 → O/X 6 → 문제 / 맨 뒤 정답·근거
    node tools/print_ko.js  →  korean_1h.html (저장소 루트)   ·  PDF: node tools/print_ko.js --pdf  →  print/korean-1hour.pdf */
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'); global.window = {};
@@ -8,12 +8,8 @@ eval(R('core.js')); global.KO = window.KO;
 for (const f of ['d_law.js', 'd_bio.js', 'd_tech.js', 'd_soc.js', 'd_text.js']) eval(R(f));
 const NUM = ['①', '②', '③', '④', '⑤'];
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-/* 원문 마크업 → 인쇄용: **핵심어** 굵게, 나머지 표시는 지움 */
-const clean = s => esc(s).replace(/\[\[FIG:[^\]]+\]\]/g, '').replace(/\(\(|\)\)/g, '').replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>').replace(/\[\[([^\]]+?)\]\]/g, '$1').replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>').replace(/__([\s\S]+?)__/g, '<u>$1</u>');
-/* 문단에서 핵심 문장(((…))이 걸친 문장)만 최대 2개 */
-function keySents(raw) { const parts = raw.split(/(?<=[.?!](?:\)\)|\*\*|__|”|")*)\s+/), out = [];
-  for (const s of parts) if (/\(\(|\)\)/.test(s) && out.length < 2) out.push(clean(s).trim());
-  return out.length ? out : [clean(parts[0])]; }
+/* 원문 전체 → 인쇄용: ((핵심 문장)) 회색 형광, **핵심어** 굵게, [[논리 표지]] 점선 테두리, {{네모}}·__밑줄__은 원문 그대로, 그림은 칸 안에 */
+const full = s => esc(s).replace(/\[\[FIG:([^\]]+)\]\]/g, '<img class="ifig" src="$1">').replace(/\(\(/g, '<span class="k">').replace(/\)\)/g, '</span>').replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>').replace(/\[\[([^\]]+?)\]\]/g, '<span class="cj">$1</span>').replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>').replace(/__([\s\S]+?)__/g, '<u>$1</u>');
 const box = s => s.replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>');
 
 const ORDER = [ /* [id, 분] — 김선홍T 다음 오홍주T */
@@ -24,7 +20,7 @@ const pickQ = p => p.exam ? p.quiz.map((q, i) => i).filter(i => /기출/.test(p.
 
 let qn = 0, oxn = 0; const ANS = [];
 function section(id, min) { const p = KO.get(id); const oxI = pickOx(p), qI = pickQ(p); const oxStart = oxn + 1;
-  const rows = p.paras.map((raw, i) => { const n = p.notes[i] || {}; return `<tr><th>${i + 1}</th><td class="ks">${keySents(raw).join(' <span class="dots">…</span> ')}</td><td>${esc(n.sum || '')}${n.point ? `<div class="pt">★ ${esc(n.point)}</div>` : ''}</td><td class="memo"></td></tr>`; }).join('');
+  const rows = p.paras.map((raw, i) => { const n = p.notes[i] || {}; return `<tr><th>${i + 1}</th><td class="src">${full(raw)}</td><td>${esc(n.sum || '')}${n.point ? `<div class="pt">★ ${esc(n.point)}</div>` : ''}</td><td class="memo"></td></tr>`; }).join('');
   const traps = p.notes.map((n, i) => n.trap ? `<li><b>${i + 1}문단</b> ${esc(n.trap)}</li>` : '').join('');
   const tb = p.table ? `<table class="cmp"><tr>${p.table.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${p.table.rows.map(r => `<tr>${r.map((c, j) => j ? `<td>${esc(c)}</td>` : `<th>${esc(c)}</th>`).join('')}</tr>`).join('')}</table>` : '';
   const ox = oxI.map(i => { oxn++; return `<li><span class="n">${oxn}</span> ${esc(p.ox[i][0])} <span class="b">(   )</span></li>`; }).join('');
@@ -34,16 +30,15 @@ function section(id, min) { const p = KO.get(id); const oxI = pickOx(p), qI = pi
   ANS.push({ ox: oxI.map((i, k) => ({ n: oxStart + k, a: p.ox[i][1], why: p.ox[i][2] })), id });
   return `<div class="sec"><h2>${p.emoji} ${esc(p.title)} <small>${esc(p.src)} · 약 ${min}분</small></h2>
 <div class="theme">🎯 ${esc(p.theme)}</div>
-<table class="kt"><tr><th style="width:5mm">¶</th><th>핵심 문장 (원문에서)</th><th style="width:31%">쉬운 말로</th><th style="width:16%">내 필기</th></tr>${rows}</table>
-${p.id === 'ecg' ? '<img class="fig" src="img/ko/ecg_fig.png">' : ''}
+<table class="kt"><tr><th style="width:5mm">¶</th><th>원문 <small>회색 = 핵심 문장 · 굵게 = 핵심어 · 점선 = 논리 표지</small></th><th style="width:28%">쉬운 말로</th><th style="width:13%">내 필기</th></tr>${rows}</table>
 <div class="duo"><div class="dl">${tb}</div><div class="dr"><div class="warn"><b class="t">⚠ 함정</b><ul>${traps}</ul></div></div></div>
 <div class="oxb"><b>O/X</b> <small>맞으면 O, 틀리면 X — 틀린 곳에 밑줄</small><ol class="ox">${ox}</ol></div>
 ${qs}</div>`; }
 
 const plan = (() => { let t = 0; const row = (who, ids) => { const a = t; const s = ids.map(([id, m]) => { t += m; return `${KO.get(id).title.replace(/\s*\(.*?\)\s*/g, '').split(':')[0]} (${m}분)`; }).join(' · '); return `<tr><th>${a}~${t}분</th><td><b>${who}</b> ${s}</td></tr>`; };
-  return `<table class="plan"><tr><th>읽는 법</th><td>각 지문: <b>🎯 주제</b> → 표의 <b>핵심 문장</b>을 읽고, 가운데 <b>쉬운 말</b> 칸을 손으로 가린 채 무슨 뜻인지 말해 보기 → <b>⚠ 함정</b> → <b>O/X</b> → <b>문제</b>. 오른쪽 <b>내 필기</b> 칸엔 헷갈린 것만.</td></tr>
+  return `<table class="plan"><tr><th>읽는 법</th><td>각 지문: <b>🎯 주제</b> → 왼쪽 <b>원문</b>을 문단씩 읽고(회색 형광 = 핵심 문장), 가운데 <b>쉬운 말</b> 칸을 손으로 가린 채 그 문단이 무슨 말인지 말해 보기 → <b>⚠ 함정</b> → <b>O/X</b> → <b>문제</b>. 오른쪽 <b>내 필기</b> 칸엔 헷갈린 것만.</td></tr>
 ${row('김선홍T', ORDER.slice(0, 7))}${row('오홍주T', ORDER.slice(7))}<tr><th>${t}~60분</th><td>맨 뒤 <b>정답·근거</b>로 채점 → 틀린 O/X는 근거 문단을 앱(원문 탭 🔊 듣기)으로 다시 보기</td></tr></table>
-<div class="tip">⏱ 시간이 모자라면: 지문마다 <b>🎯 주제 + ⚠ 함정 + O/X</b>만. 9월·10월 학평(심전도·건축법)은 기출이니 문제까지 꼭.</div>`; })();
+<div class="tip">⏱ 시간이 모자라면: 원문은 <b>회색 형광 문장</b>만 읽고 <b>🎯 주제 + ⚠ 함정 + O/X</b>. 9월·10월 학평(심전도·건축법)은 기출이니 문제까지 꼭.</div>`; })();
 
 function answers() { let h = '<div class="ans"><h2>정답 · 근거</h2>';
   for (const a of ANS) {
@@ -61,7 +56,9 @@ table{border-collapse:collapse;width:100%;margin:1mm 0 1.6mm}td,th{border:1px so
 .plan th{width:22mm;text-align:center}.tip{border:1.2px dashed #555;border-radius:2mm;padding:1.4mm 3mm;margin:1.5mm 0 3mm;font-size:8.8pt}
 .sec{break-before:auto}
 .theme{font-weight:700;font-size:9.6pt;margin:0 0 1.2mm;break-after:avoid}
-.kt tr{break-inside:avoid}.kt th:first-child{text-align:center}.kt .ks{font-family:'Noto Serif KR',serif;font-size:8.6pt}
+.kt tr{break-inside:avoid}.kt th:first-child{text-align:center}.kt th small{font-weight:400;font-size:7.4pt;color:#555;margin-left:1.5mm}
+.kt .src{font-family:'Noto Serif KR',serif;font-size:8.7pt;line-height:1.5;text-align:justify}.src .k{background:linear-gradient(transparent 52%,#d4d4d4 52%)}.src b{font-weight:700}.src .cj{border:1px dotted #333;border-radius:1mm;padding:0 .3mm}
+.ifig{display:block;max-width:62mm;margin:1.2mm auto}
 .dots{color:#999}.bx{border:1px solid #111;padding:0 .8mm}
 .memo{background:repeating-linear-gradient(#fff 0 5.6mm,#d4d4d4 5.6mm 5.85mm)}
 .duo{display:flex;gap:3mm;align-items:flex-start}.dl{flex:1.15;min-width:0}.dr{flex:1;min-width:0}
