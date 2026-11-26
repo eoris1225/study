@@ -128,7 +128,7 @@ def pieces(text, lim=88):
     if len(text) <= lim: return [text]
     mid = len(text) // 2
     def best(rx):
-        c = [m.end() for m in re.finditer(rx, text)]
+        c = [m.end() for m in re.finditer(rx, text) if min(m.start(), len(text) - m.end()) >= max(15, len(text) * .25)]   # 짧은 조각은 XTTS가 웅얼거림을 만듦 → 고르게 나눔
         return min(c, key=lambda i: abs(i - mid)) if c else None
     cut = None
     for rx in (r', ', r'(?:며|고|면|서|여|써|록|지만|므로|는데|은데|니까)\s', r'\s'):
