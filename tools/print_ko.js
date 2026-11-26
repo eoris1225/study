@@ -53,11 +53,11 @@ function answers() { let h = '<div class="ans"><h2>정답 · 근거</h2>';
   return h + '</div>'; }
 
 const css = `@page{size:A4;margin:11mm 11mm 12mm}
-body{font-family:'Noto Sans KR',sans-serif;font-size:9.4pt;line-height:1.45;color:#111;margin:0}
+body{font-family:'Noto Sans KR',sans-serif;font-size:9.4pt;line-height:1.4;color:#111;margin:0}
 .wrap{max-width:188mm;margin:0 auto}
 h1{font-size:19pt;margin:0 0 2mm;font-weight:900}
 h2{font-size:12pt;margin:3mm 0 1.6mm;padding:1.4mm 3mm;background:#111;color:#fff;border-radius:2mm;break-after:avoid}h2 small{font-weight:400;font-size:8.2pt;opacity:.85}
-table{border-collapse:collapse;width:100%;margin:1mm 0 1.6mm}td,th{border:1px solid #666;padding:.8mm 1.5mm;vertical-align:top;font-size:8.7pt;line-height:1.42}th{background:#eee;text-align:left}
+table{border-collapse:collapse;width:100%;margin:1mm 0 1.6mm}td,th{border:1px solid #666;padding:.8mm 1.5mm;vertical-align:top;font-size:8.7pt;line-height:1.36}th{background:#eee;text-align:left}
 .plan th{width:22mm;text-align:center}.tip{border:1.2px dashed #555;border-radius:2mm;padding:1.4mm 3mm;margin:1.5mm 0 3mm;font-size:8.8pt}
 .sec{break-before:auto}
 .theme{font-weight:700;font-size:9.6pt;margin:0 0 1.2mm;break-after:avoid}
