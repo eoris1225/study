@@ -168,7 +168,7 @@
     const RA = [62, 112], LA = [248, 112], LL = [232, 388]; const flip = c.flip, lead = c.lead;
     const el = (p, sign, name) => { k.circ(p[0], p[1], 12, sign === '+' ? C.red : sign === '−' ? C.blue : '#ccc', C.ink, 2); k.txt(sign || '', p[0], p[1], { size: 15, bold: true, color: '#fff' }); k.txt(name, p[0], p[1] + 24, { size: 12, bold: true }); };
     const sRA = flip ? '+' : '−', sOther = flip ? '−' : '+'; el(RA, sRA, '오른팔'); el(lead === 1 ? LA : LL, sOther, lead === 1 ? '왼팔' : '왼다리'); el(lead === 1 ? LL : LA, '', lead === 1 ? '왼다리' : '왼팔');
-    k.txt('※ 마주 보는 그림: 몸의 오른쪽 = 화면 왼쪽', 155, 420, { size: 11, color: C.gray });
+    k.txt('※ 마주 보는 그림: 몸의 오른쪽 = 화면 왼쪽', 140, 433, { size: 11, color: C.gray });
     /* 심장 */ const hx = 160, hy = 225, aG = phase.atria, vG = phase.vent, vR = phase.repol;
     const fillA = aG > 0 ? `rgba(255,120,60,${.25 + .6 * aG})` : '#f7c6c6', fillV = vG > 0 ? `rgba(255,90,40,${.25 + .65 * vG})` : vR > 0 ? `rgba(80,140,255,${.2 + .5 * vR})` : '#f2b3b3';
     k.rr(hx - 52, hy - 50, 50, 42, 16, fillA, C.ink, 2); k.rr(hx + 2, hy - 50, 50, 42, 16, fillA, C.ink, 2); k.txt('우심방', hx - 27, hy - 29, { size: 11, bold: true }); k.txt('좌심방', hx + 27, hy - 29, { size: 11, bold: true });

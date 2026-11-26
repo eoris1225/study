@@ -43,7 +43,7 @@ window.KOA = (() => {
 
   function mount(el, id, p) {
     const sc = SC[id]; if (!sc) { el.innerHTML = '<p style="padding:20px">애니메이션 준비 중</p>'; return { destroy() { } }; }
-    el.innerHTML = `<div class="anim"><canvas></canvas><div class="acap"></div><div class="actl"><button class="pv">◀ 이전</button><button class="play">⏸ 멈춤</button><button class="nx">다음 ▶</button><div class="dots"></div><button class="fs" title="전체 화면">⛶</button></div><div class="alab"></div></div>`;
+    el.innerHTML = `<div class="anim"><canvas></canvas><div class="rot">📱 그림이 작으면 폰을 가로로 돌리거나 ⛶ 버튼을 눌러 크게 보세요</div><div class="acap"></div><div class="actl"><button class="pv">◀ 이전</button><button class="play">⏸ 멈춤</button><button class="nx">다음 ▶</button><div class="dots"></div><button class="fs" title="전체 화면">⛶</button></div><div class="alab"></div></div>`;
     const box = el.querySelector('.anim'), cv = box.querySelector('canvas'), cap = box.querySelector('.acap'), lab = box.querySelector('.alab'), dots = box.querySelector('.dots'), pb = box.querySelector('.play');
     const S = { t: 0, k: 0, st: 0, playing: true, jump: 0 }; sc.init && sc.init(S, p);
     const steps = sc.steps; dots.innerHTML = steps.map((_, i) => `<i data-i="${i}"></i>`).join('');

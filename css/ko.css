@@ -31,6 +31,7 @@ body.narrow .ptitle{font-size:19px}
 .rbar button,.qtop button,.endnav button{border:1.5px solid #cfc6b2;background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
 .rbar button.on,.qtop button.on{background:var(--navy);border-color:var(--navy);color:#fff}
 .txt{font-family:'Noto Serif KR',serif;font-size:17px;line-height:1.95;word-break:keep-all;text-align:justify}
+body.narrow .txt{text-align:left}
 body.narrow .txt{font-size:15.5px;line-height:1.9}
 .pp{position:relative;margin:0 0 6px;text-indent:1em}
 .pp .pn{display:none}
@@ -139,10 +140,15 @@ details .pp{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;ma
 #inkbar button:disabled{opacity:.35}
 #inkbar button[data-a=finger]{width:48px}
 #inkbar i{display:block;width:20px;height:20px;border-radius:50%;border:2px solid #fff}
+@media (max-width:400px){#inkbar{gap:1px;padding:4px}#inkbar button{width:34px;height:40px;font-size:16px}#inkbar button[data-a=finger]{width:42px}}
 #toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%) translateY(20px);background:#000c;color:#fff;padding:8px 14px;border-radius:999px;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:40;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%)}
 /* 애니메이션 */
-.animwrap{max-width:980px;margin:0 auto;padding:10px 10px 30px}
+.animwrap{max-width:min(980px,max(440px,calc((100vh - 290px) * 1.5)));margin:0 auto;padding:10px 10px 30px}
+.anim:fullscreen{overflow:auto;display:flex;flex-direction:column}
+.anim:fullscreen canvas{width:auto;max-width:100%;height:calc(100vh - 150px);margin:0 auto}
+.rot{display:none;font-size:12.5px;color:#7a7466;padding:4px 12px 0}
+@media (orientation:portrait) and (max-width:600px){.rot{display:block}}
 .anim{background:var(--paper);border-radius:14px;box-shadow:0 2px 12px #0002;overflow:hidden}
 .anim canvas{display:block;width:100%;touch-action:pan-y;background:#fffdf6}
 .acap{min-height:66px;padding:10px 14px;font-size:16px;line-height:1.55;border-top:1px solid #eee4d0;background:#fffaf0}
