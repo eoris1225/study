@@ -1,6 +1,6 @@
 /* 국어 1시간 자습 프린트 — 기말 범위 12지문 (다른 과목 1시간 프린트와 같은 틀)
    지문마다: 🎯 한 줄 주제 → 문단별 핵심 문장(원문) · 쉬운 말 · 내 필기 칸 → 한눈 비교표 → ⚠ 함정 → O/X 6 → 문제 / 맨 뒤 정답·근거
-   node tools/print_ko.js  →  korean_print.html (저장소 루트)   ·  PDF: node tools/print_ko.js --pdf  →  print/korean-1hour.pdf */
+   node tools/print_ko.js  →  korean_1h.html (저장소 루트)   ·  PDF: node tools/print_ko.js --pdf  →  print/korean-1hour.pdf */
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'); global.window = {};
 const R = f => fs.readFileSync(path.join(ROOT, 'js', 'ko', f), 'utf8');
@@ -84,12 +84,12 @@ const body = `<h1>국어 1시간 — 기말 범위 지문 다시 보기</h1>${pl
 const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>국어 1시간 자습 프린트</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Noto+Serif+KR:wght@400;700&display=swap"><style>${css}</style></head>
 <body><button class="btn" onclick="print()">인쇄하기</button><div class="wrap">${body}</div></body></html>`;
-fs.writeFileSync(path.join(ROOT, 'korean_print.html'), html);
-console.log('korean_print.html', (html.length / 1024).toFixed(0) + 'KB, 문제', qn, 'O/X', oxn);
+fs.writeFileSync(path.join(ROOT, 'korean_1h.html'), html);
+console.log('korean_1h.html', (html.length / 1024).toFixed(0) + 'KB, 문제', qn, 'O/X', oxn);
 
 if (process.argv.includes('--pdf')) (async () => {
   const { chromium } = require('playwright'); const b = await chromium.launch(); const pg = await b.newPage();
-  await pg.goto('file://' + path.join(ROOT, 'korean_print.html'), { waitUntil: 'networkidle' }); await pg.evaluate(() => document.fonts.ready);
+  await pg.goto('file://' + path.join(ROOT, 'korean_1h.html'), { waitUntil: 'networkidle' }); await pg.evaluate(() => document.fonts.ready);
   await pg.pdf({ path: path.join(ROOT, 'print', 'korean-1hour.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true });
   await b.close(); console.log('print/korean-1hour.pdf');
 })();

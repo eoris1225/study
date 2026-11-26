@@ -120,6 +120,7 @@ details .pp{font-family:'Noto Serif KR',serif;font-size:15px;line-height:1.85;ma
 .hero h1{margin:0 0 6px;font-size:22px}.hero p{margin:0 0 10px;line-height:1.6;font-size:14.5px}
 .big{display:block;width:100%;margin:8px 0 0;border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:900;background:var(--navy);color:#fff;text-align:left}
 .big.alt{background:#c4442f}
+a.big{box-sizing:border-box;text-decoration:none}.big.prt{background:#fff;color:var(--navy);border:2px solid var(--navy)}.big.prt small{display:block;font-weight:400;font-size:12.5px;opacity:.8;margin-top:2px}
 .home h2{font-size:17px;margin:20px 4px 8px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .card{display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto auto auto;column-gap:8px;text-align:left;border:0;background:var(--paper);border-radius:14px;padding:12px;box-shadow:0 2px 8px #0001}
