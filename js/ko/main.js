@@ -32,12 +32,13 @@
   function render() {
     keepScroll(); if (anim) { anim.destroy(); anim = null; } measure();
     const { a, qs } = parse(); route = location.hash || '#/'; renderAt = Date.now();
-    if (a[0] === 'p' && KO.get(a[1])) { SS('ko_last', route.split('?')[0]); passage(KO.get(a[1]), TABS.some(t => t[0] === a[2]) ? a[2] : 'read', qs); }
+    if (a[0] === 'p' && KO.get(a[1])) { SS('ko_last', route.split('?')[0]); const tb = TABS.some(t => t[0] === a[2]) ? a[2] : 'read'; passage(KO.get(a[1]), tb, qs); emit('ko:route', { p: KO.get(a[1]), tab: tb }); }
     else if (a[0] === 'rush') rush();
     else home();
     const m = JSON.parse(LS('ko_scroll') || '{}'); const y = qs.hl ? null : m[route.split('?')[0]];
     requestAnimationFrame(() => { view.scrollTop = y || 0; });
   }
+  const emit = (n, d) => { try { document.dispatchEvent(new CustomEvent(n, { detail: d })); } catch (e) { } };
   /* 유령 클릭 막기: 화면이 바뀐 직후 0.45초 안의 클릭(이전 화면에서 누른 손가락)은 무시 */
   view.addEventListener('click', e => { if (Date.now() - renderAt < 450) { e.preventDefault(); e.stopPropagation(); } }, true);
 
@@ -140,7 +141,7 @@
     pa.addEventListener('click', e => { const b = e.target.closest('.oxb .opt'); const a = e.target.closest('[data-hl]');
       if (a) { go(`#/p/${a.dataset.pid}/read?hl=${a.dataset.hl}`); return; }
       if (!b) return; const it = b.closest('.oxi'), i = +it.dataset.i; if (getAns(i) !== undefined) return; const v = +b.dataset.v; setAns(i, v);
-      const ok = (v === 1) === !!items[i].a; it.classList.add(ok ? 'right' : 'wrong'); b.classList.add('pick'); it.querySelector('.oxw .rs').textContent = ok ? '⭕ 맞았어요' : '❌ 틀렸어요'; rerender && rerender(); });
+      const ok = (v === 1) === !!items[i].a; emit('ko:answer', { ok, kind: 'ox', why: items[i].why }); it.classList.add(ok ? 'right' : 'wrong'); b.classList.add('pick'); it.querySelector('.oxw .rs').textContent = ok ? '⭕ 맞았어요' : '❌ 틀렸어요'; rerender && rerender(); });
   }
   function ox(p) { const g = P(p.id); g.ox = g.ox || {}; let only = false;
     const items = p.ox.map(([t, a, why, pi]) => ({ t, a, why, p: pi, pid: p.id }));
@@ -175,8 +176,8 @@
     const pa = paper(`${srcLine(p)}<h1 class="ptitle">📝 문제 — ${p.title}</h1><div class="qtop"><span class="score">${sc.q} / ${MC}</span><span>${p.exam ? '기출 4문항 + 변형' : p.quiz.some(q => q.type === 'write') ? '교과서 활동(서술형) + 변형 문제' : '변형 문제 (시험 대비 자체 제작)'} · 펜으로 지문 근거를 표시하며 풀어 봐요</span></div>
       ${p.quiz.map(qh).join('')}<div class="endnav"><button data-nextp>다음 지문 ▶</button></div>`, `${p.id}:quiz`);
     pa.onclick = e => { const o = e.target.closest('.qo'), r = e.target.closest('.rq'), md = e.target.closest('.mdl');
-      if (md) { const c = md.closest('.qc'), i = +c.dataset.i, box = c.querySelector('.model'); box.hidden = !box.hidden; md.textContent = box.hidden ? '💡 예시 답 보기' : '예시 답 접기'; if (!box.hidden) { g.quiz[i] = 'w'; c.classList.add('done'); save(); } return; }
-      if (o) { const c = o.closest('.qc'), i = +c.dataset.i, q = p.quiz[i]; if (g.quiz[i] !== undefined) return; const k = +o.dataset.k; g.quiz[i] = k; save();
+      if (md) { const c = md.closest('.qc'), i = +c.dataset.i, box = c.querySelector('.model'); box.hidden = !box.hidden; md.textContent = box.hidden ? '💡 예시 답 보기' : '예시 답 접기'; if (!box.hidden) { g.quiz[i] = 'w'; c.classList.add('done'); save(); emit('ko:model', {}); } return; }
+      if (o) { const c = o.closest('.qc'), i = +c.dataset.i, q = p.quiz[i]; if (g.quiz[i] !== undefined) return; const k = +o.dataset.k; g.quiz[i] = k; save(); emit('ko:answer', { ok: k === q.a, kind: 'quiz', why: q.why[q.a] }); if (Object.keys(g.quiz).length >= p.quiz.length) setTimeout(() => emit('ko:done', {}), 4500);
         c.classList.add('done'); c.querySelectorAll('.qo').forEach(b => { if (+b.dataset.k === q.a) b.classList.add('ok'); }); if (k !== q.a) o.classList.add('no'); c.querySelector('.why').innerHTML = whyHtml(q, k);
         const s2 = score(p); pa.querySelector('.qtop .score').textContent = `${s2.q} / ${MC}`; }
       if (r) { const c = r.closest('.qc'), i = +c.dataset.i; delete g.quiz[i]; save(); c.classList.remove('done'); c.querySelectorAll('.qo').forEach(b => b.classList.remove('ok', 'no')); c.querySelector('.why').innerHTML = ''; }
