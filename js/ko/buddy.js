@@ -32,18 +32,18 @@ sheet.innerHTML = `<div class="bs-box"><h3>🌸 응원 친구 불러오기</h3>
 document.body.append(el, btn, sheet);
 const cv = el.querySelector('canvas'), bub = el.querySelector('.bd-bubble'), msg = el.querySelector('.bd-msg');
 
-function layout() { el.classList.toggle('big', cfg.big); el.querySelector('[data-b=voice]').textContent = cfg.voice ? '🔊' : '🔇'; resize(); }
+function layout() { el.classList.toggle('bdbig', cfg.big); el.querySelector('[data-b=voice]').textContent = cfg.voice ? '🔊' : '🔇'; resize(); }
 let hasModel = false, ready = false;
 function showState() { el.hidden = !(hasModel && cfg.on); btn.hidden = hasModel && cfg.on; btn.textContent = hasModel ? '🌸' : '🌸 응원 친구'; btn.classList.toggle('pill', !hasModel); layout(); }
 
 /* ── 3D ── */
 let R = null, scene, cam, mesh = null, B = {}, rest = {}, M = {}, raf = 0, last = 0;
 function initGL() { if (R) return true; try { R = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true }); } catch (e) { msg.textContent = '이 기기에서는 3D를 그릴 수 없어요'; return false; }
-  R.setPixelRatio(Math.min(2, devicePixelRatio || 1)); R.outputColorSpace = THREE.SRGBColorSpace;
+  R.setPixelRatio(Math.min(2, devicePixelRatio || 1)); R.outputColorSpace = THREE.SRGBColorSpace; R.setClearColor(0x000000, 0);
   scene = new THREE.Scene(); scene.add(new THREE.AmbientLight('#ffffff', 2.2)); const d = new THREE.DirectionalLight('#ffffff', 1.4); d.position.set(-2, 4, 6); scene.add(d);
   cam = new THREE.PerspectiveCamera(22, 1, 1, 200); resize(); return true; }
-function resize() { if (!R) return; const w = cv.clientWidth || 120, h = cv.clientHeight || 170; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); frame(); }
-function frame() { if (!cam) return; const big = cfg.big; cam.position.set(0, 13.9, big ? 30 : 31); cam.lookAt(0, 13.2, 0); }
+function resize() { if (!R) return; const w = cv.clientWidth || 120, h = cv.clientHeight || 170; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); frame(); if (ready) R.render(scene, cam); }
+function frame() { if (!cam) return; cam.position.set(0, 15.2, 27); cam.lookAt(0, 14.7, 0); }
 
 const norm = p => decodeURIComponent(p).replace(/\\/g, '/').replace(/^.*?buddymodel\//, '').toLowerCase();
 async function loadModel(rec) { if (!initGL()) return; msg.textContent = '불러오는 중…'; const urls = {};
@@ -61,24 +61,40 @@ function rot(name, x, y, z) { const b = B[name]; if (!b) return; E.set(x, y, z, 
 const mood = { face: 'neutral', until: 0 }, act = { name: 'idle', t0: 0, dur: 0 }; let talkUntil = 0, mw = {};
 const FACES = { neutral: {}, smile: { 'Ex_笑顔': 1 }, shy: { 'Ex_照れ': 1 }, trouble: { 'Ex_困る': 1 }, surprise: { 'Ex_びっくり': 1 }, sad: { 'Ex_悲しい': .7 }, wink: { 'ウィンク': 1, '口角上げ': .6 } };
 function morph(name, w) { const i = M[name]; if (i == null) return; mw[name] = w; }
-function setPose(t, a) { const now = performance.now() / 1000, u = act.dur ? Math.min(1, (now - act.t0) / act.dur) : 0, env = Math.sin(Math.PI * Math.min(1, u * 1.15)), on = act.name;
+/* 자세: 팔은 "윗팔·아래팔이 향할 방향"을 정해 그 방향으로 뼈를 겨눔(모델 기준: +x = 에마의 왼쪽, +y 위, +z 앞).
+   머리·몸·뛰기는 값으로. 모두 목표값을 부드럽게 따라감 */
+const V3 = THREE.Vector3, v = (x, y, z) => new V3(x, y, z).normalize(), mir = d => new V3(-d.x, d.y, d.z);
+const ARM = { L: ['左腕', '左ひじ', '左手首'], R: ['右腕', '右ひじ', '右手首'] }, restDir = {}, cur = {};
+const IDLE = { uL: v(.22, -1, .06), fL: v(.12, -1, .16) };
+function poseOf(on, t) { /* 왼팔(L) 기준 방향, 오른팔은 따로 주지 않으면 거울 */
+  let uL = IDLE.uL, fL = IDLE.fL, uR = null, fR = null, H = { hx: 0, hy: 0, hz: 0, bz: 0, hop: 0 };
+  if (on === 'cheer') { const w = Math.sin(t * 9) * .18; uL = v(.6, .8, .12); fL = v(.25 + w, 1, .1); uR = mir(v(.6, .8, .12)); fR = mir(v(.25 - w, 1, .1)); H = { hx: -.12, hy: 0, hz: 0, bz: 0, hop: Math.abs(Math.sin(t * 7)) * .35 }; }
+  if (on === 'wave') { uR = v(-1, .12, .2); fR = v(-.15 + Math.sin(t * 10) * .4, 1, .2); H = { hx: 0, hy: -.08, hz: .13, bz: -.03, hop: 0 }; }
+  if (on === 'fight') { const b = Math.abs(Math.sin(t * 8)); uL = v(.4, -.85, .4); fL = v(-.2, .85, .55); H = { hx: b * .1, hy: 0, hz: 0, bz: 0, hop: b * .15 }; }
+  if (on === 'shy') { uL = v(.2, -1, .3); fL = v(-.5, -.3, .8); H = { hx: .16, hy: 0, hz: -.1, bz: Math.sin(t * 2.4) * .05, hop: 0 }; }
+  if (on === 'think') { uR = v(-.3, -.85, .45); fR = v(.45, .85, .35); H = { hx: .05, hy: 0, hz: .2, bz: .05, hop: 0 }; }
+  if (on === 'nod') H.hx = Math.abs(Math.sin(t * 6)) * .26;
+  return { uL, fL, uR: uR || mir(uL), fR: fR || mir(fL), ...H }; }
+const qp = new THREE.Quaternion(), qw = new THREE.Quaternion();
+function aim(name, dir) { const b = B[name]; if (!b || !restDir[name]) return; b.parent.updateWorldMatrix(true, false); b.parent.getWorldQuaternion(qp); qw.setFromUnitVectors(restDir[name], dir); b.quaternion.copy(qp.invert()).multiply(qw); }
+function initArms() { mesh.updateMatrixWorld(true); const wp = n => B[n].getWorldPosition(new V3());
+  for (const s of ['L', 'R']) { const [a, e, h] = ARM[s]; if (!B[a] || !B[e] || !B[h]) continue; restDir[a] = wp(e).sub(wp(a)).normalize(); restDir[e] = wp(h).sub(wp(e)).normalize(); }
+  Object.assign(cur, poseOf('idle', 0)); for (const k of ['uL', 'fL', 'uR', 'fR']) cur[k] = cur[k].clone(); }
+function setPose(t, a) { const now = performance.now() / 1000, u = act.dur ? (now - act.t0) / act.dur : 1, on = u < 1 ? act.name : 'idle';
+  if (!cur.uL) initArms(); const T = poseOf(on, t), k = Math.min(1, a * 7);
+  for (const key of ['uL', 'fL', 'uR', 'fR']) cur[key].lerp(T[key], k).normalize();
+  for (const key of ['hx', 'hy', 'hz', 'bz', 'hop']) cur[key] = (cur[key] || 0) + (T[key] - (cur[key] || 0)) * k;
   const br = Math.sin(t * 1.6) * .025, sway = Math.sin(t * .7) * .03;
-  let armL = -1.0, armR = 1.0, elL = 0, elR = 0, elLx = 0, elRx = 0, headX = Math.sin(t * .9) * .03, headY = Math.sin(t * .5) * .06, headZ = Math.sin(t * .63) * .04, hop = 0, bodyZ = sway;
-  if (on === 'cheer') { armL = -1.0 + 3.0 * env; armR = 1.0 - 3.0 * env; elL = -.3 * env + Math.sin(t * 14) * .25 * env; elR = .3 * env - Math.sin(t * 14) * .25 * env; hop = Math.abs(Math.sin(u * Math.PI * 3)) * .35 * env; headX -= .12 * env; }
-  if (on === 'wave') { armR = 1.0 - 2.2 * env; elR = -1.2 * env + Math.sin(t * 9) * .45 * env; headZ += .12 * env; }
-  if (on === 'nod') { headX += Math.abs(Math.sin(u * Math.PI * 2)) * .28 * env; }
-  if (on === 'fight') { armL = -1.25; armR = 1.25; elLx = -1.9 * env; elRx = -1.9 * env; elL = .5 * env; elR = -.5 * env; hop = Math.abs(Math.sin(u * Math.PI * 4)) * .18 * env; headX -= .05 * env; }
-  if (on === 'think') { headZ += .2 * env; headX += .06 * env; armR = 1.2; elRx = -2.1 * env; elR = -.6 * env; }
-  if (on === 'shy') { headX += .16 * env; headZ -= .1 * env; armL = -1.15; armR = 1.15; elLx = -.9 * env; elRx = -.9 * env; elL = .9 * env; elR = -.9 * env; }
-  rot('上半身', br, 0, bodyZ); rot('上半身2', br * .6, 0, 0); rot('首', headX * .4, headY * .4, headZ * .4); rot('頭', headX * .6, headY * .6, headZ * .6);
-  rot('左腕', 0, 0, armL * .62 - .05); rot('右腕', 0, 0, armR * .62 + .05); rot('左ひじ', elLx, elL, 0); rot('右ひじ', elRx, elR, 0);
-  if (B['センター']) { B['センター'].position.y = (B['センター'].userData.y0 ??= B['センター'].position.y) + hop; }
-  /* 표정 */ for (const k in mw) mw[k] = 0; const f = FACES[now < mood.until ? mood.face : 'neutral'] || {}; for (const [k, w] of Object.entries(f)) morph(k, w);
-  if (!f['Ex_笑顔'] && !f['ウィンク']) { const bl = (t % 3.7) < .13 ? 1 : 0; morph('まばたき', bl); }
-  if (now < talkUntil && !f['Ex_笑顔']) { const v = ['あ', 'い', 'う', 'え', 'お'][Math.floor(t * 9) % 5]; morph(v, .35 + .3 * Math.abs(Math.sin(t * 17))); }
+  rot('上半身', br, 0, sway + cur.bz); rot('上半身2', br * .6, 0, 0);
+  const hx = cur.hx + Math.sin(t * .9) * .03, hy = cur.hy + Math.sin(t * .5) * .06, hz = cur.hz + Math.sin(t * .63) * .04;
+  rot('首', hx * .4, hy * .4, hz * .4); rot('頭', hx * .6, hy * .6, hz * .6);
+  aim('左腕', cur.uL); aim('左ひじ', cur.fL); aim('右腕', cur.uR); aim('右ひじ', cur.fR);
+  const c = B['センター']; if (c) { c.userData.y0 ??= c.position.y; c.position.y = c.userData.y0 + cur.hop; }
+  /* 표정 */ for (const key in mw) mw[key] = 0; const f = FACES[now < mood.until ? mood.face : 'neutral'] || {}; for (const [key, w] of Object.entries(f)) morph(key, w);
+  if (!f['Ex_笑顔'] && !f['ウィンク']) morph('まばたき', (t % 3.7) < .13 ? 1 : 0);
+  if (now < talkUntil && !f['Ex_笑顔']) morph(['あ', 'い', 'う', 'え', 'お'][Math.floor(t * 9) % 5], .35 + .3 * Math.abs(Math.sin(t * 17)));
   else if (now < talkUntil) morph('あ', .3 * Math.abs(Math.sin(t * 15)));
-  const inf = mesh.morphTargetInfluences; for (const [k, i] of Object.entries(M)) { const tgt = mw[k] || 0; inf[i] += (tgt - inf[i]) * Math.min(1, a * 12); }
-  if (u >= 1 && on !== 'idle') act.name = 'idle'; }
+  const inf = mesh.morphTargetInfluences; for (const [key, i] of Object.entries(M)) inf[i] += ((mw[key] || 0) - inf[i]) * Math.min(1, a * 12); }
 function loop(ts) { raf = requestAnimationFrame(loop); if (el.hidden || document.hidden || !ready) return; const dt = Math.min(.1, (ts - last) / 1000); if (dt < 1 / 40) return; last = ts; setPose(ts / 1000, dt); R.render(scene, cam); }
 function doAct(name, face, dur = 1.8) { act.name = name; act.t0 = performance.now() / 1000; act.dur = dur; if (face) { mood.face = face; mood.until = act.t0 + dur + 1.2; } }
 
