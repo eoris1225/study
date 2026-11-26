@@ -8,7 +8,7 @@ eval(R('core.js')); global.KO = window.KO;
 for (const f of ['d_law.js', 'd_bio.js', 'd_tech.js', 'd_soc.js', 'd_text.js']) eval(R(f));
 const NUM = ['①', '②', '③', '④', '⑤'];
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-/* 원문 전체 → 인쇄용: ((핵심 문장)) 회색 형광, **핵심어** 굵게, [[논리 표지]] 점선 테두리, {{네모}}·__밑줄__은 원문 그대로, 그림은 칸 안에 */
+/* 원문 전체 → 인쇄용: ((핵심 문장)) 노란 형광, **핵심어** 파랑 굵게, [[논리 표지]] 빨간 테두리 (앱 해부 표시 색 그대로, 컬러 인쇄용), {{네모}}·__밑줄__은 원문 그대로, 그림은 칸 안에 */
 const full = s => esc(s).replace(/\[\[FIG:([^\]]+)\]\]/g, '<img class="ifig" src="$1">').replace(/\(\(/g, '<span class="k">').replace(/\)\)/g, '</span>').replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>').replace(/\[\[([^\]]+?)\]\]/g, '<span class="cj">$1</span>').replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>').replace(/__([\s\S]+?)__/g, '<u>$1</u>');
 const box = s => s.replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>');
 
@@ -30,15 +30,15 @@ function section(id, min) { const p = KO.get(id); const oxI = pickOx(p), qI = pi
   ANS.push({ ox: oxI.map((i, k) => ({ n: oxStart + k, a: p.ox[i][1], why: p.ox[i][2] })), id });
   return `<div class="sec"><h2>${p.emoji} ${esc(p.title)} <small>${esc(p.src)} · 약 ${min}분</small></h2>
 <div class="theme">🎯 ${esc(p.theme)}</div>
-<table class="kt"><tr><th style="width:5mm">¶</th><th>원문 <small>회색 = 핵심 문장 · 굵게 = 핵심어 · 점선 = 논리 표지</small></th><th style="width:28%">쉬운 말로</th><th style="width:13%">내 필기</th></tr>${rows}</table>
+<table class="kt"><tr><th style="width:5mm">¶</th><th>원문 <small><span class="k">노랑 = 핵심 문장</span> · <b class="kw">파랑 = 핵심어</b> · <span class="cj">빨강 = 논리 표지</span></small></th><th style="width:28%">쉬운 말로</th><th style="width:13%">내 필기</th></tr>${rows}</table>
 <div class="duo"><div class="dl">${tb}</div><div class="dr"><div class="warn"><b class="t">⚠ 함정</b><ul>${traps}</ul></div></div></div>
 <div class="oxb"><b>O/X</b> <small>맞으면 O, 틀리면 X — 틀린 곳에 밑줄</small><ol class="ox">${ox}</ol></div>
 ${qs}</div>`; }
 
 const plan = (() => { let t = 0; const row = (who, ids) => { const a = t; const s = ids.map(([id, m]) => { t += m; return `${KO.get(id).title.replace(/\s*\(.*?\)\s*/g, '').split(':')[0]} (${m}분)`; }).join(' · '); return `<tr><th>${a}~${t}분</th><td><b>${who}</b> ${s}</td></tr>`; };
-  return `<table class="plan"><tr><th>읽는 법</th><td>각 지문: <b>🎯 주제</b> → 왼쪽 <b>원문</b>을 문단씩 읽고(회색 형광 = 핵심 문장), 가운데 <b>쉬운 말</b> 칸을 손으로 가린 채 그 문단이 무슨 말인지 말해 보기 → <b>⚠ 함정</b> → <b>O/X</b> → <b>문제</b>. 오른쪽 <b>내 필기</b> 칸엔 헷갈린 것만.</td></tr>
+  return `<table class="plan"><tr><th>읽는 법</th><td>각 지문: <b>🎯 주제</b> → 왼쪽 <b>원문</b>을 문단씩 읽고(노랑 = 핵심 문장 · 파랑 = 핵심어 · 빨강 = 논리 표지, 앱 🖍 해부 표시와 같음), 가운데 <b>쉬운 말</b> 칸을 손으로 가린 채 그 문단이 무슨 말인지 말해 보기 → <b>⚠ 함정</b> → <b>O/X</b> → <b>문제</b>. 오른쪽 <b>내 필기</b> 칸엔 헷갈린 것만.</td></tr>
 ${row('김선홍T', ORDER.slice(0, 7))}${row('오홍주T', ORDER.slice(7))}<tr><th>${t}~60분</th><td>맨 뒤 <b>정답·근거</b>로 채점 → 틀린 O/X는 근거 문단을 앱(원문 탭 🔊 듣기)으로 다시 보기</td></tr></table>
-<div class="tip">⏱ 시간이 모자라면: 원문은 <b>회색 형광 문장</b>만 읽고 <b>🎯 주제 + ⚠ 함정 + O/X</b>. 9월·10월 학평(심전도·건축법)은 기출이니 문제까지 꼭.</div>`; })();
+<div class="tip">⏱ 시간이 모자라면: 원문은 <b>노란 형광 문장</b>만 읽고 <b>🎯 주제 + ⚠ 함정 + O/X</b>. 9월·10월 학평(심전도·건축법)은 기출이니 문제까지 꼭.</div>`; })();
 
 function answers() { let h = '<div class="ans"><h2>정답 · 근거</h2>';
   for (const a of ANS) {
@@ -48,7 +48,7 @@ function answers() { let h = '<div class="ans"><h2>정답 · 근거</h2>';
   return h + '</div>'; }
 
 const css = `@page{size:A4;margin:11mm 11mm 12mm}
-body{font-family:'Noto Sans KR',sans-serif;font-size:9.4pt;line-height:1.4;color:#111;margin:0}
+body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-family:'Noto Sans KR',sans-serif;font-size:9.4pt;line-height:1.4;color:#111;margin:0}
 .wrap{max-width:188mm;margin:0 auto}
 h1{font-size:19pt;margin:0 0 2mm;font-weight:900}
 h2{font-size:12pt;margin:3mm 0 1.6mm;padding:1.4mm 3mm;background:#111;color:#fff;border-radius:2mm;break-after:avoid}h2 small{font-weight:400;font-size:8.2pt;opacity:.85}
@@ -57,7 +57,7 @@ table{border-collapse:collapse;width:100%;margin:1mm 0 1.6mm}td,th{border:1px so
 .sec{break-before:auto}
 .theme{font-weight:700;font-size:9.6pt;margin:0 0 1.2mm;break-after:avoid}
 .kt tr{break-inside:avoid}.kt th:first-child{text-align:center}.kt th small{font-weight:400;font-size:7.4pt;color:#555;margin-left:1.5mm}
-.kt .src{font-family:'Noto Serif KR',serif;font-size:8.7pt;line-height:1.46;text-align:justify}.src .k{background:linear-gradient(transparent 56%,#d9d9d9 56%)}.src b{font-weight:700}.src .cj{border:1px dotted #333;border-radius:1mm;padding:0 .3mm}
+.kt .src{font-family:'Noto Serif KR',serif;font-size:8.7pt;line-height:1.46;text-align:justify}.k{background:linear-gradient(transparent 54%,#ffe776 54%)}.src b,.kw{font-weight:700;color:#1745b8}.cj{color:#d6402f;border:1.1px solid #d6402f;border-radius:1.2mm;padding:0 .4mm;font-weight:700}
 .ifig{display:block;max-width:62mm;margin:1.2mm auto}
 .dots{color:#999}.bx{border:1px solid #111;padding:0 .8mm}
 .memo{background:repeating-linear-gradient(#fff 0 5.6mm,#d4d4d4 5.6mm 5.85mm)}
