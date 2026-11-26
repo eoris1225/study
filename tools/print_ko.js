@@ -57,7 +57,7 @@ table{border-collapse:collapse;width:100%;margin:1mm 0 1.6mm}td,th{border:1px so
 .sec{break-before:auto}
 .theme{font-weight:700;font-size:9.6pt;margin:0 0 1.2mm;break-after:avoid}
 .kt tr{break-inside:avoid}.kt th:first-child{text-align:center}.kt th small{font-weight:400;font-size:7.4pt;color:#555;margin-left:1.5mm}
-.kt .src{font-family:'Noto Serif KR',serif;font-size:8.7pt;line-height:1.5;text-align:justify}.src .k{background:linear-gradient(transparent 52%,#d4d4d4 52%)}.src b{font-weight:700}.src .cj{border:1px dotted #333;border-radius:1mm;padding:0 .3mm}
+.kt .src{font-family:'Noto Serif KR',serif;font-size:8.7pt;line-height:1.46;text-align:justify}.src .k{background:linear-gradient(transparent 56%,#d9d9d9 56%)}.src b{font-weight:700}.src .cj{border:1px dotted #333;border-radius:1mm;padding:0 .3mm}
 .ifig{display:block;max-width:62mm;margin:1.2mm auto}
 .dots{color:#999}.bx{border:1px solid #111;padding:0 .8mm}
 .memo{background:repeating-linear-gradient(#fff 0 5.6mm,#d4d4d4 5.6mm 5.85mm)}
