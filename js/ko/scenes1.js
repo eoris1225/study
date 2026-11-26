@@ -159,7 +159,7 @@
   });
 
   /* ───────── 심전도 ───────── */
-  const G = (x, m, s) => Math.exp(-((x - m) / s) ** 2);
+  const G = (x, m, s) => Math.exp(-(((x - m) / s) ** 2));
   function ecgV(tc, c) { /* tc: 주기 안의 시간(초) */ const pr = c.pr || 0, w = c.wide ? 2 : 1, q0 = .17 + pr;
     let v = c.aP * G(tc, .05, .025) + c.aR * (-.12 * G(tc, q0, .009 * w) + 1 * G(tc, q0 + .025 * w, .012 * w) - .25 * G(tc, q0 + .05 * w, .01 * w)) + c.aT * G(tc, .45 + pr + (w - 1) * .05, .065);
     return v * (c.flip ? -1 : 1) * (c.lead === 1 ? .5 : 1); }
