@@ -45,7 +45,7 @@ body.narrow .marks .pp .pn{left:-13px;width:14px;height:14px;font-size:9px;line-
 .kw,.cj{font-weight:inherit}
 .memo{display:none;font-family:'Gaegu',cursive;font-size:19px;line-height:1.35;color:var(--blue);margin:2px 0 12px 8px;padding:4px 8px;border-left:3px solid #9db4f0;background:#f2f6ff}
 body.narrow .memo{font-size:17px}
-.paper.memo .memo{display:block}
+.paper.showmemo .memo{display:block}
 .pp.flash{animation:fl 2.4s ease}
 @keyframes fl{0%,40%{background:#fff3a6}100%{background:transparent}}
 .fig{margin:10px auto;text-align:center;text-indent:0}.fig img{max-width:100%;width:420px}.fig figcaption{font-size:13px}

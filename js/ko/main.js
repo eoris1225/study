@@ -98,10 +98,10 @@
       ${srcLine(p)}<h1 class="ptitle">${p.title}</h1><div class="txt">${body}</div>
       <div class="legend">해부 표시: <b class="kw">핵심어</b> · <span class="ks">핵심 문장</span> · <span class="cj">논리 표지(따라서·반면…)</span> · <span class="bx">원문 네모</span> · <u class="ul">원문 밑줄</u></div>
       <div class="endnav"><button data-tab2="note">다 읽었으면 🔍 분석으로 ▶</button></div>`, `${p.id}:read`);
-    pa.classList.toggle('marks', opt.marks); pa.classList.toggle('memo', opt.memo);
+    pa.classList.toggle('marks', opt.marks); pa.classList.toggle('showmemo', opt.memo);
     let t0 = 0, iv = 0;
     pa.onclick = e => { const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.o) { opt[b.dataset.o] = !opt[b.dataset.o]; saveOpt(); b.classList.toggle('on', opt[b.dataset.o]); pa.classList.toggle(b.dataset.o, opt[b.dataset.o]); }
+      if (b.dataset.o) { opt[b.dataset.o] = !opt[b.dataset.o]; saveOpt(); b.classList.toggle('on', opt[b.dataset.o]); pa.classList.toggle(b.dataset.o === 'memo' ? 'showmemo' : b.dataset.o, opt[b.dataset.o]); }
       if (b.dataset.t !== undefined) { const sp = b.querySelector('span');
         if (!t0) { t0 = Date.now(); b.classList.add('on'); iv = setInterval(() => { if (!sp.isConnected) return clearInterval(iv); const s = (Date.now() - t0) / 1000 | 0; sp.textContent = `${s / 60 | 0}:${String(s % 60).padStart(2, '0')} (누르면 멈춤)`; }, 500); }
         else { clearInterval(iv); const s = (Date.now() - t0) / 1000 | 0; t0 = 0; b.classList.remove('on'); sp.textContent = `${s / 60 | 0}분 ${s % 60}초 걸림`; const g = P(p.id); g.time = s; save(); } }
