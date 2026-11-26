@@ -15,11 +15,11 @@ CACHE = os.environ.get('KO_TTS_CACHE', '/tmp/ko_tts_cache')
 SR = 24000
 
 # ── 화자 ──
-CAST = {
+CAST = {   # 화자는 Whisper 받아쓰기로 한국어 발음 정확도(CER)를 재서 고름 (0~2%)
     'nar': dict(name='내레이터', spk='Ana Florence', speed=1.0),
-    'alt': dict(name='두 번째 내레이터', spk='Daisy Studious', speed=1.0),
-    'man': dict(name='남성 화자', spk='Viktor Eka', speed=1.0),
-    'old': dict(name='인용 화자', spk='Craig Gutsy', speed=0.96),
+    'alt': dict(name='두 번째 화자', spk='Sofia Hellen', speed=1.0),
+    'man': dict(name='남성 화자', spk='Xavier Hayasaka', speed=1.0),
+    'old': dict(name='인용 화자', spk='Baldur Sanjin', speed=0.96),
 }
 # 지문별 문단 화자 (없으면 전부 nar). 값: 문단 번호 → 화자, 문장 안 "…" 인용은 QUOTE[pid]
 PLAN = {
@@ -105,7 +105,8 @@ def asr(wav):
     if _asr is None:
         from faster_whisper import WhisperModel
         _asr = WhisperModel('small', device='cpu', compute_type='int8', cpu_threads=4)
-    segs, _ = _asr.transcribe(wav.astype(np.float32), language='ko', beam_size=1, vad_filter=False)
+    x = np.interp(np.arange(0, len(wav), SR / 16000), np.arange(len(wav)), wav).astype(np.float32)   # 24k → 16k
+    segs, _ = _asr.transcribe(x, language='ko', beam_size=1, vad_filter=False)
     return ''.join(s.text for s in segs)
 def cer(ref, hyp):
     f = lambda x: re.sub(r'[^가-힣0-9a-zA-Z]', '', x)
@@ -122,7 +123,29 @@ def trim(w, th=0.012):
     if not len(idx): return w
     a, b = max(0, idx[0] - int(.04 * SR)), min(len(w), idx[-1] + int(.08 * SR))
     return w[a:b]
+def pieces(text, lim=88):
+    """XTTS 한국어는 95자를 넘으면 끝이 잘릴 수 있음 → 쉼표, 그다음 연결 어미(-며/-고/-면/-서/-여/-써/-록/-지만/-므로/-는데) 뒤에서 나눔"""
+    if len(text) <= lim: return [text]
+    mid = len(text) // 2
+    def best(rx):
+        c = [m.end() for m in re.finditer(rx, text)]
+        return min(c, key=lambda i: abs(i - mid)) if c else None
+    cut = None
+    for rx in (r', ', r'(?:며|고|면|서|여|써|록|지만|므로|는데|은데|니까)\s', r'\s'):
+        c = best(rx)
+        if c and max(c, len(text) - c) <= max(lim, len(text) * .75): cut = c; break
+        if cut is None and c: cut = c
+    return pieces(text[:cut].strip(' ,'), lim) + pieces(text[cut:].strip(' ,'), lim)
 def synth(text, who):
+    ps = pieces(text)
+    if len(ps) == 1: return synth1(text, who)
+    ws, worst, tries = [], 0.0, 0
+    for k, p in enumerate(ps):
+        w, info = synth1(p, who); worst = max(worst, info['cer']); tries += info['tries']
+        if k: ws.append(np.zeros(int(SR * .14), dtype=np.float32))
+        ws.append(w)
+    return np.concatenate(ws), {'cer': worst, 'tries': tries}
+def synth1(text, who):
     c = CAST[who]; key = hashlib.sha1(f"{c['spk']}|{c['speed']}|{text}".encode()).hexdigest()[:16]
     os.makedirs(CACHE, exist_ok=True); f = os.path.join(CACHE, key + '.npy'); jf = f + '.json'
     if os.path.exists(f): return np.load(f), json.load(open(jf))

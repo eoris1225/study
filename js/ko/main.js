@@ -221,15 +221,16 @@
       const box = (r || el) && (r || el).getBoundingClientRect(), vb = view.getBoundingClientRect();
       if (box && Date.now() - lastUser > 2500 && (box.top < vb.top + 30 || box.bottom > vb.bottom - 130)) view.scrollBy({ top: box.top - vb.top - 110, behavior: 'smooth' }); }
     function stop() { if (!on) return; on = false; au.pause(); bar.hidden = true; document.body.classList.remove('playing'); if (window.CSS && CSS.highlights) CSS.highlights.delete('tts'); pa && pa.querySelectorAll('.pp.reading').forEach(x => x.classList.remove('reading')); }
-    au.addEventListener('timeupdate', sync); au.addEventListener('play', sync); au.addEventListener('pause', sync);
+    au.addEventListener('timeupdate', sync); au.addEventListener('play', sync); au.addEventListener('pause', sync); au.addEventListener('seeked', sync);
     au.addEventListener('ended', () => { if (V() && pi + 1 < V().paras.length) load(pi + 1, 0, true); else { stop(); emit('ko:done', {}); } });
     bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const a = b.dataset.p;
       if (a === 'play') { if (au.paused) au.play().catch(() => { }); else au.pause(); }
       if (a === 'prev') step(-1); if (a === 'next') step(1); if (a === 'close') stop();
       if (a === 'rate') { rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length]; au.playbackRate = rate; b.textContent = rate + '×'; } });
     bar.addEventListener('change', e => { if (e.target.dataset.p === 'para') load(+e.target.value, 0, true); });
-    return { start, stop };
+    return { start, stop, get state() { return { t: au.currentTime, d: au.duration, paused: au.paused, pi, si, rs: au.readyState }; } };
   })();
+  window.KOPlayer = Player;
 
   /* ── 전 범위 O/X 섞어 풀기 ── */
   function rush() { header('🔥 전 범위 O/X 20', null); let set; try { set = JSON.parse(LS('ko_rush') || 'null'); } catch (e) { }
