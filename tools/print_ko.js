@@ -10,9 +10,9 @@ const NUM = ['①', '②', '③', '④', '⑤'];
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 /* 원문 마크업 → 인쇄용: **핵심어** 굵게, 나머지 표시는 지움 */
 const clean = s => esc(s).replace(/\[\[FIG:[^\]]+\]\]/g, '').replace(/\(\(|\)\)/g, '').replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>').replace(/\[\[([^\]]+?)\]\]/g, '$1').replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>').replace(/__([\s\S]+?)__/g, '<u>$1</u>');
-/* 문단에서 핵심 문장(((…))이 걸친 문장)만 최대 3개 */
+/* 문단에서 핵심 문장(((…))이 걸친 문장)만 최대 2개 */
 function keySents(raw) { const parts = raw.split(/(?<=[.?!](?:\)\)|\*\*|__|”|")*)\s+/), out = [];
-  for (const s of parts) if (/\(\(|\)\)/.test(s) && out.length < 3) out.push(clean(s).trim());
+  for (const s of parts) if (/\(\(|\)\)/.test(s) && out.length < 2) out.push(clean(s).trim());
   return out.length ? out : [clean(parts[0])]; }
 const box = s => s.replace(/\{\{([^}]+?)\}\}/g, '<span class="bx">$1</span>');
 
