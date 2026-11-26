@@ -100,17 +100,19 @@ def tts():
         _tts = TTS('tts_models/multilingual/multi-dataset/xtts_v2').to('cpu')
     return _tts
 _asr = None
-def asr(wav):
+def asr(wav, words=False):
     global _asr
     if _asr is None:
         from faster_whisper import WhisperModel
         _asr = WhisperModel('small', device='cpu', compute_type='int8', cpu_threads=4)
     x = np.interp(np.arange(0, len(wav), SR / 16000), np.arange(len(wav)), wav).astype(np.float32)   # 24k → 16k
-    segs, _ = _asr.transcribe(x, language='ko', beam_size=1, vad_filter=False)
+    segs, _ = _asr.transcribe(x, language='ko', beam_size=1, vad_filter=False, word_timestamps=words)
+    segs = list(segs)
+    if words: return ''.join(s.text for s in segs), [w for s in segs for w in (s.words or [])]
     return ''.join(s.text for s in segs)
+HG = lambda x: re.sub(r'[^가-힣0-9a-zA-Z]', '', x)
 def cer(ref, hyp):
-    f = lambda x: re.sub(r'[^가-힣0-9a-zA-Z]', '', x)
-    a, b = f(ref), f(hyp)
+    a, b = HG(ref), HG(norm(hyp))        # Whisper가 숫자로 적은 것(1000원)도 한국어 읽기로 바꿔 비교
     if not a: return 0.0
     prev = list(range(len(b) + 1))
     for i, ca in enumerate(a, 1):
@@ -118,6 +120,14 @@ def cer(ref, hyp):
         for j, cb in enumerate(b, 1): cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb))
         prev = cur
     return prev[-1] / len(a)
+def expect(text): return len(HG(text)) * .17 + .5        # 한국어 낭독 대략 초당 6글자
+def cut_babble(text, w):
+    """문장을 다 읽은 뒤 이어지는 웅얼거림 잘라내기: 받아쓴 단어를 따라가며 원문 글자 수만큼 읽은 지점에서 자름"""
+    _, words = asr(w, words=True); need = len(HG(text)); got = 0
+    for wd in words:
+        got += len(HG(norm(wd.word)))
+        if got >= need - 1: return w[:min(len(w), int((wd.end + .18) * SR))]
+    return w
 def trim(w, th=0.012):
     idx = np.where(np.abs(w) > th)[0]
     if not len(idx): return w
@@ -145,18 +155,26 @@ def synth(text, who):
         if k: ws.append(np.zeros(int(SR * .14), dtype=np.float32))
         ws.append(w)
     return np.concatenate(ws), {'cer': worst, 'tries': tries}
+TEMPS = [.65, .5, .35, .75, .3, .55]
 def synth1(text, who):
     c = CAST[who]; key = hashlib.sha1(f"{c['spk']}|{c['speed']}|{text}".encode()).hexdigest()[:16]
     os.makedirs(CACHE, exist_ok=True); f = os.path.join(CACHE, key + '.npy'); jf = f + '.json'
-    if os.path.exists(f): return np.load(f), json.load(open(jf))
+    if os.path.exists(f):
+        info = json.load(open(jf))
+        w0 = np.load(f)
+        if info.get('v') == 2 or (info['cer'] <= .2 and len(w0) / SR / expect(text) < 1.5): return w0, info      # 통과 못 했거나 너무 긴(웅얼거림) 조각은 새 방식으로 다시
     best = None
-    for k in range(3):
-        w = np.array(tts().tts(text=text, speaker=c['spk'], language='ko', speed=c['speed'], split_sentences=False, temperature=.65 if k == 0 else .5), dtype=np.float32)
-        w = trim(w); e = cer(text, asr(w))
-        if best is None or e < best[1]: best = (w, e)
-        if e <= .12: break
-    np.save(f, best[0]); json.dump({'cer': best[1], 'tries': k + 1}, open(jf, 'w'))
-    return best[0], {'cer': best[1], 'tries': k + 1}
+    for k, temp in enumerate(TEMPS):
+        w = np.array(tts().tts(text=text, speaker=c['spk'], language='ko', speed=c['speed'], split_sentences=False, temperature=temp), dtype=np.float32)
+        w = trim(w); e = cer(text, asr(w)); r = len(w) / SR / expect(text)
+        if e > .2 and r > 1.3: w2 = trim(cut_babble(text, w)); e2 = cer(text, asr(w2)); r2 = len(w2) / SR / expect(text)
+        else: w2, e2, r2 = w, e, r
+        score = e2 + max(0, r2 - 1.5)
+        if best is None or score < best[2]: best = (w2, e2, score, k + 1)
+        if e2 <= .12 and r2 < 1.5: break
+    info = {'cer': best[1], 'tries': k + 1, 'v': 2}
+    np.save(f, best[0]); json.dump(info, open(jf, 'w'))
+    return best[0], info
 
 def mp3(w, path):
     pcm = (np.clip(w, -1, 1) * 32767).astype('<i2').tobytes()
