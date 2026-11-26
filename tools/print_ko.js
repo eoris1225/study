@@ -24,9 +24,8 @@ const pickQ = p => p.exam ? p.quiz.map((q, i) => i).filter(i => /기출/.test(p.
 
 let qn = 0, oxn = 0; const ANS = [];
 function section(id, min) { const p = KO.get(id); const oxI = pickOx(p), qI = pickQ(p); const oxStart = oxn + 1;
-  const rows = p.paras.map((raw, i) => `<tr><th>${i + 1}</th><td class="ks">${keySents(raw).join(' <span class="dots">…</span> ')}</td><td>${esc(p.notes[i] ? p.notes[i].sum : '')}</td><td class="memo"></td></tr>`).join('');
+  const rows = p.paras.map((raw, i) => { const n = p.notes[i] || {}; return `<tr><th>${i + 1}</th><td class="ks">${keySents(raw).join(' <span class="dots">…</span> ')}</td><td>${esc(n.sum || '')}${n.point ? `<div class="pt">★ ${esc(n.point)}</div>` : ''}</td><td class="memo"></td></tr>`; }).join('');
   const traps = p.notes.map((n, i) => n.trap ? `<li><b>${i + 1}문단</b> ${esc(n.trap)}</li>` : '').join('');
-  const points = p.notes.map((n, i) => `<li><b>${i + 1}문단</b> ${esc(n.point)}</li>`).join('');
   const tb = p.table ? `<table class="cmp"><tr>${p.table.head.map(h => `<th>${esc(h)}</th>`).join('')}</tr>${p.table.rows.map(r => `<tr>${r.map((c, j) => j ? `<td>${esc(c)}</td>` : `<th>${esc(c)}</th>`).join('')}</tr>`).join('')}</table>` : '';
   const ox = oxI.map(i => { oxn++; return `<li><span class="n">${oxn}</span> ${esc(p.ox[i][0])} <span class="b">(   )</span></li>`; }).join('');
   const qs = qI.map(i => { const q = p.quiz[i]; qn++; ANS.push({ qn, id, q }); return `<div class="pr"><span class="n">문제 ${qn}.</span> <span class="tag">${esc(q.tag)}</span> ${box(esc(q.q))}
@@ -37,8 +36,8 @@ function section(id, min) { const p = KO.get(id); const oxI = pickOx(p), qI = pi
 <div class="theme">🎯 ${esc(p.theme)}</div>
 <table class="kt"><tr><th style="width:5mm">¶</th><th>핵심 문장 (원문에서)</th><th style="width:31%">쉬운 말로</th><th style="width:16%">내 필기</th></tr>${rows}</table>
 ${p.id === 'ecg' ? '<img class="fig" src="img/ko/ecg_fig.png">' : ''}
-<div class="duo"><div class="dl">${tb}<div class="pt"><b>★ 출제 포인트</b><ul>${points}</ul></div></div>
-<div class="dr"><div class="warn"><b class="t">⚠ 함정</b><ul>${traps}</ul></div><div class="oxb"><b>O/X 확인</b><ol class="ox">${ox}</ol></div></div></div>
+<div class="duo"><div class="dl">${tb}</div><div class="dr"><div class="warn"><b class="t">⚠ 함정</b><ul>${traps}</ul></div></div></div>
+<div class="oxb"><b>O/X</b> <small>맞으면 O, 틀리면 X — 틀린 곳에 밑줄</small><ol class="ox">${ox}</ol></div>
 ${qs}</div>`; }
 
 const plan = (() => { let t = 0; const row = (who, ids) => { const a = t; const s = ids.map(([id, m]) => { t += m; return `${KO.get(id).title.replace(/\s*\(.*?\)\s*/g, '').split(':')[0]} (${m}분)`; }).join(' · '); return `<tr><th>${a}~${t}분</th><td><b>${who}</b> ${s}</td></tr>`; };
@@ -67,10 +66,11 @@ table{border-collapse:collapse;width:100%;margin:1mm 0 1.6mm}td,th{border:1px so
 .memo{background:repeating-linear-gradient(#fff 0 5.6mm,#d4d4d4 5.6mm 5.85mm)}
 .duo{display:flex;gap:3mm;align-items:flex-start}.dl{flex:1.15;min-width:0}.dr{flex:1;min-width:0}
 .cmp td,.cmp th{font-size:8.1pt;padding:.6mm 1.2mm}.cmp tr:first-child th{background:#111;color:#fff}
-.pt,.warn,.oxb{border:1.2px solid #111;border-radius:2mm;padding:1.2mm 2.4mm;margin:1mm 0;font-size:8.4pt;break-inside:avoid}
-.warn{border:1.4px dashed #b91c1c}.warn b.t{color:#b91c1c}
+.kt .pt{font-size:7.9pt;color:#333;margin-top:.8mm;padding-top:.6mm;border-top:1px dotted #999}
+.warn,.oxb{border:1.2px solid #111;border-radius:2mm;padding:1.2mm 2.4mm;margin:1mm 0;font-size:8.4pt;break-inside:avoid}
+.warn{border:1.4px dashed #b91c1c;margin-top:1mm}.warn b.t{color:#b91c1c}.oxb small{color:#555;font-size:7.6pt}
 ul{margin:.6mm 0 0;padding-left:4mm}li{margin:0 0 .5mm}
-.ox{margin:.6mm 0 0;padding-left:0;list-style:none}.ox li{font-size:8.4pt}.ox .n{font-weight:900;display:inline-block;min-width:5mm}.ox .b{white-space:pre;font-weight:700}
+.ox{margin:.6mm 0 0;padding-left:0;list-style:none;columns:2;column-gap:5mm}.ox li{font-size:8.3pt;break-inside:avoid}.ox .n{font-weight:900;display:inline-block;min-width:5mm}.ox .b{white-space:pre;font-weight:700}
 .pr{border-top:1.4px dashed #111;padding-top:1.4mm;margin-top:2mm;break-inside:avoid;font-size:9pt}.pr .n{font-weight:900}.tag{font-size:7.6pt;background:#111;color:#fff;border-radius:1mm;padding:0 1.2mm}
 .opts{list-style:none;padding-left:2mm;margin:1mm 0 0}.opts li{font-size:8.6pt;margin:0 0 .4mm}
 .bogi{border:1px solid #555;padding:1.6mm 2.4mm 1.2mm;margin:1.4mm 0;position:relative;white-space:pre-line;font-family:'Noto Serif KR',serif;font-size:8.5pt}.bogi>span{position:absolute;top:-2.4mm;left:45%;background:#fff;padding:0 1.5mm;font-family:'Noto Sans KR';font-weight:700;font-size:8pt;white-space:normal}
